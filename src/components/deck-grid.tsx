@@ -148,7 +148,7 @@ export default function DeckGrid({
 
   // Add the sorting UI right before the grid
   return (
-    <div className="w-full pb-4">
+    <div className="w-full pb-4 mb-12">
       <TooltipProvider>
         <div className="grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid">
           {grid.map((spell, index) => (
