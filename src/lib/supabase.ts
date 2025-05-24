@@ -6,8 +6,8 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
   dotenv.config({ path: ".env.local" });
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
@@ -15,4 +15,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Create the regular client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Create the admin client with service role
+export const supabaseAdmin = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
