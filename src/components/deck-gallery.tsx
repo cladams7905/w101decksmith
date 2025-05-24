@@ -1,25 +1,34 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Plus, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import type { Deck } from "@/lib/types"
-import { NewDeckModal } from "@/components/new-deck-modal"
+import { useState } from "react";
+import { Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import type { Deck } from "@/lib/types";
+import { NewDeckModal } from "@/components/app-header/navigation/new-deck-modal";
 
 interface DeckGalleryProps {
-  decks: Deck[]
-  currentDeck: Deck
-  onSwitchDeck: (deck: Deck) => void
-  showNewDeckModal: boolean
-  setShowNewDeckModal: (show: boolean) => void
-  onCreateDeck: (name: string, school: string, level: string, weavingClass: string) => void
-  wizardSchool: string
-  wizardLevel: string
-  weavingClass: string
+  decks: Deck[];
+  currentDeck: Deck;
+  onSwitchDeck: (deck: Deck) => void;
+  showNewDeckModal: boolean;
+  setShowNewDeckModal: (show: boolean) => void;
+  onCreateDeck: (
+    name: string,
+    school: string,
+    level: string,
+    weavingClass: string
+  ) => void;
+  wizardSchool: string;
+  wizardLevel: string;
+  weavingClass: string;
 }
 
 export function DeckGallery({
@@ -31,10 +40,12 @@ export function DeckGallery({
   onCreateDeck,
   wizardSchool,
   wizardLevel,
-  weavingClass,
+  weavingClass
 }: DeckGalleryProps) {
-  const [deckSearchQuery, setDeckSearchQuery] = useState("")
-  const filteredDecks = decks.filter((deck) => deck.name.toLowerCase().includes(deckSearchQuery.toLowerCase()))
+  const [deckSearchQuery, setDeckSearchQuery] = useState("");
+  const filteredDecks = decks.filter((deck) =>
+    deck.name.toLowerCase().includes(deckSearchQuery.toLowerCase())
+  );
 
   return (
     <DialogContent className="sm:max-w-[700px]">
@@ -78,7 +89,8 @@ export function DeckGallery({
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium truncate">{deck.name}</h3>
                     <p className="text-xs text-muted-foreground">
-                      Level {deck.level || wizardLevel} {deck.weavingClass || weavingClass}
+                      Level {deck.level || wizardLevel}{" "}
+                      {deck.weavingClass || weavingClass}
                     </p>
                   </div>
                 </div>
@@ -88,7 +100,9 @@ export function DeckGallery({
                     {deck.spells.length}/64 cards
                   </Badge>
 
-                  {deck.id === currentDeck.id && <Badge className="bg-primary">Current</Badge>}
+                  {deck.id === currentDeck.id && (
+                    <Badge className="bg-primary">Current</Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -98,7 +112,8 @@ export function DeckGallery({
 
       <div className="flex justify-between items-center mt-4">
         <p className="text-sm text-muted-foreground">
-          {filteredDecks.length} {filteredDecks.length === 1 ? "deck" : "decks"} total
+          {filteredDecks.length} {filteredDecks.length === 1 ? "deck" : "decks"}{" "}
+          total
         </p>
         <NewDeckModal
           showModal={showNewDeckModal}
@@ -113,5 +128,5 @@ export function DeckGallery({
         />
       </div>
     </DialogContent>
-  )
+  );
 }

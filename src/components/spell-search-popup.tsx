@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, Filter, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import SpellTooltip from "@/components/spell-tooltip";
 import type { Spell } from "@/lib/types";
-import { spellCategories } from "@/lib/data";
+import { spellCategories } from "@/db/data";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
@@ -82,7 +82,7 @@ export default function SpellSearchPopup({
     .map((category) => ({
       ...category,
       spells: category.spells.filter(
-        (spell) =>
+        (spell: Spell) =>
           spell.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           spell.description.toLowerCase().includes(searchQuery.toLowerCase())
       )
@@ -115,7 +115,7 @@ export default function SpellSearchPopup({
     Object.values(categoryFilters).filter(Boolean).length;
 
   // Adjust position to ensure popup stays within viewport
-  const adjustedPosition = { ...position };
+  const adjustedPosition = useMemo(() => ({ ...position }), [position]);
 
   // Check if we need to adjust the position based on viewport
   useEffect(() => {
@@ -136,7 +136,7 @@ export default function SpellSearchPopup({
         adjustedPosition.top = Math.max(0, position.top - overflow - 20);
       }
     }
-  }, [position]);
+  }, [position, adjustedPosition]);
 
   return (
     <div
@@ -287,7 +287,7 @@ export default function SpellSearchPopup({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid grid-cols-1 gap-2 p-1">
-                    {category.spells.map((spell) => (
+                    {category.spells.map((spell: Spell) => (
                       <Tooltip key={spell.id}>
                         <TooltipTrigger asChild>
                           <Card

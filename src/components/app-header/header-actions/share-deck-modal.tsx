@@ -20,7 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Copy, Facebook, Link, Share2, Twitter } from "lucide-react";
 import type { Deck } from "@/lib/types";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 
 interface ShareDeckModalProps {
   deck: Deck;

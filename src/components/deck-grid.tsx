@@ -23,7 +23,7 @@ interface DeckGridProps {
   deck: Deck;
   onAddSpell: (spell: Spell, index: number, quantity: number) => void;
   onReplaceSpell: (spell: Spell, index: number) => void;
-  onSortDeck?: (sortedSpells: Spell[]) => void;
+  onSortDeck: (spells: Spell[]) => void;
 }
 
 // Add state variables for sorting at the beginning of the component function
@@ -36,67 +36,9 @@ export default function DeckGrid({
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const [isReplacing, setIsReplacing] = useState(false);
-  const [sortBy, setSortBy] = useState<"school" | "pips" | "utility" | "none">(
-    "none"
-  );
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  // Add sorting function
-  const sortDeck = (
-    by: "school" | "pips" | "utility" | "none",
-    order: "asc" | "desc"
-  ) => {
-    if (by === "none" || !onSortDeck) return;
-
-    const sortedSpells = [...deck.spells].sort((a, b) => {
-      if (by === "school") {
-        // Sort by school name
-        const schoolA = a.school.toLowerCase();
-        const schoolB = b.school.toLowerCase();
-        return order === "asc"
-          ? schoolA.localeCompare(schoolB)
-          : schoolB.localeCompare(schoolA);
-      } else if (by === "pips") {
-        // Sort by pip cost
-        return order === "asc" ? a.pips - b.pips : b.pips - a.pips;
-      } else if (by === "utility") {
-        // Sort by utility type
-        const getUtilityType = (spell: Spell): number => {
-          if (spell.damage && spell.damage > 0) return 1; // Damage
-          if (spell.damageOverTime && spell.damageOverTime > 0) return 2; // DoT
-          if (spell.buffPercentage && spell.buffPercentage > 0) return 3; // Buff
-          if (spell.debuffPercentage && spell.debuffPercentage > 0) return 4; // Debuff
-          if (spell.healing && spell.healing > 0) return 5; // Healing
-          if (spell.healingOverTime && spell.healingOverTime > 0) return 6; // HoT
-          if (spell.pipsGained && spell.pipsGained > 0) return 7; // Pip gain
-          return 8; // Other
-        };
-
-        const typeA = getUtilityType(a);
-        const typeB = getUtilityType(b);
-        return order === "asc" ? typeA - typeB : typeB - typeA;
-      }
-
-      return 0;
-    });
-
-    onSortDeck(sortedSpells);
-  };
-
-  // Add the handleSort function
-  const handleSort = (value: string) => {
-    if (value === "none") {
-      setSortBy("none");
-      return;
-    }
-
-    const [by, order] = value.split("-") as [
-      "school" | "pips" | "utility",
-      "asc" | "desc"
-    ];
-    setSortBy(by);
-    setSortOrder(order);
-    sortDeck(by, order);
+  const handleSort = (spells: Spell[]) => {
+    onSortDeck(spells);
   };
 
   // Create an 8x8 grid (64 slots)

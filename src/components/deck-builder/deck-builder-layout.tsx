@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { DeckHeader } from "@/components/deck-header";
 import { RightSidebar } from "@/components/right-sidebar";
 import { BulkActionDialog } from "@/components/bulk-action-dialog";
-import { SpellSidebar } from "@/components/spell-sidebar/spell-sidebar";
+import { SpellSidebar } from "@/components/spell-sidebar";
 import DeckGrid from "@/components/deck-grid";
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";

@@ -1,5 +1,5 @@
-import DeckBuilder from "@/components/deck-builder"
+import DeckBuilder from "@/components/deck-builder";
 
 export default function Home() {
-  return <DeckBuilder />
+  return <DeckBuilder />;
 }
