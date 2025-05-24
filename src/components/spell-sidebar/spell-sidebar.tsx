@@ -42,10 +42,12 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
       />
 
       {/* List of spells in accordions */}
-      <SpellList
-        filteredSpells={filteredSpells}
-        onSpellClick={handleSpellClick}
-      />
+      <div className="flex-1 overflow-auto">
+        <SpellList
+          filteredSpells={filteredSpells}
+          onSpellClick={handleSpellClick}
+        />
+      </div>
 
       {/* Spell Quantity Selection */}
       {selectedSpell && (

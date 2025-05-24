@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
+import { Database } from "./database.types";
 
 // Load environment variables from .env.local file when not in Next.js
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
@@ -16,10 +17,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Create the regular client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Create the admin client with service role
-export const supabaseAdmin = createClient(
+export const supabaseAdmin = createClient<Database>(
   supabaseUrl,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );

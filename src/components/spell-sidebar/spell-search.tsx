@@ -100,7 +100,7 @@ export function SpellSearch({
   };
 
   return (
-    <div className="p-4 border-b border-blue-900/30 z-10 w-full sticky top-0 bg-background">
+    <div className="p-4 border-b border-blue-900/30 sticky top-0 z-10 bg-background">
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -1,58 +1,47 @@
 "use client";
 
-import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-import type React from "react";
-
 import {
   Menu,
   PanelRight,
-  Plus,
-  Newspaper,
+  ChevronRight,
+  Users,
   TrendingUp,
   Search,
-  Users,
-  ChevronRight
+  Newspaper
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NotificationMenu } from "@/components/notification-menu";
 import { NewDeckModal } from "@/components/new-deck-modal";
-import type { Deck } from "@/lib/types";
-import { UpgradeMembershipModal } from "@/components/upgrade-membership-modal";
+import type { Deck, Spell } from "@/lib/types";
 import UserMenuComponent from "@/components/user-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-  DropdownMenuLabel
-} from "@/components/ui/dropdown-menu";
 import { MyDecksDropdown } from "@/components/my-decks-dropdown";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
 import { ShareDeckModal } from "@/components/share-deck-modal";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { SpellSidebar } from "./spell-sidebar/spell-sidebar";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AppHeaderProps {
   currentDeck: Deck;
   decks: Deck[];
   onSwitchDeck: (deck: Deck) => void;
-  onCreateDeck: (
-    name: string,
-    school: string,
-    level: string,
-    weavingClass: string
-  ) => void;
+  onCreateDeck: () => void;
   onToggleRightSidebar: () => void;
-  renderSidebarContent: () => React.ReactNode;
   showNewDeckModal: boolean;
   setShowNewDeckModal: (show: boolean) => void;
-  showDeckSwitchModal: boolean;
-  setShowDeckSwitchModal: (show: boolean) => void;
   wizardSchool: string;
   wizardLevel: string;
   weavingClass: string;
+  onAddSpell: (spell: Spell, quantity: number) => void;
 }
 
 export function AppHeader({
@@ -61,14 +50,12 @@ export function AppHeader({
   onSwitchDeck,
   onCreateDeck,
   onToggleRightSidebar,
-  renderSidebarContent,
   showNewDeckModal,
   setShowNewDeckModal,
-  showDeckSwitchModal,
-  setShowDeckSwitchModal,
   wizardSchool,
   wizardLevel,
-  weavingClass
+  weavingClass,
+  onAddSpell
 }: AppHeaderProps) {
   const [communityDropdownOpen, setCommunityDropdownOpen] = useState(false);
 
@@ -86,19 +73,13 @@ export function AppHeader({
             side="left"
             className="w-[300px] p-0 gradient-linear flex flex-col"
           >
-            <div className="flex-1 overflow-auto">{renderSidebarContent()}</div>
-            <div className="border-t gradient-special p-4 sticky bottom-0">
-              <div onClick={(e) => e.stopPropagation()}>
-                <UpgradeMembershipModal />
-              </div>
-              <div className="text-xs text-muted-foreground text-center mt-2">
-                Wizard101 Deck Builder
-              </div>
+            <div className="flex-1 overflow-auto">
+              <SpellSidebar currentDeck={currentDeck} onAddSpell={onAddSpell} />
             </div>
           </SheetContent>
         </Sheet>
 
-        {/* App Logo Placeholder */}
+        {/* App Logo */}
         <div className="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center text-white font-bold mr-4">
           W
         </div>
@@ -273,8 +254,7 @@ export function AppHeader({
           onCreateDeck={onCreateDeck}
           triggerButton={
             <Button variant="outline_primary" className="md:ml-4">
-              New
-              <Plus />
+              New Deck
             </Button>
           }
         />

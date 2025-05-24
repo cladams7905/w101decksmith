@@ -1,4 +1,4 @@
-import { supabase } from "../src/lib/supabase";
+import { supabase } from "../src/lib/db/supabase";
 
 const SCHOOL_PATHS = [
   "Fire",
