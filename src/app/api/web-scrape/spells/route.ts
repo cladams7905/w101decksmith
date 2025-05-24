@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
+import { CheerioAPI } from "cheerio";
 
 const WIKI_BASE_URL = "https://wiki.wizard101central.com";
 
@@ -17,45 +18,126 @@ const SCHOOL_SPELL_PATHS = [
   "/wiki/Spell:Shadow_School_Spells"
 ];
 
-type SpellType = "Spell" | "TreasureCard" | "ItemCard";
+type CardType = "spell" | "treasure_card" | "item_card";
+type CardEffect =
+  | "damage"
+  | "manipulation"
+  | "steal"
+  | "global"
+  | "charm"
+  | "ward"
+  | "heal"
+  | "aoe"
+  | "aura"
+  | "enchantment"
+  | "shadow";
+type School =
+  | "fire"
+  | "ice"
+  | "storm"
+  | "life"
+  | "myth"
+  | "death"
+  | "balance"
+  | "astral"
+  | "shadow";
+type PvpStatus = "no_pvp" | "no_pve" | "level_restricted" | "unrestricted";
 
 interface SpellInfo {
   name: string;
-  card_type: SpellType;
-  school?: string;
-  card_effects?: string[];
-  accuracy?: string;
+  card_type: CardType;
+  school?: School;
+  card_effects?: CardEffect[];
+  accuracy?: number;
   description?: string;
   description_image_alts?: string[];
   card_image_url?: string;
   pip_cost?: string;
-  pvp_level?: string;
+  pvp_level?: number;
+  pvp_status?: PvpStatus;
   wiki_url: string;
   category?: string;
+  tier?: string;
 }
 
-function determineSpellType(name: string): SpellType {
-  if (name.toLowerCase().startsWith("treasurecard:")) return "TreasureCard";
-  if (name.toLowerCase().startsWith("itemcard:")) return "ItemCard";
-  return "Spell";
+interface PvpInfo {
+  status: PvpStatus;
+  level?: number;
+}
+
+function determineSpellType(name: string): CardType {
+  if (name.toLowerCase().startsWith("treasurecard:")) return "treasure_card";
+  if (name.toLowerCase().startsWith("itemcard:")) return "item_card";
+  return "spell";
+}
+
+function normalizeSchool(school: string): School | undefined {
+  const schoolMap: { [key: string]: School } = {
+    Fire: "fire",
+    Ice: "ice",
+    Storm: "storm",
+    Life: "life",
+    Myth: "myth",
+    Death: "death",
+    Balance: "balance",
+    Sun: "astral",
+    Moon: "astral",
+    Star: "astral",
+    Shadow: "shadow"
+  };
+
+  return schoolMap[school];
+}
+
+function normalizeCardEffects(effects: string[]): CardEffect[] {
+  const effectMap: { [key: string]: CardEffect } = {
+    damage: "damage",
+    manipulation: "manipulation",
+    steal: "steal",
+    global: "global",
+    charm: "charm",
+    ward: "ward",
+    healing: "heal",
+    heal: "heal",
+    aoe: "aoe",
+    aura: "aura",
+    enchantment: "enchantment",
+    shadow: "shadow"
+  };
+
+  return effects
+    .map((effect) => effectMap[effect.toLowerCase()])
+    .filter((effect): effect is CardEffect => effect !== undefined);
 }
 
 function cleanSpellName(name: string): string {
-  const colonIndex = name.indexOf(":");
-  if (colonIndex !== -1) {
-    return name.substring(colonIndex + 1).trim();
-  }
-  return name;
+  // Remove both "Spell:" prefix and any type prefix (TreasureCard:, ItemCard:)
+  const cleanedName = name
+    .replace(/^(?:Spell:|TreasureCard:|ItemCard:)/i, "")
+    .trim();
+  return cleanedName;
 }
 
-function cleanAccuracy(accuracy: string): string {
+function cleanAccuracy(accuracy: string): number {
   const match = accuracy.match(/\d+/);
-  return match ? `${match[0]}%` : accuracy;
+  if (!match) return 1; // Default to 100% if no number found
+  const percentage = parseInt(match[0], 10);
+  return percentage / 100;
 }
 
 function cleanPipCost(pipCost: string): string {
-  const match = pipCost.match(/Pip Cost(\d+)/);
-  return match ? match[1] : pipCost;
+  // Check for "X" or variable pip cost indicators
+  if (pipCost.toLowerCase().includes("x")) {
+    return "X";
+  }
+
+  // Extract numeric pip cost
+  const match = pipCost.match(/\d+/);
+  if (!match) {
+    console.log(`No numeric pip cost found in: ${pipCost}, defaulting to "1"`);
+    return "1";
+  }
+  return match[0];
 }
 
 function processSpellTypes(typeAlts: string[]): string[] {
@@ -69,10 +151,114 @@ function processSpellTypes(typeAlts: string[]): string[] {
     .filter((value, index, self) => self.indexOf(value) === index);
 }
 
-function extractPvpLevel(html: string): string | undefined {
-  const pvpLevelRegex = /(?:PvP|Level)[- ]*((?:\d+\+|\d+))/i;
-  const match = html.match(pvpLevelRegex);
-  return match ? match[1] : undefined;
+function extractPvpInfo($: CheerioAPI): PvpInfo {
+  // Find the PvP and PvP Level rows in the infobox table
+  const pvpRows = $(".infobox tr").filter((_, el) => {
+    const firstCell = $(el).find("td:first-child");
+    const cellText = firstCell.find("b").text().trim();
+    return cellText === "PvP" || cellText === "PvP Level";
+  });
+
+  if (!pvpRows.length) {
+    // If no PvP row found, assume unrestricted
+    return { status: "unrestricted" };
+  }
+
+  let pvpStatus: PvpStatus = "unrestricted";
+  let pvpLevel: number | undefined;
+
+  // Process each row (could be just PvP, just PvP Level, or both)
+  pvpRows.each((_, row) => {
+    const $row = $(row);
+    const label = $row.find("td:first-child b").text().trim();
+    const cell = $row.find("td:last-child");
+    const cellText = cell.text().trim();
+
+    if (label === "PvP") {
+      // Check for "No PvP"
+      if (
+        cellText.startsWith("No") &&
+        cell.find('img[alt="No PvP"]').length > 0
+      ) {
+        pvpStatus = "no_pvp";
+      }
+      // Check for "PvP Only"
+      else if (
+        cellText.startsWith("Only") &&
+        cell.find('img[alt="PvP Only"]').length > 0
+      ) {
+        pvpStatus = "no_pve";
+      }
+    } else if (label === "PvP Level") {
+      // Extract level number, handling both "40+" and "40" formats
+      const levelMatch = cellText.match(/(\d+)\+?/);
+      if (levelMatch) {
+        pvpLevel = parseInt(levelMatch[1], 10);
+        // Only set status to level_restricted if it's not already no_pve
+        if (pvpStatus !== "no_pve") {
+          pvpStatus = "level_restricted";
+        }
+      }
+    }
+  });
+
+  return {
+    status: pvpStatus,
+    ...(pvpLevel !== undefined && { level: pvpLevel })
+  };
+}
+
+async function getSpellwrightingTierLinks($: CheerioAPI): Promise<string[]> {
+  const tierLinks: string[] = [];
+
+  // Find the Spellwrighting Tiers section
+  const tierSection = $(".data-table-heading").filter((_, el) =>
+    $(el).text().trim().startsWith("Spellwrighting Tiers")
+  );
+
+  if (tierSection.length) {
+    // Find the following table or list containing the tier links
+    const tierContainer = tierSection.next();
+
+    // Extract all spell links from the container
+    tierContainer.find("a").each((_, link) => {
+      const href = $(link).attr("href");
+      if (href && href.includes("/wiki/Spell:")) {
+        const fullUrl = href.startsWith("http")
+          ? href
+          : `${WIKI_BASE_URL}${href}`;
+        if (!tierLinks.includes(fullUrl)) {
+          // Avoid duplicates
+          tierLinks.push(fullUrl);
+        }
+      }
+    });
+  }
+
+  return tierLinks;
+}
+
+function extractNameAndTier(rawName: string): { name: string; tier: string } {
+  // First clean any Spell: prefix from the name
+  const cleanedName = cleanSpellName(rawName);
+
+  // Match patterns like "Name (Tier 2a)" or "Name Tier 2a"
+  const tierPattern = /(?:\(Tier\s+(\d+[a-z]?)\)|\s+Tier\s+(\d+[a-z]?))\s*$/i;
+  const match = cleanedName.match(tierPattern);
+
+  if (match) {
+    // Get the tier value from either capture group
+    const tier = (match[1] || match[2]).toLowerCase();
+    // Remove the tier part from the name
+    const name = cleanedName.replace(tierPattern, "").trim();
+    return { name, tier };
+  }
+
+  // If no tier found in the name, return the cleaned name and tier "1"
+  return {
+    name: cleanedName,
+    tier: "1"
+  };
 }
 
 async function getSpellDetailsFromPage(
@@ -84,7 +270,6 @@ async function getSpellDetailsFromPage(
     const html = await response.text();
     const $ = cheerio.load(html);
 
-    // Log the raw HTML for debugging failed pages
     console.log(`Processing page content for ${url}`);
 
     const rawName = $(".firstHeading").text().trim();
@@ -94,7 +279,7 @@ async function getSpellDetailsFromPage(
     }
 
     const cardType = determineSpellType(rawName);
-    const name = cleanSpellName(rawName);
+    const { name, tier } = extractNameAndTier(rawName);
 
     const infoBox = $(".infobox");
     if (!infoBox.length) {
@@ -106,26 +291,28 @@ async function getSpellDetailsFromPage(
       name,
       card_type: cardType,
       wiki_url: url,
-      category
+      category,
+      tier
     };
 
-    const pvpLevel = extractPvpLevel(html);
-    if (pvpLevel) {
-      spellInfo.pvp_level = pvpLevel;
-    }
-
     // Extract school from school image alt tag
-    const schoolRow = infoBox
-      .find("tr")
-      .filter((_, el) => $(el).text().toLowerCase().includes("school"));
+    const schoolRow = infoBox.find("tr").filter((_, el) => {
+      const firstCell = $(el).find("td:first-child");
+      return firstCell.find("b").text().trim() === "School";
+    });
     if (schoolRow.length) {
       const schoolImage = schoolRow.find("img");
       if (schoolImage.length) {
         const schoolAlt = schoolImage.attr("alt");
         if (schoolAlt) {
-          spellInfo.school = schoolAlt.replace(" School", "").trim();
-        } else {
-          console.log(`No school alt text found for ${name}`);
+          const normalizedSchool = normalizeSchool(
+            schoolAlt.replace(" School", "").trim()
+          );
+          if (normalizedSchool) {
+            spellInfo.school = normalizedSchool;
+          } else {
+            console.log(`Could not normalize school: ${schoolAlt} for ${name}`);
+          }
         }
       }
     } else {
@@ -133,9 +320,10 @@ async function getSpellDetailsFromPage(
     }
 
     // Extract type from type image alt tags
-    const typeRow = infoBox
-      .find("tr")
-      .filter((_, el) => $(el).text().toLowerCase().includes("type"));
+    const typeRow = infoBox.find("tr").filter((_, el) => {
+      const firstCell = $(el).find("td:first-child");
+      return firstCell.find("b").text().trim() === "Type";
+    });
     if (typeRow.length) {
       const typeImages = typeRow.find("img");
       if (typeImages.length) {
@@ -145,7 +333,8 @@ async function getSpellDetailsFromPage(
           .filter((alt): alt is string => alt !== undefined);
 
         if (typeAlts.length) {
-          spellInfo.card_effects = processSpellTypes(typeAlts);
+          const rawEffects = processSpellTypes(typeAlts);
+          spellInfo.card_effects = normalizeCardEffects(rawEffects);
         } else {
           console.log(`No type alt texts found for ${name}`);
         }
@@ -155,11 +344,12 @@ async function getSpellDetailsFromPage(
     }
 
     // Extract accuracy
-    const accuracyRow = infoBox
-      .find("tr")
-      .filter((_, el) => $(el).text().toLowerCase().includes("accuracy"));
+    const accuracyRow = infoBox.find("tr").filter((_, el) => {
+      const firstCell = $(el).find("td:first-child");
+      return firstCell.find("b").text().trim() === "Accuracy";
+    });
     if (accuracyRow.length) {
-      const accuracyText = accuracyRow.find("td").text().trim();
+      const accuracyText = accuracyRow.find("td:last-child").text().trim();
       if (accuracyText) {
         spellInfo.accuracy = cleanAccuracy(accuracyText);
       } else {
@@ -168,11 +358,12 @@ async function getSpellDetailsFromPage(
     }
 
     // Extract pip cost
-    const pipRow = infoBox
-      .find("tr")
-      .filter((_, el) => $(el).text().toLowerCase().includes("pip"));
+    const pipRow = infoBox.find("tr").filter((_, el) => {
+      const firstCell = $(el).find("td:first-child");
+      return firstCell.find("b").text().trim() === "Pip Cost";
+    });
     if (pipRow.length) {
-      const pipText = pipRow.find("td").text().trim();
+      const pipText = pipRow.find("td:last-child").text().trim();
       if (pipText) {
         spellInfo.pip_cost = cleanPipCost(pipText);
       } else {
@@ -181,38 +372,34 @@ async function getSpellDetailsFromPage(
     }
 
     // Extract spell description
-    let description = "";
-
-    // Try infobox description first
     const descriptionRow = infoBox
       .find("tr")
-      .filter(
-        (_, el) => $(el).text().trim().toLowerCase() === "spell description"
-      )
+      .filter((_, el) => {
+        const firstCell = $(el).find("td:first-child");
+        return firstCell.find("b").text().trim() === "Spell Description";
+      })
       .next("tr");
 
     if (descriptionRow.length) {
-      const infoboxDesc = descriptionRow.find("td").text().trim();
-      if (infoboxDesc) {
-        description = infoboxDesc;
+      const description = descriptionRow.find("td").text().trim();
+      if (description) {
+        spellInfo.description = description;
       }
     }
 
-    // If no infobox description, try first paragraph
-    if (!description) {
+    // If no description found in infobox, try first paragraph
+    if (!spellInfo.description) {
       const contentParagraphs = $(".mw-parser-output > p");
       contentParagraphs.each((_, el) => {
         const text = $(el).text().trim();
-        if (text && !description) {
-          description = text;
+        if (text && !spellInfo.description) {
+          spellInfo.description = text;
           return false;
         }
       });
     }
 
-    if (description) {
-      spellInfo.description = description;
-    } else {
+    if (!spellInfo.description) {
       console.log(`No description found for ${name}`);
     }
 
@@ -242,7 +429,17 @@ async function getSpellDetailsFromPage(
       }
     }
 
-    console.log(`Successfully processed spell: ${name}`, spellInfo);
+    // Extract PvP information
+    const pvpInfo = extractPvpInfo($);
+    spellInfo.pvp_status = pvpInfo.status;
+    if (pvpInfo.level !== undefined) {
+      spellInfo.pvp_level = pvpInfo.level;
+    }
+
+    console.log(
+      `Successfully processed spell: ${name} (Tier ${tier})`,
+      spellInfo
+    );
     return spellInfo;
   } catch (error) {
     console.error(`Error processing spell at ${url}:`, error);
@@ -307,6 +504,36 @@ async function getSpellLinksFromSchoolPage(url: string): Promise<string[]> {
   return links;
 }
 
+async function processSpellWithVariants(
+  url: string,
+  category: string
+): Promise<SpellInfo[]> {
+  // First fetch the page to get tier links
+  const response = await fetch(url);
+  const html = await response.text();
+  const $ = cheerio.load(html);
+
+  // Get all tier links including the base spell
+  const tierLinks = await getSpellwrightingTierLinks($);
+
+  // If no tier links found, process as a single spell
+  if (!tierLinks.length) {
+    const spellInfo = await getSpellDetailsFromPage(url, category);
+    return spellInfo ? [spellInfo] : [];
+  }
+
+  // Process all spells from the tier links
+  const variants: SpellInfo[] = [];
+  for (const tierLink of tierLinks) {
+    const tierSpell = await getSpellDetailsFromPage(tierLink, category);
+    if (tierSpell) {
+      variants.push(tierSpell);
+    }
+  }
+
+  return variants;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -319,7 +546,6 @@ export async function GET(request: Request) {
     let foundSpellLinks: string[] = [];
 
     if (targetSchool) {
-      // Find the matching school path
       const schoolPath = SCHOOL_SPELL_PATHS.find((path) =>
         path.toLowerCase().includes(targetSchool.toLowerCase())
       );
@@ -338,17 +564,14 @@ export async function GET(request: Request) {
 
         for (const spellUrl of foundSpellLinks) {
           console.log(`Processing spell URL: ${spellUrl}`);
-          const spellInfo = await getSpellDetailsFromPage(
+          const variants = await processSpellWithVariants(
             spellUrl,
             `${schoolName} School`
           );
-          if (spellInfo) {
-            console.log("Found spell:", spellInfo.name);
-            spells.push(spellInfo);
-          } else {
-            console.log(`Failed to process spell at URL: ${spellUrl}`);
-          }
+          spells.push(...variants);
         }
+
+        console.log(`Processed ${spells.length} spells (including variants)`);
       } else {
         return NextResponse.json(
           { error: `School '${targetSchool}' not found` },
@@ -369,10 +592,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       spells,
-      total_scraped: spells.length,
-      failed_to_process: foundSpellLinks.filter(
-        (link) => !spells.some((spell) => spell.wiki_url === link)
-      )
+      total_spells: spells.length,
+      total_base_spells: foundSpellLinks.length
     });
   } catch (error) {
     console.error("Error in GET handler:", error);

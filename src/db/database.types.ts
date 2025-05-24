@@ -16,12 +16,13 @@ export type Database = {
           card_image_url: string | null
           card_type: Database["public"]["Enums"]["card_type"] | null
           description: string | null
-          id: number
           last_updated: string
           name: string
-          pip_cost: number | null
+          pip_cost: string | null
           pvp_level: number | null
+          pvp_status: Database["public"]["Enums"]["pvp_status"] | null
           school: Database["public"]["Enums"]["school"] | null
+          tier: string
           wiki_url: string | null
         }
         Insert: {
@@ -30,12 +31,13 @@ export type Database = {
           card_image_url?: string | null
           card_type?: Database["public"]["Enums"]["card_type"] | null
           description?: string | null
-          id?: number
           last_updated?: string
           name: string
-          pip_cost?: number | null
+          pip_cost?: string | null
           pvp_level?: number | null
+          pvp_status?: Database["public"]["Enums"]["pvp_status"] | null
           school?: Database["public"]["Enums"]["school"] | null
+          tier?: string
           wiki_url?: string | null
         }
         Update: {
@@ -44,12 +46,13 @@ export type Database = {
           card_image_url?: string | null
           card_type?: Database["public"]["Enums"]["card_type"] | null
           description?: string | null
-          id?: number
           last_updated?: string
           name?: string
-          pip_cost?: number | null
+          pip_cost?: string | null
           pvp_level?: number | null
+          pvp_status?: Database["public"]["Enums"]["pvp_status"] | null
           school?: Database["public"]["Enums"]["school"] | null
+          tier?: string
           wiki_url?: string | null
         }
         Relationships: []
@@ -63,28 +66,29 @@ export type Database = {
     }
     Enums: {
       card_effect:
-        | "Damage"
-        | "Manipulation"
-        | "Steal"
-        | "Global"
-        | "Charm"
-        | "Ward"
-        | "Heal"
-        | "AoE"
-        | "Aura"
-        | "Enchantment"
-        | "Shadow"
-      card_type: "Spell" | "TreasureCard" | "ItemCard"
+        | "damage"
+        | "manipulation"
+        | "steal"
+        | "global"
+        | "charm"
+        | "ward"
+        | "heal"
+        | "aoe"
+        | "aura"
+        | "enchantment"
+        | "shadow"
+      card_type: "spell" | "treasure_card" | "item_card"
+      pvp_status: "no_pvp" | "no_pve" | "level_restricted" | "unrestricted"
       school:
-        | "Fire"
-        | "Ice"
-        | "Storm"
-        | "Life"
-        | "Myth"
-        | "Death"
-        | "Balance"
-        | "Astral"
-        | "Shadow"
+        | "fire"
+        | "ice"
+        | "storm"
+        | "life"
+        | "myth"
+        | "death"
+        | "balance"
+        | "astral"
+        | "shadow"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -201,29 +205,30 @@ export const Constants = {
   public: {
     Enums: {
       card_effect: [
-        "Damage",
-        "Manipulation",
-        "Steal",
-        "Global",
-        "Charm",
-        "Ward",
-        "Heal",
-        "AoE",
-        "Aura",
-        "Enchantment",
-        "Shadow",
+        "damage",
+        "manipulation",
+        "steal",
+        "global",
+        "charm",
+        "ward",
+        "heal",
+        "aoe",
+        "aura",
+        "enchantment",
+        "shadow",
       ],
-      card_type: ["Spell", "TreasureCard", "ItemCard"],
+      card_type: ["spell", "treasure_card", "item_card"],
+      pvp_status: ["no_pvp", "no_pve", "level_restricted", "unrestricted"],
       school: [
-        "Fire",
-        "Ice",
-        "Storm",
-        "Life",
-        "Myth",
-        "Death",
-        "Balance",
-        "Astral",
-        "Shadow",
+        "fire",
+        "ice",
+        "storm",
+        "life",
+        "myth",
+        "death",
+        "balance",
+        "astral",
+        "shadow",
       ],
     },
   },
