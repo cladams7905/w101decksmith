@@ -1,7 +1,7 @@
 import { Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { spellCategories } from "@/lib/data";
+import { spellCategories } from "@/db/data";
 import {
   Popover,
   PopoverContent,
@@ -46,7 +46,7 @@ export function SpellSearch({
         .map((category) => ({
           ...category,
           spells: category.spells.filter(
-            (spell) =>
+            (spell: Spell) =>
               spell.name.toLowerCase().includes(query.toLowerCase()) ||
               spell.description.toLowerCase().includes(query.toLowerCase())
           )

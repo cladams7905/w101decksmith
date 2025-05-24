@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../src/lib/db/supabase";
+import { supabaseAdmin } from "../src/db/supabase";
 import fetch from "node-fetch";
 
 const MAX_RETRIES = 3;
