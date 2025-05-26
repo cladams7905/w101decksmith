@@ -9,6 +9,7 @@ import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
 import { useState } from "react";
 import type { Spell } from "@/lib/types";
+import { deckLogger } from "@/lib/logger";
 
 export function DeckBuilderLayout() {
   const {
@@ -17,19 +18,11 @@ export function DeckBuilderLayout() {
     wizardLevel,
     wizardSchool,
     weavingClass,
-    sortBy,
-    sortOrder,
     addSpell,
     addSpellToSlot,
     replaceSpell,
     createNewDeck,
     switchDeck,
-    updateDeckName,
-    deleteDeck,
-    sortDeck,
-    setWizardLevel,
-    setWizardSchool,
-    setWeavingClass,
     updateDeckSpells
   } = useDeck();
 
@@ -39,63 +32,114 @@ export function DeckBuilderLayout() {
     rightPanelWidth,
     isMobile,
     showNewDeckModal,
-    showDeckSettingsModal,
     showBulkActionDialog,
-    isEditingDeckName,
     toggleRightSidebar,
     setLeftPanelWidth,
     setRightPanelWidth,
     setShowNewDeckModal,
-    setShowDeckSettingsModal,
-    setShowBulkActionDialog,
-    setIsEditingDeckName
+    setShowBulkActionDialog
   } = useUI();
 
-  const [editedDeckName, setEditedDeckName] = useState(currentDeck.name);
   const [selectedSpellType, setSelectedSpellType] = useState<string | null>(
     null
   );
-  const [bulkActionType, setBulkActionType] = useState<"edit" | "delete">(
-    "edit"
-  );
-  const [isSpellId, setIsSpellId] = useState<boolean>(false);
-
-  const handleSaveDeckName = () => {
-    if (editedDeckName.trim()) {
-      updateDeckName(editedDeckName);
-    }
-    setIsEditingDeckName(false);
-  };
-
-  const handleSort = (value: string) => {
-    if (value === "none") {
-      sortDeck("none", "asc");
-      return;
-    }
-
-    const [by, order] = value.split("-") as [
-      "school" | "pips" | "utility",
-      "asc" | "desc"
-    ];
-    sortDeck(by, order);
-  };
-
-  const handleSelectSpellsByType = (
-    typeId: string,
-    actionType: "edit" | "delete",
-    isSpellId = false
-  ) => {
-    setSelectedSpellType(typeId);
-    setIsSpellId(isSpellId);
-    setBulkActionType(actionType);
-    setShowBulkActionDialog(true);
-  };
+  const [bulkActionType] = useState<"edit" | "delete">("edit");
+  const [isSpellId] = useState<boolean>(false);
 
   const handleDeleteSpellsByType = (typeId: string, isSpellId = false) => {
     const newSpells = isSpellId
       ? currentDeck.spells.filter((spell) => spell.id !== typeId)
       : currentDeck.spells.filter((spell) => spell.school !== typeId);
     updateDeckSpells(newSpells);
+  };
+
+  const handleRemoveSpell = (index: number) => {
+    const newSpells = [...currentDeck.spells];
+    newSpells.splice(index, 1);
+    updateDeckSpells(newSpells);
+  };
+
+  const handleBulkRemoveSpells = (indices: number[]) => {
+    // Sort indices in descending order to avoid index shifting issues
+    const sortedIndices = [...indices].sort((a, b) => b - a);
+    const newSpells = [...currentDeck.spells];
+
+    // Remove spells starting from the highest index
+    sortedIndices.forEach((index) => {
+      if (index < newSpells.length) {
+        newSpells.splice(index, 1);
+      }
+    });
+
+    updateDeckSpells(newSpells);
+  };
+
+  const handleBulkReplaceSpells = (spell: Spell, indices: number[]) => {
+    const newSpells = [...currentDeck.spells];
+
+    // Replace spells at the specified indices
+    indices.forEach((index) => {
+      if (index < newSpells.length) {
+        newSpells[index] = spell;
+      }
+    });
+
+    updateDeckSpells(newSpells);
+  };
+
+  const handleAddSpellToGridPositions = (spell: Spell, positions: number[]) => {
+    const newSpells = [...currentDeck.spells];
+
+    // For each position, add the spell to the end of the deck
+    // This maintains the current behavior where spells are added sequentially
+    positions.forEach(() => {
+      if (newSpells.length < 64) {
+        newSpells.push(spell);
+      }
+    });
+
+    updateDeckSpells(newSpells);
+  };
+
+  const handleMixedOperation = (
+    spell: Spell,
+    replaceIndices: number[],
+    addCount: number
+  ) => {
+    deckLogger.info("=== Atomic mixed operation ===");
+    deckLogger.info("Spell:", spell.name);
+    deckLogger.info("Replace indices:", replaceIndices);
+    deckLogger.info("Add count:", addCount);
+
+    const newSpells = [...currentDeck.spells];
+
+    // First, handle replacements
+    replaceIndices.forEach((index) => {
+      if (index < newSpells.length) {
+        deckLogger.debug(
+          `Replacing deck[${index}]: "${newSpells[index].name}" -> "${spell.name}"`
+        );
+        newSpells[index] = spell;
+      }
+    });
+
+    // Then, handle additions
+    for (let i = 0; i < addCount; i++) {
+      if (newSpells.length < 64) {
+        deckLogger.debug(
+          `Adding "${spell.name}" to deck (${i + 1}/${addCount})`
+        );
+        newSpells.push(spell);
+      }
+    }
+
+    deckLogger.debug(
+      "Final atomic result:",
+      newSpells.map((s, i) => ({ index: i, name: s.name, id: s.id }))
+    );
+
+    updateDeckSpells(newSpells);
+    deckLogger.info("=== End atomic mixed operation ===");
   };
 
   const handleBulkReplaceSpell = (newSpell: Spell) => {
@@ -143,41 +187,23 @@ export function DeckBuilderLayout() {
             className="h-[calc(100vh-4rem)] border-r"
           >
             <div className="h-full flex flex-col w-full">
-              <SpellSidebar currentDeck={currentDeck} onAddSpell={addSpell} />
+              <SpellSidebar onAddSpell={addSpell} currentDeck={currentDeck} />
             </div>
           </ResizablePanel>
         </div>
 
         <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
-          <DeckHeader
-            deck={currentDeck}
-            isEditingDeckName={isEditingDeckName}
-            setIsEditingDeckName={setIsEditingDeckName}
-            editedDeckName={editedDeckName}
-            setEditedDeckName={setEditedDeckName}
-            onSaveDeckName={handleSaveDeckName}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSort={handleSort}
-            onSelectSpellsByType={handleSelectSpellsByType}
-            onDeleteSpellsByType={handleDeleteSpellsByType}
-            showDeckSettingsModal={showDeckSettingsModal}
-            setShowDeckSettingsModal={setShowDeckSettingsModal}
-            wizardLevel={wizardLevel}
-            setWizardLevel={setWizardLevel}
-            wizardSchool={wizardSchool}
-            setWizardSchool={setWizardSchool}
-            weavingClass={weavingClass}
-            setWeavingClass={setWeavingClass}
-            decks={decks}
-            onDeleteDeck={deleteDeck}
-          />
+          <DeckHeader />
           <div className="flex-1 overflow-y-auto p-4 md:px-6 md:pb-6 pt-0">
             <DeckGrid
               deck={currentDeck}
               onAddSpell={addSpellToSlot}
               onReplaceSpell={replaceSpell}
-              onSortDeck={updateDeckSpells}
+              onRemoveSpell={handleRemoveSpell}
+              onBulkRemoveSpells={handleBulkRemoveSpells}
+              onBulkReplaceSpells={handleBulkReplaceSpells}
+              onBulkAddSpells={handleAddSpellToGridPositions}
+              onMixedOperation={handleMixedOperation}
             />
           </div>
         </main>

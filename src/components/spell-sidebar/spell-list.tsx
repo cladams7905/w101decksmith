@@ -1,7 +1,7 @@
 import type { Spell } from "@/lib/types";
 import { Accordion } from "@/components/ui/accordion";
 import { SpellSchoolAccordion } from "./spell-school-accordion";
-import { useSpellSorting } from "../../lib/hooks/use-spell-sorting";
+import { useSpellSorting } from "./use-spell-sorting";
 
 interface SpellListProps {
   filteredSpells: {

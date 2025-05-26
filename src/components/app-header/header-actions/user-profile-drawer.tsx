@@ -29,7 +29,7 @@ import {
   UserCircle,
   ChevronRight
 } from "lucide-react";
-import { UpgradeMembershipModal } from "@/components/upgrade-membership-modal";
+import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
 
 interface UserProfileDrawerProps {
   open: boolean;

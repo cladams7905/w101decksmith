@@ -1,9 +1,10 @@
+import { useRef, useState, type MutableRefObject } from "react";
 import type { Spell } from "@/lib/types";
-import { useState, useRef, type MutableRefObject } from "react";
-import { UpgradeMembershipModal } from "@/components/upgrade-membership-modal";
-import { SpellSearch } from "./spell-search";
 import { SpellList } from "./spell-list";
 import { SpellQuantityPopup } from "./spell-quantity-popup";
+import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
+import { useSpellFilter } from "../shared/use-spell-filter";
+import { SpellSearchBar } from "../shared/spell-search-bar";
 
 interface SpellSidebarProps {
   currentDeck: {
@@ -13,16 +14,15 @@ interface SpellSidebarProps {
 }
 
 export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const {
+    searchQuery,
+    setSearchQuery,
+    categoryFilters,
+    setCategoryFilters,
+    filteredSpells
+  } = useSpellFilter();
+
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null);
-  const [filteredSpells, setFilteredSpells] = useState<
-    {
-      id: string;
-      name: string;
-      color: string;
-      spells: Spell[];
-    }[]
-  >([]);
   const selectedCardRef = useRef<HTMLElement | null>(
     null
   ) as MutableRefObject<HTMLElement | null>;
@@ -35,10 +35,12 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Spell Searching and Filtering */}
-      <SpellSearch
+      <SpellSearchBar
         searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onFilterChange={setFilteredSpells}
+        onSearchChange={setSearchQuery}
+        categoryFilters={categoryFilters}
+        onCategoryFiltersChange={setCategoryFilters}
+        className="mb-2 pl-2 pr-3 py-4"
       />
 
       {/* List of spells in accordions */}
@@ -60,7 +62,7 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
         />
       )}
 
-      {/* Sticky sidebar footer with upgrade button */}
+      {/* Sticky sidebar footer */}
       <div className="border-t p-4 mt-auto bg-background gradient-special backdrop-blur-2xl z-20">
         <UpgradeMembershipModal />
         <div className="text-xs text-muted-foreground text-center mt-2">

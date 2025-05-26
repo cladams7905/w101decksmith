@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import type { Spell, Deck } from "@/lib/types";
+import { deckLogger } from "@/lib/logger";
 
 interface DeckContextType {
   currentDeck: Deck;
@@ -103,11 +104,11 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const addSpellToSlot = useCallback(
     (spell: Spell, slotIndex: number, quantity = 1) => {
       const newSpells = [...currentDeck.spells];
-      const startIndex = newSpells.length;
 
+      // Add the specified quantity of spells to the end of the deck
       for (let i = 0; i < quantity; i++) {
-        if (startIndex + i < 64) {
-          newSpells[startIndex + i] = spell;
+        if (newSpells.length < 64) {
+          newSpells.push(spell);
         }
       }
 
@@ -127,10 +128,40 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
 
   const replaceSpell = useCallback(
     (spell: Spell, index: number) => {
+      deckLogger.info("=== replaceSpell function called ===");
+      deckLogger.info("Trying to replace at deck index:", index);
+      deckLogger.info("With spell:", spell.name);
+      deckLogger.info(
+        "Current deck before replace:",
+        currentDeck.spells.map((s, i) => ({
+          deckIndex: i,
+          name: s.name,
+          id: s.id,
+          isTargetIndex: i === index
+        }))
+      );
+
       const newSpells = [...currentDeck.spells];
       if (index < newSpells.length) {
+        const oldSpell = newSpells[index];
         newSpells[index] = spell;
+        deckLogger.info(
+          `Successfully replaced deck[${index}]: "${oldSpell.name}" -> "${spell.name}"`
+        );
+      } else {
+        deckLogger.error(
+          `ERROR: Index ${index} is out of bounds (deck length: ${newSpells.length})`
+        );
       }
+
+      deckLogger.info(
+        "New deck after replace:",
+        newSpells.map((s, i) => ({
+          deckIndex: i,
+          name: s.name,
+          id: s.id
+        }))
+      );
 
       setCurrentDeck((prev) => ({
         ...prev,
@@ -142,6 +173,8 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
           deck.id === currentDeck.id ? { ...deck, spells: newSpells } : deck
         )
       );
+
+      deckLogger.info("=== replaceSpell completed ===");
     },
     [currentDeck.id, currentDeck.spells]
   );

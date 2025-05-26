@@ -34,8 +34,8 @@ export function SpellSchoolAccordion({
 }: SpellSchoolAccordionProps) {
   return (
     <AccordionItem value={category.id}>
-      <div className="sticky top-0 z-5 bg-background">
-        <AccordionTrigger className="py-2 px-3">
+      <div className="sticky top-0 z-5">
+        <AccordionTrigger className="py-2 px-3 bg-background">
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full bg-${category.color}-500`}
