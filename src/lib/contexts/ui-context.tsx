@@ -6,17 +6,13 @@ interface UIContextType {
   rightPanelWidth: number;
   isMobile: boolean;
   showNewDeckModal: boolean;
-  showDeckSwitchModal: boolean;
   showDeckSettingsModal: boolean;
-  showBulkActionDialog: boolean;
   isEditingDeckName: boolean;
   toggleRightSidebar: () => void;
   setLeftPanelWidth: (width: number) => void;
   setRightPanelWidth: (width: number) => void;
   setShowNewDeckModal: (show: boolean) => void;
-  setShowDeckSwitchModal: (show: boolean) => void;
   setShowDeckSettingsModal: (show: boolean) => void;
-  setShowBulkActionDialog: (show: boolean) => void;
   setIsEditingDeckName: (editing: boolean) => void;
 }
 
@@ -28,9 +24,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [rightPanelWidth, setRightPanelWidth] = useState(280);
   const [isMobile, setIsMobile] = useState(false);
   const [showNewDeckModal, setShowNewDeckModal] = useState(false);
-  const [showDeckSwitchModal, setShowDeckSwitchModal] = useState(false);
   const [showDeckSettingsModal, setShowDeckSettingsModal] = useState(false);
-  const [showBulkActionDialog, setShowBulkActionDialog] = useState(false);
   const [isEditingDeckName, setIsEditingDeckName] = useState(false);
 
   // Check if we're on mobile
@@ -61,17 +55,13 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     rightPanelWidth,
     isMobile,
     showNewDeckModal,
-    showDeckSwitchModal,
     showDeckSettingsModal,
-    showBulkActionDialog,
     isEditingDeckName,
     toggleRightSidebar,
     setLeftPanelWidth,
     setRightPanelWidth,
     setShowNewDeckModal,
-    setShowDeckSwitchModal,
     setShowDeckSettingsModal,
-    setShowBulkActionDialog,
     setIsEditingDeckName
   };
 

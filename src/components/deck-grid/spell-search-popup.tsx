@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Spell } from "@/lib/types";
@@ -73,37 +73,13 @@ export default function SpellSearchPopup({
     };
   }, [onClose]);
 
-  // Adjust position to ensure popup stays within viewport
-  const adjustedPosition = useMemo(() => ({ ...position }), [position]);
-
-  // Check if we need to adjust the position based on viewport
-  useEffect(() => {
-    if (popupRef.current) {
-      const rect = popupRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      // Adjust horizontal position if needed
-      if (rect.right > viewportWidth) {
-        const overflow = rect.right - viewportWidth;
-        adjustedPosition.left = Math.max(0, position.left - overflow - 20);
-      }
-
-      // Adjust vertical position if needed
-      if (rect.bottom > viewportHeight) {
-        const overflow = rect.bottom - viewportHeight;
-        adjustedPosition.top = Math.max(0, position.top - overflow - 20);
-      }
-    }
-  }, [position, adjustedPosition]);
-
   return (
     <div
       ref={popupRef}
-      className="fixed z-50 gradient border rounded-xl shadow-2xl p-4 w-80 max-h-[80vh] flex flex-col"
+      className="fixed z-50 bg-background border rounded-lg shadow-2xl p-4 w-80 max-h-[80vh] flex flex-col"
       style={{
-        top: `${adjustedPosition.top}px`,
-        left: `${adjustedPosition.left}px`
+        top: `${position.top}px`,
+        left: `${position.left}px`
       }}
     >
       <div className="flex justify-between items-center mb-3">

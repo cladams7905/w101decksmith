@@ -2,12 +2,10 @@ import { ResizablePanel } from "@/components/resizable-panel";
 import { AppHeader } from "@/components/app-header";
 import { DeckHeader } from "@/components/deck-header";
 import { RightSidebar } from "@/components/right-sidebar";
-import { BulkActionDialog } from "@/components/bulk-action-dialog";
 import { SpellSidebar } from "@/components/spell-sidebar";
 import DeckGrid from "@/components/deck-grid";
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
-import { useState } from "react";
 import type { Spell } from "@/lib/types";
 import { deckLogger } from "@/lib/logger";
 
@@ -32,26 +30,11 @@ export function DeckBuilderLayout() {
     rightPanelWidth,
     isMobile,
     showNewDeckModal,
-    showBulkActionDialog,
     toggleRightSidebar,
     setLeftPanelWidth,
     setRightPanelWidth,
-    setShowNewDeckModal,
-    setShowBulkActionDialog
+    setShowNewDeckModal
   } = useUI();
-
-  const [selectedSpellType, setSelectedSpellType] = useState<string | null>(
-    null
-  );
-  const [bulkActionType] = useState<"edit" | "delete">("edit");
-  const [isSpellId] = useState<boolean>(false);
-
-  const handleDeleteSpellsByType = (typeId: string, isSpellId = false) => {
-    const newSpells = isSpellId
-      ? currentDeck.spells.filter((spell) => spell.id !== typeId)
-      : currentDeck.spells.filter((spell) => spell.school !== typeId);
-    updateDeckSpells(newSpells);
-  };
 
   const handleRemoveSpell = (index: number) => {
     const newSpells = [...currentDeck.spells];
@@ -142,24 +125,6 @@ export function DeckBuilderLayout() {
     deckLogger.info("=== End atomic mixed operation ===");
   };
 
-  const handleBulkReplaceSpell = (newSpell: Spell) => {
-    if (!selectedSpellType) return;
-
-    const newSpells = currentDeck.spells.map((spell) =>
-      isSpellId
-        ? spell.id === selectedSpellType
-          ? newSpell
-          : spell
-        : spell.school === selectedSpellType
-        ? newSpell
-        : spell
-    );
-
-    updateDeckSpells(newSpells);
-    setShowBulkActionDialog(false);
-    setSelectedSpellType(null);
-  };
-
   return (
     <div className="h-screen w-full flex flex-col bg-background text-foreground">
       <AppHeader
@@ -216,17 +181,6 @@ export function DeckBuilderLayout() {
           deck={currentDeck}
         />
       </div>
-
-      <BulkActionDialog
-        open={showBulkActionDialog}
-        onOpenChange={setShowBulkActionDialog}
-        selectedSpellType={selectedSpellType}
-        isSpellId={isSpellId}
-        actionType={bulkActionType}
-        currentDeck={currentDeck}
-        onBulkReplaceSpell={handleBulkReplaceSpell}
-        onDeleteSpellsByType={handleDeleteSpellsByType}
-      />
     </div>
   );
 }

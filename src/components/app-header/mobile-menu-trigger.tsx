@@ -2,13 +2,17 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SpellSidebar } from "@/components/spell-sidebar";
-import type { Spell } from "@/lib/types";
+import type { Spell, Deck } from "@/lib/types";
 
 interface MobileMenuTriggerProps {
+  currentDeck: Deck;
   onAddSpell: (spell: Spell, quantity: number) => void;
 }
 
-export function MobileMenuTrigger({ onAddSpell }: MobileMenuTriggerProps) {
+export function MobileMenuTrigger({
+  currentDeck,
+  onAddSpell
+}: MobileMenuTriggerProps) {
   return (
     <Sheet>
       <SheetTrigger asChild className="md:hidden mr-2">
@@ -22,7 +26,7 @@ export function MobileMenuTrigger({ onAddSpell }: MobileMenuTriggerProps) {
       >
         <div className="flex-1 overflow-auto">
           <div className="h-[calc(100vh-4rem)] overflow-y-auto">
-            <SpellSidebar onAddSpell={onAddSpell} />
+            <SpellSidebar onAddSpell={onAddSpell} currentDeck={currentDeck} />
           </div>
         </div>
       </SheetContent>

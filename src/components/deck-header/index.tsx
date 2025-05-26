@@ -24,6 +24,7 @@ import { DeckSettingsModal } from "@/components/deck-header/deck-settings-modal"
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
 import { useState } from "react";
+import type { Spell } from "@/lib/types";
 
 function DeckNameEditor() {
   const { currentDeck, updateDeckName } = useDeck();
@@ -77,8 +78,23 @@ function DeckNameEditor() {
 }
 
 function DeckCardCount() {
-  const { currentDeck } = useDeck();
-  const { onSelectSpellsByType, onDeleteSpellsByType } = useDeckActions();
+  const { currentDeck, updateDeckSpells } = useDeck();
+
+  // Handle replacing all instances of a specific spell
+  const handleReplaceSpells = (oldSpellId: string, newSpell: Spell) => {
+    const newSpells = currentDeck.spells.map((spell) =>
+      spell.id === oldSpellId ? newSpell : spell
+    );
+    updateDeckSpells(newSpells);
+  };
+
+  // Handle deleting all instances of a specific spell
+  const handleDeleteSpells = (spellId: string) => {
+    const newSpells = currentDeck.spells.filter(
+      (spell) => spell.id !== spellId
+    );
+    updateDeckSpells(newSpells);
+  };
 
   return (
     <Popover>
@@ -90,11 +106,11 @@ function DeckCardCount() {
           {currentDeck.spells.length} / 64 cards
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="end">
+      <PopoverContent className="w-64 p-0 rounded-lg" align="end">
         <DeckBreakdown
           deck={currentDeck}
-          onSelectSpells={onSelectSpellsByType}
-          onDeleteSpells={onDeleteSpellsByType}
+          onReplaceSpells={handleReplaceSpells}
+          onDeleteSpells={handleDeleteSpells}
         />
       </PopoverContent>
     </Popover>
@@ -124,7 +140,7 @@ function DeckSortButton() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="rounded-xl">
         <DropdownMenuLabel>Sort Deck</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup
@@ -197,38 +213,6 @@ function DeckSettingsButton() {
       />
     </Dialog>
   );
-}
-
-function useDeckActions() {
-  const [selectedSpellType, setSelectedSpellType] = useState<string | null>(
-    null
-  );
-  const [bulkActionType, setBulkActionType] = useState<"edit" | "delete">(
-    "edit"
-  );
-  const [isSpellId, setIsSpellId] = useState<boolean>(false);
-
-  const onSelectSpellsByType = (
-    typeId: string,
-    actionType: "edit" | "delete",
-    isSpellId = false
-  ) => {
-    setSelectedSpellType(typeId);
-    setBulkActionType(actionType);
-    setIsSpellId(isSpellId);
-  };
-
-  const onDeleteSpellsByType = (typeId: string, isSpellId = false) => {
-    onSelectSpellsByType(typeId, "delete", isSpellId);
-  };
-
-  return {
-    selectedSpellType,
-    bulkActionType,
-    isSpellId,
-    onSelectSpellsByType,
-    onDeleteSpellsByType
-  };
 }
 
 export function DeckHeader() {
