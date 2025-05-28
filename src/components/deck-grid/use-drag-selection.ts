@@ -13,34 +13,46 @@ interface UseDragSelectionReturn {
 export function useDragSelection(): UseDragSelectionReturn {
   const [selectedSlots, setSelectedSlots] = useState<Set<number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
-  const [recentlyDragged, setRecentlyDragged] = useState(false);
+  const [tooltipsDisabled, setTooltipsDisabled] = useState(false);
   const [dragStartIndex, setDragStartIndex] = useState<number | null>(null);
   const dragModeRef = useRef<"select" | "deselect" | null>(null);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Add effect to handle tooltip re-enabling after drag
+  // Stable tooltip management with debouncing
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    if (!isDragging && recentlyDragged) {
-      // Keep tooltips disabled for a short period after dragging ends
-      timeoutId = setTimeout(() => {
-        setRecentlyDragged(false);
-      }, 200); // 200ms delay before re-enabling tooltips
+    if (isDragging) {
+      // Immediately disable tooltips when dragging starts
+      if (!tooltipsDisabled) {
+        setTooltipsDisabled(true);
+      }
+      // Clear any pending timeout
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+        tooltipTimeoutRef.current = null;
+      }
+    } else {
+      // When dragging ends, delay tooltip re-enabling
+      if (tooltipsDisabled) {
+        tooltipTimeoutRef.current = setTimeout(() => {
+          setTooltipsDisabled(false);
+          tooltipTimeoutRef.current = null;
+        }, 300); // 300ms delay before re-enabling tooltips
+      }
     }
 
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+        tooltipTimeoutRef.current = null;
       }
     };
-  }, [isDragging, recentlyDragged]);
+  }, [isDragging, tooltipsDisabled]);
 
   // Memoize mouse down handler with optimized state updates
   const handleMouseDown = useCallback(
     (index: number, event: React.MouseEvent) => {
       event.preventDefault();
       setIsDragging(true);
-      setRecentlyDragged(false); // Clear recently dragged when starting new drag
       setDragStartIndex(index);
 
       // Determine if we're selecting or deselecting based on current state
@@ -91,28 +103,22 @@ export function useDragSelection(): UseDragSelectionReturn {
 
   // Memoize mouse up handler
   const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setRecentlyDragged(true); // Mark as recently dragged when ending drag
-    }
     setIsDragging(false);
     setDragStartIndex(null);
     dragModeRef.current = null;
-  }, [isDragging]);
+  }, []);
 
   // Memoize clear selection handler with stable empty Set
   const clearSelection = useCallback(() => {
     setSelectedSlots(new Set());
   }, []);
 
-  // Calculate shouldDisableTooltips based on both states
-  const shouldDisableTooltips = isDragging || recentlyDragged;
-
   // Memoize the return object to prevent unnecessary rerenders
   const returnValue = useMemo(
     () => ({
       selectedSlots,
       isDragging,
-      shouldDisableTooltips,
+      shouldDisableTooltips: tooltipsDisabled,
       handleMouseDown,
       handleMouseEnter,
       handleMouseUp,
@@ -121,7 +127,7 @@ export function useDragSelection(): UseDragSelectionReturn {
     [
       selectedSlots,
       isDragging,
-      shouldDisableTooltips,
+      tooltipsDisabled,
       handleMouseDown,
       handleMouseEnter,
       handleMouseUp,

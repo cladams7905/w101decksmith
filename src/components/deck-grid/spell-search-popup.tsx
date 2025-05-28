@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { SpellSearchBar } from "@/components/shared/spell-search-bar";
 import { useSpellFilter } from "@/components/shared/use-spell-filter";
 import { SpellList } from "../spell-sidebar/spell-list";
+import { LoadingProgress } from "@/components/ui/loading-progress";
 
 interface SpellSearchPopupProps {
   position: { top: number; left: number };
@@ -305,9 +306,7 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
 
         <div className="overflow-y-auto flex-1">
           {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="text-muted-foreground">Loading spells...</div>
-            </div>
+            <LoadingProgress text="Loading spells..." className="py-4" />
           ) : error ? (
             <div className="flex items-center justify-center p-8">
               <div className="text-red-500">Error: {error}</div>

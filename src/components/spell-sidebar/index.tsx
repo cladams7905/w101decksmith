@@ -12,6 +12,7 @@ import { SpellQuantityPopup } from "./spell-quantity-popup";
 import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
 import { useSpellFilter } from "../shared/use-spell-filter";
 import { SpellSearchBar } from "../shared/spell-search-bar";
+import { LoadingProgress } from "@/components/ui/loading-progress";
 
 interface SpellSidebarProps {
   currentDeck: {
@@ -59,13 +60,11 @@ export const SpellSidebar = memo(function SpellSidebar({
     setSelectedSpell(null);
   }, []);
 
-  // Memoize loading component
+  // Memoize loading component with progress bar
   const loadingComponent = useMemo(
     () => (
-      <div className="bg-card p-4 w-full">
-        <div className="flex items-center justify-center h-32">
-          <div className="text-muted-foreground">Loading spells...</div>
-        </div>
+      <div className="bg-card w-full h-full">
+        <LoadingProgress text="Loading spells..." className="h-32" />
       </div>
     ),
     []
