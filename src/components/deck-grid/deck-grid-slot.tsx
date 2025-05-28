@@ -87,7 +87,7 @@ export function DeckGridSlot({
     }
   };
 
-  const baseClasses = `aspect-square flex items-center justify-center transition-all duration-200 cursor-pointer ${
+  const baseClasses = `aspect-square w-full h-auto min-w-0 min-h-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${
     isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""
   }`;
 
@@ -96,16 +96,17 @@ export function DeckGridSlot({
       <Tooltip>
         <TooltipTrigger asChild>
           <Card
-            className={`${baseClasses} bg-purple-900/50 border-purple-700/50 hover:border-purple-500 group py-0 p-1 rounded-lg`}
+            className={`${baseClasses} bg-purple-900/50 border-purple-700/50 hover:border-purple-500 group py-0 p-1 rounded-lg overflow-hidden`}
             onClick={handleClick}
             onMouseDown={(e) => onMouseDown(index, e)}
             onMouseEnter={() => onMouseEnter(index)}
+            style={{ minWidth: 0, minHeight: 0 }}
           >
-            <CardContent className="p-0 h-full w-full relative">
+            <CardContent className="p-0 h-full w-full relative overflow-hidden">
               {/* Spell Image */}
               {imageLoaded && !imageError && imageUrl && (
                 <div
-                  className="z-0 w-full h-full flex items-center justify-center rounded-lg"
+                  className="absolute inset-0 w-full h-full flex items-center justify-center rounded-lg"
                   style={{
                     backgroundImage: `url("${imageUrl}")`,
                     backgroundSize: "175%",
@@ -176,12 +177,13 @@ export function DeckGridSlot({
 
   return (
     <Card
-      className={`${baseClasses} border-blue-900/30 bg-linear-to-br from-blue-900/40 hover:bg-gray-600/30 hover:border-gray-400/50 group`}
+      className={`${baseClasses} border-blue-900/30 bg-linear-to-br from-blue-900/40 hover:bg-gray-600/30 hover:border-gray-400/50 group overflow-hidden py-0`}
       onClick={handleClick}
       onMouseDown={(e) => onMouseDown(index, e)}
       onMouseEnter={() => onMouseEnter(index)}
+      style={{ minWidth: 0, minHeight: 0 }}
     >
-      <CardContent className="p-1 h-full w-full flex flex-col items-center justify-center text-center">
+      <CardContent className="p-1 h-full w-full flex flex-col items-center justify-center text-center overflow-hidden">
         <Plus className="h-4 w-4 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="text-[8px] text-muted-foreground">•</div>
       </CardContent>

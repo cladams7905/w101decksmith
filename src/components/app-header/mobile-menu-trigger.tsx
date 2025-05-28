@@ -1,5 +1,10 @@
 import { Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SpellSidebar } from "@/components/spell-sidebar";
 import type { Spell, Deck } from "@/lib/types";
@@ -22,10 +27,11 @@ export function MobileMenuTrigger({
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-[300px] p-0 gradient-linear flex flex-col"
+        className="w-[300px] p-0 bg-background flex flex-col pt-8"
       >
+        <SheetTitle className="sr-only">Spell Library</SheetTitle>
         <div className="flex-1 overflow-auto">
-          <div className="h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="h-full overflow-y-auto">
             <SpellSidebar onAddSpell={onAddSpell} currentDeck={currentDeck} />
           </div>
         </div>

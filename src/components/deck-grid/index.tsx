@@ -257,7 +257,7 @@ export default function DeckGrid({
   return (
     <div className="w-full pb-4 mb-12">
       <TooltipProvider>
-        <div className="max-w-lg max-h-96 mx-auto">
+        <div className="max-w-xl max-h-[420px] mx-auto md:mt-6">
           <div
             key={`grid-${deck.spells.length}-${deck.spells
               .map((s) => s.name)

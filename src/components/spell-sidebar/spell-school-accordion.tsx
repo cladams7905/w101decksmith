@@ -58,9 +58,9 @@ export function SpellSchoolAccordion({
   };
 
   return (
-    <AccordionItem value={category.id}>
-      <div className="sticky top-0 z-20">
-        <AccordionTrigger className="py-2 px-3 bg-background mb-2">
+    <AccordionItem value={category.id} className="border-b-0">
+      <div className="sticky top-0 z-20 bg-background pr-3 pl-2">
+        <AccordionTrigger className="py-2 px-3 mb-2 bg-linear-to-br from-blue-900/40 border border-border rounded-lg">
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full bg-${category.color}-500`}

@@ -123,13 +123,6 @@
   box-shadow: 0 5px 15px rgba(153, 51, 255, 0.2);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .deck-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
 /* Gradient backgrounds */
 .gradient {
   @apply bg-linear-to-br from-blue-950/90 to-black/60 backdrop-blur-2xl;
