@@ -263,8 +263,11 @@ const DeckGrid = memo(function DeckGrid({
       // Only clear if we have selections and it's not a drag operation
       if (selectedSlots.size > 0 && !isDragging) {
         const target = event.target as Element;
-        // Check if click is outside the deck grid
-        if (!target.closest(".deck-grid")) {
+        // Check if click is outside both the deck grid AND the spell search popup
+        if (
+          !target.closest(".deck-grid") &&
+          !target.closest("[data-spell-search-popup]")
+        ) {
           clearSelection();
         }
       }

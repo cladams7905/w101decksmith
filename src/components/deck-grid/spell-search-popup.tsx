@@ -4,8 +4,6 @@ import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { X, GripHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Spell } from "@/lib/types";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { SpellSearchBar } from "@/components/shared/spell-search-bar";
 import { useSpellFilter } from "@/components/shared/use-spell-filter";
 import { SpellList } from "../spell-sidebar/spell-list";
@@ -34,15 +32,7 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
 }: SpellSearchPopupProps) {
   // Memoize computed values to prevent unnecessary recalculations
   const selectedSlotsCount = useMemo(() => selectedSlots.size, [selectedSlots]);
-  const maxQuantity = useMemo(
-    () =>
-      selectedSlotsCount > 0 ? selectedSlotsCount : Math.min(4, availableSlots),
-    [selectedSlotsCount, availableSlots]
-  );
 
-  const [spellQuantity, setSpellQuantity] = useState(
-    selectedSlotsCount > 0 ? selectedSlotsCount : 1
-  );
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Drag functionality state
@@ -110,20 +100,11 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
   // Memoize spell selection handler
   const handleSpellSelect = useCallback(
     (spell: Spell) => {
-      onSelectSpell(spell, isReplacing ? 1 : spellQuantity);
+      const quantity = selectedSlotsCount > 0 ? selectedSlotsCount : 1;
+      onSelectSpell(spell, quantity);
     },
-    [onSelectSpell, isReplacing, spellQuantity]
+    [onSelectSpell, selectedSlotsCount]
   );
-
-  // Memoize quantity change handler
-  const handleQuantityChange = useCallback((value: number[]) => {
-    setSpellQuantity(value[0]);
-  }, []);
-
-  // Update spell quantity when selected slots change
-  useEffect(() => {
-    setSpellQuantity(selectedSlotsCount > 0 ? selectedSlotsCount : 1);
-  }, [selectedSlotsCount]);
 
   // Drag functionality effects
   useEffect(() => {
@@ -188,6 +169,7 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
   return (
     <div
       ref={popupRef}
+      data-spell-search-popup
       className="fixed z-50 bg-background border rounded-lg shadow-2xl w-80 max-h-[80vh] flex flex-col"
       style={{
         top: `${currentPosition.top}px`,
@@ -238,34 +220,10 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
         />
 
         {!isReplacing && selectedSlotsCount === 0 && (
-          <>
-            <div className="text-xs text-muted-foreground mb-3">
-              {availableSlots} {availableSlots === 1 ? "slot" : "slots"}{" "}
-              available in deck
-              {spellQuantity > 1 && (
-                <span className="ml-1">
-                  (adding {spellQuantity}{" "}
-                  {spellQuantity === 1 ? "copy" : "copies"})
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-3 mb-3 border-t border-blue-900/30 pt-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="popup-spell-quantity">Quantity</Label>
-                <span className="text-sm font-medium">{spellQuantity}</span>
-              </div>
-              <Slider
-                id="popup-spell-quantity"
-                min={1}
-                max={maxQuantity}
-                step={1}
-                value={[spellQuantity]}
-                onValueChange={handleQuantityChange}
-                className="w-full"
-              />
-            </div>
-          </>
+          <div className="text-xs text-muted-foreground mb-3">
+            {availableSlots} {availableSlots === 1 ? "slot" : "slots"} available
+            in deck. Click a spell to add one copy.
+          </div>
         )}
 
         {!isReplacing && selectedSlotsCount > 0 && (
