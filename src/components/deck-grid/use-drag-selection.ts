@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 
 interface UseDragSelectionReturn {
   selectedSlots: Set<number>;
@@ -15,6 +15,7 @@ export function useDragSelection(): UseDragSelectionReturn {
   const [dragStartIndex, setDragStartIndex] = useState<number | null>(null);
   const dragModeRef = useRef<"select" | "deselect" | null>(null);
 
+  // Memoize mouse down handler with optimized state updates
   const handleMouseDown = useCallback(
     (index: number, event: React.MouseEvent) => {
       event.preventDefault();
@@ -22,10 +23,10 @@ export function useDragSelection(): UseDragSelectionReturn {
       setDragStartIndex(index);
 
       // Determine if we're selecting or deselecting based on current state
-      const isCurrentlySelected = selectedSlots.has(index);
-      dragModeRef.current = isCurrentlySelected ? "deselect" : "select";
-
       setSelectedSlots((prev) => {
+        const isCurrentlySelected = prev.has(index);
+        dragModeRef.current = isCurrentlySelected ? "deselect" : "select";
+
         const newSet = new Set(prev);
         if (isCurrentlySelected) {
           newSet.delete(index);
@@ -35,9 +36,10 @@ export function useDragSelection(): UseDragSelectionReturn {
         return newSet;
       });
     },
-    [selectedSlots]
+    [] // No external dependencies needed
   );
 
+  // Memoize mouse enter handler with optimized state updates
   const handleMouseEnter = useCallback(
     (index: number) => {
       if (!isDragging || dragStartIndex === null) return;
@@ -48,15 +50,8 @@ export function useDragSelection(): UseDragSelectionReturn {
       setSelectedSlots((prev) => {
         const newSet = new Set(prev);
 
-        // Clear previous selection in drag range
-        for (let i = 0; i < 64; i++) {
-          if (i >= startIndex && i <= endIndex) continue;
-          if (dragModeRef.current === "select") {
-            // Keep existing selections outside drag range
-          } else {
-            // Keep existing selections outside drag range
-          }
-        }
+        // Clear previous selection in drag range - optimized logic
+        // Keep existing selections outside drag range unchanged
 
         // Apply selection/deselection to drag range
         for (let i = startIndex; i <= endIndex; i++) {
@@ -73,22 +68,37 @@ export function useDragSelection(): UseDragSelectionReturn {
     [isDragging, dragStartIndex]
   );
 
+  // Memoize mouse up handler
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setDragStartIndex(null);
     dragModeRef.current = null;
   }, []);
 
+  // Memoize clear selection handler with stable empty Set
   const clearSelection = useCallback(() => {
     setSelectedSlots(new Set());
   }, []);
 
-  return {
-    selectedSlots,
-    isDragging,
-    handleMouseDown,
-    handleMouseEnter,
-    handleMouseUp,
-    clearSelection
-  };
+  // Memoize the return object to prevent unnecessary rerenders
+  const returnValue = useMemo(
+    () => ({
+      selectedSlots,
+      isDragging,
+      handleMouseDown,
+      handleMouseEnter,
+      handleMouseUp,
+      clearSelection
+    }),
+    [
+      selectedSlots,
+      isDragging,
+      handleMouseDown,
+      handleMouseEnter,
+      handleMouseUp,
+      clearSelection
+    ]
+  );
+
+  return returnValue;
 }

@@ -12,43 +12,31 @@ import {
   getSchoolColor,
   groupSpellsByName
 } from "@/lib/spell-utils";
-import { useState, useEffect, useMemo, memo } from "react";
+import { useState, useEffect } from "react";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
 import { SpellTierPopup } from "@/components/spell-sidebar/spell-tier-popup";
-
-// Move getSpellGroup outside component to prevent recreation
-const getSpellGroup = (
-  spell: Spell | null,
-  spellCategories: { spells: Spell[] }[]
-): Spell[] | undefined => {
-  if (!spell) return undefined;
-  // Find all spells with the same name across all categories
-  const allSpells = spellCategories.flatMap((category) => category.spells);
-  const groupedSpells = groupSpellsByName(allSpells);
-  return groupedSpells.get(spell.name);
-};
+import { gridLogger } from "@/lib/logger";
 
 interface DeckGridSlotProps {
   spell: Spell | null;
   index: number;
   isSelected: boolean;
-  isDragging?: boolean;
   onEmptySlotClick: (index: number, event: React.MouseEvent) => void;
   onFilledSlotClick: (index: number, event: React.MouseEvent) => void;
   onMouseDown: (index: number, event: React.MouseEvent) => void;
   onMouseEnter: (index: number) => void;
+  onReplaceSpell?: (spellName: string, newSpell: Spell, index: number) => void;
 }
 
-// Wrap the component with memo
-export const DeckGridSlot = memo(function DeckGridSlot({
+export function DeckGridSlot({
   spell,
   index,
   isSelected,
-  isDragging,
   onEmptySlotClick,
   onFilledSlotClick,
   onMouseDown,
-  onMouseEnter
+  onMouseEnter,
+  onReplaceSpell
 }: DeckGridSlotProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -61,11 +49,17 @@ export const DeckGridSlot = memo(function DeckGridSlot({
   const imageUrl = spell ? getSpellImageUrl(spell) : null;
   const schoolColor = spell ? getSchoolColor(spell) : "gray";
 
-  // Memoize spell group calculation
-  const spellGroup = useMemo(
-    () => getSpellGroup(spell, spellCategories),
-    [spell, spellCategories]
-  );
+  // Get spell group (all tiers) for the current spell
+  const getSpellGroup = (): Spell[] | undefined => {
+    if (!spell) return undefined;
+
+    // Find all spells with the same name across all categories
+    const allSpells = spellCategories.flatMap((category) => category.spells);
+    const groupedSpells = groupSpellsByName(allSpells);
+    return groupedSpells.get(spell.name);
+  };
+
+  const spellGroup = getSpellGroup();
 
   // Handle tier button click
   const handleTierButtonClick = () => {
@@ -186,7 +180,7 @@ export const DeckGridSlot = memo(function DeckGridSlot({
     return (
       <>
         <Tooltip>
-          <TooltipTrigger asChild disabled={isDragging}>
+          <TooltipTrigger asChild>
             <Card
               className={`${baseClasses} group py-0 p-1 rounded-lg overflow-hidden transition-colors duration-200`}
               onClick={handleClick}
@@ -224,19 +218,6 @@ export const DeckGridSlot = memo(function DeckGridSlot({
                   />
                 )}
 
-                {/* Loading animation */}
-                {!imageLoaded && !imageError && imageUrl && (
-                  <div className="absolute inset-0 gradient-special animate-pulse">
-                    <div
-                      className="absolute inset-0 gradient-special animate-shimmer"
-                      style={{
-                        backgroundSize: "200% 100%",
-                        animation: "shimmer 1.5s infinite"
-                      }}
-                    />
-                  </div>
-                )}
-
                 {/* Fallback background when no image or error */}
                 {(!imageLoaded || imageError || !imageUrl) &&
                   !(!imageLoaded && !imageError && imageUrl) && (
@@ -249,6 +230,19 @@ export const DeckGridSlot = memo(function DeckGridSlot({
                       </div>
                     </div>
                   )}
+
+                {/* Loading animation */}
+                {!imageLoaded && !imageError && imageUrl && (
+                  <div className="absolute inset-0 gradient-special animate-pulse">
+                    <div
+                      className="absolute inset-0 gradient-special animate-shimmer"
+                      style={{
+                        backgroundSize: "200% 100%",
+                        animation: "shimmer 1.5s infinite"
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Hover edit overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -272,37 +266,67 @@ export const DeckGridSlot = memo(function DeckGridSlot({
               </CardContent>
             </Card>
           </TooltipTrigger>
-          {!isDragging && (
-            <TooltipContent
-              side="top"
-              align="center"
-              className="p-0 border-0 rounded-xl"
-            >
-              <SpellTooltip
-                spell={spell}
-                spellGroup={spellGroup}
-                schoolColor={schoolColor}
-                onTierButtonClick={handleTierButtonClick}
-              />
-            </TooltipContent>
-          )}
+          <TooltipContent
+            side="top"
+            align="center"
+            className="p-0 border-0 rounded-xl"
+          >
+            <SpellTooltip
+              spell={spell}
+              spellGroup={spellGroup}
+              schoolColor={schoolColor}
+              onTierButtonClick={handleTierButtonClick}
+            />
+          </TooltipContent>
         </Tooltip>
 
-        {/* Tier Selection Modal */}
-        {spellGroup && spellGroup.length > 1 && (
+        {/* Tier Selection Popup - Rendered outside tooltip */}
+        {spellGroup && spellGroup.length > 1 && currentSelectedSpell && (
           <SpellTierPopup
             spellGroup={spellGroup}
-            selectedSpell={currentSelectedSpell || spell}
+            selectedSpell={currentSelectedSpell}
             onTierSelect={handleTierSelect}
             isOpen={isTierPopupOpen}
-            onOpenChange={setIsTierPopupOpen}
+            onOpenChange={(open) => {
+              if (!open && currentSelectedSpell && onReplaceSpell) {
+                // When popup closes, apply the selected tier if it's different from original
+                if (currentSelectedSpell.tier !== spell?.tier) {
+                  // Store the spell to replace with before resetting state
+                  const spellToReplaceWith = currentSelectedSpell;
+
+                  gridLogger.debug("Replacing spell in grid slot:", {
+                    index,
+                    oldSpell: spell?.name,
+                    oldTier: spell?.tier,
+                    newSpell: spellToReplaceWith.name,
+                    newTier: spellToReplaceWith.tier
+                  });
+
+                  // First do the replacement
+                  if (spell && onReplaceSpell) {
+                    onReplaceSpell(spell.name, spellToReplaceWith, index);
+                  }
+
+                  // Then reset states after a short delay
+                  setTimeout(() => {
+                    gridLogger.debug(
+                      "Resetting states after spell replacement"
+                    );
+                    setCurrentSelectedSpell(null);
+                    setIsTierPopupOpen(false);
+                  }, 100);
+
+                  return;
+                }
+              }
+              setIsTierPopupOpen(false);
+            }}
           />
         )}
       </>
     );
   }
 
-  // Empty slot
   return (
     <Card
       className={`${baseClasses} border-blue-900/30 bg-linear-to-br from-blue-900/40 hover:bg-gray-600/30 hover:border-gray-400/50 group overflow-hidden py-0`}
@@ -317,4 +341,4 @@ export const DeckGridSlot = memo(function DeckGridSlot({
       </CardContent>
     </Card>
   );
-});
+}

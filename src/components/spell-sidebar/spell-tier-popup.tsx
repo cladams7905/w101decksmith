@@ -13,6 +13,7 @@ import { ArrowRight } from "lucide-react";
 import type { Spell } from "@/lib/types";
 import { getSpellImageUrl } from "@/lib/spell-utils";
 import Image from "next/image";
+import { gridLogger } from "@/lib/logger";
 
 interface SpellTierPopupProps {
   spellGroup: Spell[];
@@ -177,19 +178,30 @@ export function SpellTierPopup({
   onOpenChange
 }: SpellTierPopupProps) {
   const handleTierSelect = (spell: Spell) => {
+    gridLogger.debug("Tier selected:", {
+      spellName: spell.name,
+      tier: spell.tier
+    });
     onTierSelect(spell);
-    // Don't close the popup - let user click "Select Tier" button to close
   };
 
   const handleFinalSelect = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onOpenChange(false);
+    gridLogger.debug("Final tier selection confirmed:", {
+      spellName: selectedSpell.name,
+      tier: selectedSpell.tier
+    });
+    // Let the parent component handle the closing after the replacement is done
+    requestAnimationFrame(() => {
+      onOpenChange(false);
+    });
   };
 
   const handleCancel = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    gridLogger.debug("Tier selection cancelled");
     onOpenChange(false);
   };
 
@@ -198,7 +210,19 @@ export function SpellTierPopup({
   const hasBranches = branchKeys.length > 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange} modal>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        // Only allow closing through our button handlers
+        if (!open) {
+          handleCancel({
+            preventDefault: () => {},
+            stopPropagation: () => {}
+          } as React.MouseEvent);
+        }
+      }}
+      modal
+    >
       <DialogOverlay
         className="bg-black/50 backdrop-blur-sm"
         onClick={(e) => {

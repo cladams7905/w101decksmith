@@ -1,4 +1,4 @@
-import { useState, memo, useCallback, useMemo } from "react";
+import { useState } from "react";
 import type { Spell } from "@/lib/types";
 import {
   AccordionContent,
@@ -32,7 +32,7 @@ interface SpellSchoolAccordionProps {
   sortedSpells: Spell[];
 }
 
-export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
+export function SpellSchoolAccordion({
   category,
   sortOptions,
   onSort,
@@ -44,32 +44,23 @@ export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
     new Map()
   );
 
-  // Group spells by name to consolidate different tiers - memoize this
-  const groupedSpells = useMemo(
-    () => groupSpellsByName(sortedSpells),
-    [sortedSpells]
-  );
+  // Group spells by name to consolidate different tiers
+  const groupedSpells = groupSpellsByName(sortedSpells);
 
   // Get the spell to display for each group (either selected tier or primary)
-  const getDisplaySpell = useCallback(
-    (spellName: string, spellGroup: Spell[]): Spell => {
-      const selectedSpell = selectedTiers.get(spellName);
-      return selectedSpell || getPrimarySpell(spellGroup);
-    },
-    [selectedTiers]
-  );
+  const getDisplaySpell = (spellName: string, spellGroup: Spell[]): Spell => {
+    const selectedSpell = selectedTiers.get(spellName);
+    return selectedSpell || getPrimarySpell(spellGroup);
+  };
 
   // Handle tier selection
-  const handleTierSelect = useCallback(
-    (spellName: string, selectedSpell: Spell) => {
-      setSelectedTiers((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(spellName, selectedSpell);
-        return newMap;
-      });
-    },
-    []
-  );
+  const handleTierSelect = (spellName: string, selectedSpell: Spell) => {
+    setSelectedTiers((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(spellName, selectedSpell);
+      return newMap;
+    });
+  };
 
   return (
     <AccordionItem value={category.id} className="border-b-0">
@@ -114,4 +105,4 @@ export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
       </AccordionContent>
     </AccordionItem>
   );
-});
+}

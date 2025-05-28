@@ -6,7 +6,7 @@ import { DeckGridSlot } from "./deck-grid-slot";
 import { useDeckGrid } from "./use-deck-grid";
 import { useDragSelection } from "./use-drag-selection";
 import SpellSearchPopup from "@/components/deck-grid/spell-search-popup";
-import { useCallback, useEffect, useMemo, memo } from "react";
+import { useCallback, useEffect } from "react";
 import { gridLogger } from "@/lib/logger";
 
 interface DeckGridProps {
@@ -24,7 +24,7 @@ interface DeckGridProps {
   ) => void;
 }
 
-const DeckGrid = memo(function DeckGrid({
+export default function DeckGrid({
   deck,
   onAddSpell,
   onReplaceSpell,
@@ -34,21 +34,17 @@ const DeckGrid = memo(function DeckGrid({
   onBulkAddSpells,
   onMixedOperation
 }: DeckGridProps) {
-  // Memoize grid creation
-  const grid = useMemo(() => {
-    const rows = 8;
-    const cols = 8;
-    const newGrid: (Spell | null)[] = Array(rows * cols).fill(null);
+  // Create an 8x8 grid (64 slots)
+  const rows = 8;
+  const cols = 8;
+  const grid: (Spell | null)[] = Array(rows * cols).fill(null);
 
-    // Fill the grid with spells from the deck
-    deck.spells.forEach((spell, index) => {
-      if (index < newGrid.length) {
-        newGrid[index] = spell;
-      }
-    });
-
-    return newGrid;
-  }, [deck.spells]);
+  // Fill the grid with spells from the deck
+  deck.spells.forEach((spell, index) => {
+    if (index < grid.length) {
+      grid[index] = spell;
+    }
+  });
 
   // Debug: Log when deck changes
   useEffect(() => {
@@ -57,97 +53,93 @@ const DeckGrid = memo(function DeckGrid({
       spells: deck.spells.map((s, i) => ({
         index: i,
         name: s.name,
-        id: s.name
+        id: s.name,
+        tier: s.tier
       }))
     });
   }, [deck.spells]);
 
-  // Memoize multi-slot operation handler
-  const handleMultiSlotOperation = useCallback(
-    (spell: Spell, slots: number[], currentGrid: (Spell | null)[]) => {
-      gridLogger.group("Grid vs deck alignment debugging");
-      gridLogger.debug("Selected slots:", slots);
-      gridLogger.debug(
-        "Current deck:",
-        deck.spells.map((s, i) => ({ deckIndex: i, name: s.name, id: s.name }))
-      );
-      gridLogger.debug(
-        "Grid state for selected slots:",
-        slots.map((gridIndex) => ({
-          gridIndex,
-          spell: currentGrid[gridIndex]?.name || "empty",
-          spellId: currentGrid[gridIndex]?.name || null
-        }))
+  // Handle multi-slot operations (mixed add/replace)
+  const handleMultiSlotOperation = (
+    spell: Spell,
+    slots: number[],
+    currentGrid: (Spell | null)[]
+  ) => {
+    gridLogger.group("Grid vs deck alignment debugging");
+    gridLogger.debug("Selected slots:", slots);
+    gridLogger.debug(
+      "Current deck:",
+      deck.spells.map((s, i) => ({ deckIndex: i, name: s.name, id: s.name }))
+    );
+    gridLogger.debug(
+      "Grid state for selected slots:",
+      slots.map((gridIndex) => ({
+        gridIndex,
+        spell: currentGrid[gridIndex]?.name || "empty",
+        spellId: currentGrid[gridIndex]?.name || null
+      }))
+    );
+
+    // Separate slots into those that need replacement vs addition
+    const slotsToReplace = slots.filter(
+      (slotIndex) => currentGrid[slotIndex] !== null
+    );
+    const slotsToAdd = slots.filter(
+      (slotIndex) => currentGrid[slotIndex] === null
+    );
+
+    gridLogger.debug("Slots to replace (grid indices):", slotsToReplace);
+    gridLogger.debug("Slots to add (grid indices):", slotsToAdd);
+
+    // For mixed operations, we need to handle this as a single atomic operation
+    // to prevent state conflicts between replace and add operations
+    if (slotsToReplace.length > 0 && slotsToAdd.length > 0) {
+      gridLogger.info(
+        "Mixed operation detected - handling as single atomic operation"
       );
 
-      // Separate slots into those that need replacement vs addition
-      const slotsToReplace = slots.filter(
-        (slotIndex) => currentGrid[slotIndex] !== null
-      );
-      const slotsToAdd = slots.filter(
-        (slotIndex) => currentGrid[slotIndex] === null
-      );
-
-      gridLogger.debug("Slots to replace (grid indices):", slotsToReplace);
-      gridLogger.debug("Slots to add (grid indices):", slotsToAdd);
-
-      // For mixed operations, we need to handle this as a single atomic operation
-      // to prevent state conflicts between replace and add operations
-      if (slotsToReplace.length > 0 && slotsToAdd.length > 0) {
-        gridLogger.info(
-          "Mixed operation detected - handling as single atomic operation"
-        );
-
-        // Update deck with single atomic operation
-        if (onMixedOperation) {
-          gridLogger.debug("Using atomic mixed operation");
-          onMixedOperation(spell, slotsToReplace, slotsToAdd.length);
-        } else {
-          gridLogger.warn("Fallback: No atomic mixed operation available");
-          // Fallback to sequential operations (which causes the bug)
-        }
+      // Update deck with single atomic operation
+      if (onMixedOperation) {
+        gridLogger.debug("Using atomic mixed operation");
+        onMixedOperation(spell, slotsToReplace, slotsToAdd.length);
       } else {
-        // Handle pure replacement or pure addition operations
-        if (slotsToReplace.length > 0) {
-          gridLogger.info("Pure replacement operation");
-          if (onBulkReplaceSpells && slotsToReplace.length > 1) {
-            onBulkReplaceSpells(spell, slotsToReplace);
-          } else if (onReplaceSpell) {
-            slotsToReplace.forEach((slotIndex) => {
-              const currentSpell = currentGrid[slotIndex];
-              gridLogger.debug(
-                `Calling onReplaceSpell(${currentSpell?.name || ""}, ${
-                  spell.name
-                }, ${slotIndex})`
-              );
-              onReplaceSpell(currentSpell?.name || "", spell, slotIndex);
-            });
-          }
-        }
-
-        if (slotsToAdd.length > 0) {
-          gridLogger.info("Pure addition operation");
-          if (onBulkAddSpells && slotsToAdd.length > 1) {
-            onBulkAddSpells(spell, slotsToAdd);
-          } else if (onAddSpell) {
-            slotsToAdd.forEach((slotIndex) => {
-              onAddSpell(spell, slotIndex, 1);
-            });
-          }
+        gridLogger.warn("Fallback: No atomic mixed operation available");
+        // Fallback to sequential operations (which causes the bug)
+      }
+    } else {
+      // Handle pure replacement or pure addition operations
+      if (slotsToReplace.length > 0) {
+        gridLogger.info("Pure replacement operation");
+        if (onBulkReplaceSpells && slotsToReplace.length > 1) {
+          onBulkReplaceSpells(spell, slotsToReplace);
+        } else if (onReplaceSpell) {
+          slotsToReplace.forEach((slotIndex) => {
+            gridLogger.debug(
+              `Calling onReplaceSpell(${spell.name}, ${slotIndex})`
+            );
+            onReplaceSpell(
+              currentGrid[slotIndex]?.name || "",
+              spell,
+              slotIndex
+            );
+          });
         }
       }
 
-      gridLogger.groupEnd();
-    },
-    [
-      deck.spells,
-      onMixedOperation,
-      onBulkReplaceSpells,
-      onReplaceSpell,
-      onBulkAddSpells,
-      onAddSpell
-    ]
-  );
+      if (slotsToAdd.length > 0) {
+        gridLogger.info("Pure addition operation");
+        if (onBulkAddSpells && slotsToAdd.length > 1) {
+          onBulkAddSpells(spell, slotsToAdd);
+        } else if (onAddSpell) {
+          slotsToAdd.forEach((slotIndex) => {
+            onAddSpell(spell, slotIndex, 1);
+          });
+        }
+      }
+    }
+
+    gridLogger.groupEnd();
+  };
 
   const {
     activeSlot,
@@ -168,16 +160,15 @@ const DeckGrid = memo(function DeckGrid({
 
   const {
     selectedSlots,
-    isDragging,
     handleMouseDown,
     handleMouseEnter,
     handleMouseUp,
     clearSelection
   } = useDragSelection();
 
-  // Memoize drag completion handler to maintain selection state
+  // Handle drag completion - show popup when drag ends with selected slots
   const handleDragComplete = useCallback(() => {
-    if (selectedSlots.size > 0 && activeSlot === null) {
+    if (selectedSlots.size > 0) {
       // Check if we have any filled slots in the selection
       const selectedSlotIndices = Array.from(selectedSlots);
       const hasFilledSlots = selectedSlotIndices.some(
@@ -200,74 +191,52 @@ const DeckGrid = memo(function DeckGrid({
       // If only empty slots, it's an add operation
       setIsReplacing(hasFilledSlots && !hasEmptySlots);
     }
-  }, [
-    selectedSlots,
-    setPopupPosition,
-    setActiveSlot,
-    setIsReplacing,
-    grid,
-    activeSlot
-  ]);
+  }, [selectedSlots, setPopupPosition, setActiveSlot, setIsReplacing, grid]);
 
-  // Add global mouse up listener for drag selection - with better handling
+  // Add global mouse up listener for drag selection
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       handleMouseUp();
-      // Call drag complete directly without timeout to prevent race conditions
-      requestAnimationFrame(() => {
-        handleDragComplete();
-      });
+      handleDragComplete();
     };
 
     document.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => {
-      document.removeEventListener("mouseup", handleGlobalMouseUp);
-    };
-  }, [handleMouseUp, handleDragComplete]);
+    return () => document.removeEventListener("mouseup", handleGlobalMouseUp);
+  }, [handleMouseUp, selectedSlots.size, handleDragComplete]);
 
-  // Memoize single slot click handler
-  const handleSlotClick = useCallback(
-    (index: number, event: React.MouseEvent) => {
-      if (selectedSlots.size === 0) {
-        // Normal single slot operation
-        if (grid[index]) {
-          handleFilledSlotClick(index, event);
-        } else {
-          handleEmptySlotClick(index, event);
-        }
+  // Handle single slot clicks (when no multi-selection is active)
+  const handleSlotClick = (index: number, event: React.MouseEvent) => {
+    if (selectedSlots.size === 0) {
+      // Normal single slot operation
+      if (grid[index]) {
+        handleFilledSlotClick(index, event);
+      } else {
+        handleEmptySlotClick(index, event);
       }
-    },
-    [selectedSlots.size, grid, handleFilledSlotClick, handleEmptySlotClick]
-  );
+    }
+  };
 
-  // Memoize spell selection handler
-  const handleSpellSelection = useCallback(
-    (spell: Spell, quantity: number) => {
-      // Always use the current grid state, not the captured one
-      const currentGrid: (Spell | null)[] = Array(64).fill(null);
-      deck.spells.forEach((deckSpell, index) => {
-        if (index < currentGrid.length) {
-          currentGrid[index] = deckSpell;
-        }
-      });
+  // Create a wrapper for handleSelectSpell that passes the selected slots and grid
+  const handleSpellSelection = (spell: Spell, quantity: number) => {
+    // Always use the current grid state, not the captured one
+    const currentGrid: (Spell | null)[] = Array(64).fill(null);
+    deck.spells.forEach((deckSpell, index) => {
+      if (index < currentGrid.length) {
+        currentGrid[index] = deckSpell;
+      }
+    });
 
-      // Handle spell selection and cleanup
-      handleSelectSpell(
-        spell,
-        quantity,
-        selectedSlots,
-        currentGrid,
-        clearSelection
-      );
+    handleSelectSpell(
+      spell,
+      quantity,
+      selectedSlots,
+      currentGrid,
+      clearSelection
+    );
+  };
 
-      // Ensure popup closes after selection
-      closePopup();
-    },
-    [deck.spells, handleSelectSpell, selectedSlots, clearSelection, closePopup]
-  );
-
-  // Memoize delete handler
-  const handleDeleteSelectedSpells = useCallback(() => {
+  // Handle deleting spells from selected slots
+  const handleDeleteSelectedSpells = () => {
     if (selectedSlots.size > 0) {
       // Get indices of slots that have spells
       const indicesToRemove = Array.from(selectedSlots).filter(
@@ -288,28 +257,16 @@ const DeckGrid = memo(function DeckGrid({
 
       clearSelection();
     }
-  }, [selectedSlots, grid, onBulkRemoveSpells, onRemoveSpell, clearSelection]);
-
-  // Memoize popup close handler to preserve selection state until operation completes
-  const handlePopupClose = useCallback(() => {
-    closePopup();
-    // Clear selection immediately when popup is closed
-    clearSelection();
-  }, [closePopup, clearSelection]);
-
-  // Memoize grid key for proper re-rendering
-  const gridKey = useMemo(
-    () =>
-      `grid-${deck.spells.length}-${deck.spells.map((s) => s.name).join("-")}`,
-    [deck.spells]
-  );
+  };
 
   return (
     <div className="w-full pb-4 mb-12">
       <TooltipProvider>
         <div className="max-w-xl max-h-[420px] mx-auto md:mt-6">
           <div
-            key={gridKey}
+            key={`grid-${deck.spells.length}-${deck.spells
+              .map((s) => `${s.name}-${s.tier}`)
+              .join("-")}`}
             className="grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid"
           >
             {grid.map((spell, index) => (
@@ -318,11 +275,11 @@ const DeckGrid = memo(function DeckGrid({
                   spell={spell}
                   index={index}
                   isSelected={selectedSlots.has(index)}
-                  isDragging={isDragging}
                   onEmptySlotClick={handleSlotClick}
                   onFilledSlotClick={handleSlotClick}
                   onMouseDown={handleMouseDown}
                   onMouseEnter={handleMouseEnter}
+                  onReplaceSpell={onReplaceSpell}
                 />
               </div>
             ))}
@@ -334,7 +291,10 @@ const DeckGrid = memo(function DeckGrid({
       {activeSlot !== null && (
         <SpellSearchPopup
           position={popupPosition}
-          onClose={handlePopupClose}
+          onClose={() => {
+            closePopup();
+            clearSelection();
+          }}
           onSelectSpell={handleSpellSelection}
           availableSlots={64 - deck.spells.length}
           isReplacing={isReplacing}
@@ -347,6 +307,4 @@ const DeckGrid = memo(function DeckGrid({
       )}
     </div>
   );
-});
-
-export default DeckGrid;
+}

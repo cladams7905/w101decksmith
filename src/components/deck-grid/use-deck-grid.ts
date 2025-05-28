@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { Spell } from "@/lib/types";
 
 interface UseDeckGridProps {
@@ -39,70 +39,58 @@ export function useDeckGrid({
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const [isReplacing, setIsReplacing] = useState(false);
 
-  const handleEmptySlotClick = useCallback(
-    (index: number, event: React.MouseEvent) => {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setPopupPosition({
-        top: rect.top,
-        left: rect.right + 10
-      });
-      setActiveSlot(index);
-      setIsReplacing(false);
-    },
-    []
-  );
+  const handleEmptySlotClick = (index: number, event: React.MouseEvent) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setPopupPosition({
+      top: rect.top,
+      left: rect.right + 10
+    });
+    setActiveSlot(index);
+    setIsReplacing(false);
+  };
 
-  const handleFilledSlotClick = useCallback(
-    (index: number, event: React.MouseEvent) => {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setPopupPosition({
-        top: rect.top,
-        left: rect.right + 10
-      });
-      setActiveSlot(index);
-      setIsReplacing(true);
-    },
-    []
-  );
+  const handleFilledSlotClick = (index: number, event: React.MouseEvent) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setPopupPosition({
+      top: rect.top,
+      left: rect.right + 10
+    });
+    setActiveSlot(index);
+    setIsReplacing(true);
+  };
 
-  const handleSelectSpell = useCallback(
-    (
-      spell: Spell,
-      quantity: number,
-      selectedSlots?: Set<number>,
-      grid?: (Spell | null)[],
-      clearSelection?: () => void
-    ) => {
-      if (
-        selectedSlots &&
-        selectedSlots.size > 0 &&
-        grid &&
-        onMultiSlotOperation
-      ) {
-        // Handle multi-slot operation
-        const slotsArray = Array.from(selectedSlots);
-        onMultiSlotOperation(spell, slotsArray, grid);
-        // Clear selection after multi-slot operation
-        if (clearSelection) {
-          clearSelection();
-        }
-      } else if (activeSlot !== null) {
-        // Handle single slot operation
-        if (isReplacing) {
-          // For replacement, we need to get the current spell name
-          const currentSpell = grid?.[activeSlot];
-          onReplaceSpell(currentSpell?.name || "", spell, activeSlot);
-        } else {
-          onAddSpell(spell, activeSlot, quantity);
-        }
+  const handleSelectSpell = (
+    spell: Spell,
+    quantity: number,
+    selectedSlots?: Set<number>,
+    grid?: (Spell | null)[],
+    clearSelection?: () => void
+  ) => {
+    if (
+      selectedSlots &&
+      selectedSlots.size > 0 &&
+      grid &&
+      onMultiSlotOperation
+    ) {
+      // Handle multi-slot operation
+      const slotsArray = Array.from(selectedSlots);
+      onMultiSlotOperation(spell, slotsArray, grid);
+      // Clear selection after multi-slot operation
+      if (clearSelection) {
+        clearSelection();
       }
-      // Always close the popup after handling spell selection
-      setActiveSlot(null);
-    },
-    [activeSlot, isReplacing, onReplaceSpell, onAddSpell, onMultiSlotOperation]
-  );
+    } else if (activeSlot !== null) {
+      // Handle single slot operation
+      if (isReplacing) {
+        onReplaceSpell(spell.name, spell, activeSlot);
+      } else {
+        onAddSpell(spell, activeSlot, quantity);
+      }
+    }
+    setActiveSlot(null);
+  };
 
-  const closePopup = useCallback(() => setActiveSlot(null), []);
+  const closePopup = () => setActiveSlot(null);
 
   return {
     activeSlot,

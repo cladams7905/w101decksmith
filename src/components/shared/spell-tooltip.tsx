@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ interface SpellTooltipProps {
 }
 
 // Reusable SpellImage component with loading states
-const SpellImage = memo(function SpellImage({
+function SpellImage({
   spell,
   className
 }: {
@@ -133,9 +133,9 @@ const SpellImage = memo(function SpellImage({
       `}</style>
     </div>
   );
-});
+}
 
-const SpellTooltip = memo(function SpellTooltip({
+export default function SpellTooltip({
   spell,
   spellGroup,
   schoolColor,
@@ -380,6 +380,4 @@ const SpellTooltip = memo(function SpellTooltip({
       */}
     </Card>
   );
-});
-
-export default SpellTooltip;
+}

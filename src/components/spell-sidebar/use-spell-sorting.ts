@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { Spell } from "@/lib/types";
 import {
   getSpellPips,
@@ -16,92 +16,65 @@ type SortOption = {
   order: "asc" | "desc";
 };
 
-// Move utility calculation outside hook
-const calculateSpellUtility = (spell: Spell): number => {
-  const damage = getSpellDamage(spell) || 0;
-  const dot = getSpellDamageOverTime(spell) || 0;
-  const buff = getSpellBuffPercentage(spell) || 0;
-  const debuff = getSpellDebuffPercentage(spell) || 0;
-  const healing = getSpellHealing(spell) || 0;
-  const hot = getSpellHealingOverTime(spell) || 0;
-  const pipsGained = getSpellPipsGained(spell) || 0;
-
-  // Weight different aspects of utility
-  return (
-    damage * 1 +
-    dot * 0.8 +
-    buff * 2 +
-    debuff * 2 +
-    healing * 1.2 +
-    hot * 1 +
-    pipsGained * 5
-  );
-};
-
-// Cache utility values for spells
-const utilityCache = new WeakMap<Spell, number>();
-const getSpellUtility = (spell: Spell): number => {
-  if (!utilityCache.has(spell)) {
-    utilityCache.set(spell, calculateSpellUtility(spell));
-  }
-  return utilityCache.get(spell)!;
-};
-
 export function useSpellSorting() {
   const [schoolSortOptions, setSchoolSortOptions] = useState<
     Record<string, SortOption>
   >({});
 
-  const toggleSchoolSort = useCallback(
-    (schoolId: string, by: "pips" | "utility" | "none") => {
-      setSchoolSortOptions((prev) => {
-        const current = prev[schoolId];
-        if (!current || current.by !== by) {
-          return {
-            ...prev,
-            [schoolId]: { by, order: "asc" }
-          };
-        }
-        return {
-          ...prev,
-          [schoolId]: {
-            by,
-            order: current.order === "asc" ? "desc" : "asc"
-          }
+  const toggleSchoolSort = (
+    schoolId: string,
+    by: "pips" | "utility" | "none"
+  ) => {
+    setSchoolSortOptions((prev) => {
+      const currentSort = prev[schoolId] || { by: "pips", order: "asc" };
+      const newOrder =
+        currentSort.by === by && currentSort.order === "asc" ? "desc" : "asc";
+      return {
+        ...prev,
+        [schoolId]: { by, order: newOrder }
+      };
+    });
+  };
+
+  const getSortedSpells = (
+    spells: Spell[],
+    sortOption: SortOption | undefined
+  ) => {
+    // Default to sorting by pips in ascending order if no sort option is provided
+    const effectiveSortOption = sortOption || { by: "pips", order: "asc" };
+
+    if (effectiveSortOption.by === "none") {
+      return spells;
+    }
+
+    return [...spells].sort((a, b) => {
+      if (effectiveSortOption.by === "pips") {
+        const pipsA = getSpellPips(a);
+        const pipsB = getSpellPips(b);
+        return effectiveSortOption.order === "asc"
+          ? pipsA - pipsB
+          : pipsB - pipsA;
+      } else if (effectiveSortOption.by === "utility") {
+        const getUtilityType = (spell: Spell): number => {
+          if (getSpellDamage(spell) > 0) return 1;
+          if (getSpellDamageOverTime(spell) > 0) return 2;
+          if (getSpellBuffPercentage(spell) > 0) return 3;
+          if (getSpellDebuffPercentage(spell) > 0) return 4;
+          if (getSpellHealing(spell) > 0) return 5;
+          if (getSpellHealingOverTime(spell) > 0) return 6;
+          if (getSpellPipsGained(spell) > 0) return 7;
+          return 8;
         };
-      });
-    },
-    []
-  );
 
-  const getSortedSpells = useCallback(
-    (spells: Spell[], sortOption?: SortOption) => {
-      if (!sortOption || sortOption.by === "none") {
-        return spells;
+        const typeA = getUtilityType(a);
+        const typeB = getUtilityType(b);
+        return effectiveSortOption.order === "asc"
+          ? typeA - typeB
+          : typeB - typeA;
       }
-
-      // Memoize the sorted array using a stable sort
-      return [...spells].sort((a, b) => {
-        let aValue: number, bValue: number;
-
-        if (sortOption.by === "pips") {
-          aValue = getSpellPips(a);
-          bValue = getSpellPips(b);
-        } else {
-          // Use cached utility values
-          aValue = getSpellUtility(a);
-          bValue = getSpellUtility(b);
-        }
-
-        const sortFactor = sortOption.order === "asc" ? 1 : -1;
-        const comparison = (aValue - bValue) * sortFactor;
-
-        // If values are equal, maintain stable sort by using spell name
-        return comparison === 0 ? a.name.localeCompare(b.name) : comparison;
-      });
-    },
-    []
-  );
+      return 0;
+    });
+  };
 
   return {
     schoolSortOptions,
