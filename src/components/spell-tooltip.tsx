@@ -10,14 +10,15 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import type { Spell } from "@/lib/types";
 import SpellUtilityBadge from "@/components/spell-utility-badge";
 import {
   getSpellPips,
   getSpellDescription,
   getSpellSchool,
-  getSpellImageUrl
+  getSpellImageUrl,
+  getSpellPipDisplay
 } from "@/lib/spell-utils";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
@@ -141,7 +142,6 @@ export default function SpellTooltip({
   onTierButtonClick
 }: SpellTooltipProps) {
   // Get spell properties using utility functions
-  const pips = getSpellPips(spell);
   const description = getSpellDescription(spell);
   const school = getSpellSchool(spell);
 
@@ -162,9 +162,22 @@ export default function SpellTooltip({
         <div className="flex-1 flex flex-col">
           <CardHeader className="bg-blue-950/50 border-b border-border pb-3 pt-4">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-bold flex-1">
-                {spell.name}
-              </CardTitle>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <CardTitle className="text-lg font-bold truncate">
+                  {spell.name}
+                </CardTitle>
+                {spell.wiki_url && (
+                  <a
+                    href={spell.wiki_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 {hasMultipleTiers && (
                   <Button
@@ -184,7 +197,8 @@ export default function SpellTooltip({
                   variant="outline"
                   className={`bg-${schoolColor}-900 text-${schoolColor}-100 flex-shrink-0`}
                 >
-                  {pips} {pips === 1 ? "pip" : "pips"}
+                  {getSpellPipDisplay(spell)}{" "}
+                  {getSpellPips(spell) === 1 ? "pip" : "pips"}
                 </Badge>
               </div>
             </div>
@@ -203,7 +217,7 @@ export default function SpellTooltip({
               {/* Show basic spell info that we have */}
               <div className="flex flex-col">
                 <span className="text-muted-foreground">Pip Cost</span>
-                <span className="font-medium">{pips}</span>
+                <span className="font-medium">{getSpellPipDisplay(spell)}</span>
               </div>
 
               {spell.accuracy && (

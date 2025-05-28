@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 import type { Spell, Deck } from "@/lib/types";
-import { deckLogger } from "@/lib/logger";
+import {
+  getSpellPips,
+  getSpellDamage,
+  getSpellDamageOverTime,
+  getSpellBuffPercentage,
+  getSpellDebuffPercentage,
+  getSpellHealing,
+  getSpellHealingOverTime,
+  getSpellPipsGained
+} from "@/lib/spell-utils";
 
 interface DeckContextType {
   currentDeck: Deck;
@@ -12,7 +21,7 @@ interface DeckContextType {
   sortOrder: "asc" | "desc";
   addSpell: (spell: Spell, quantity: number) => void;
   addSpellToSlot: (spell: Spell, slotIndex: number, quantity?: number) => void;
-  replaceSpell: (spell: Spell, index: number) => void;
+  replaceSpell: (spellName: string, newSpell: Spell, index?: number) => void;
   createNewDeck: () => void;
   switchDeck: (deck: Deck) => void;
   updateDeckName: (name: string) => void;
@@ -127,56 +136,51 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   );
 
   const replaceSpell = useCallback(
-    (spell: Spell, index: number) => {
-      deckLogger.info("=== replaceSpell function called ===");
-      deckLogger.info("Trying to replace at deck index:", index);
-      deckLogger.info("With spell:", spell.name);
-      deckLogger.info(
-        "Current deck before replace:",
-        currentDeck.spells.map((s, i) => ({
-          deckIndex: i,
-          name: s.name,
-          id: s.id,
-          isTargetIndex: i === index
-        }))
-      );
+    (spellName: string, newSpell: Spell, index?: number) => {
+      if (index !== undefined) {
+        // Replace spell at specific index
+        setCurrentDeck((prev) => {
+          const newSpells = [...prev.spells];
+          newSpells[index] = newSpell;
+          return { ...prev, spells: newSpells };
+        });
 
-      const newSpells = [...currentDeck.spells];
-      if (index < newSpells.length) {
-        const oldSpell = newSpells[index];
-        newSpells[index] = spell;
-        deckLogger.info(
-          `Successfully replaced deck[${index}]: "${oldSpell.name}" -> "${spell.name}"`
+        setDecks((prev) =>
+          prev.map((deck) =>
+            deck.id === currentDeck.id
+              ? {
+                  ...deck,
+                  spells: deck.spells.map((spell, i) =>
+                    i === index ? newSpell : spell
+                  )
+                }
+              : deck
+          )
         );
       } else {
-        deckLogger.error(
-          `ERROR: Index ${index} is out of bounds (deck length: ${newSpells.length})`
+        // Replace all instances of the spell
+        setCurrentDeck((prev) => ({
+          ...prev,
+          spells: prev.spells.map((spell) =>
+            spell.name === spellName ? newSpell : spell
+          )
+        }));
+
+        setDecks((prev) =>
+          prev.map((deck) =>
+            deck.id === currentDeck.id
+              ? {
+                  ...deck,
+                  spells: deck.spells.map((spell) =>
+                    spell.name === spellName ? newSpell : spell
+                  )
+                }
+              : deck
+          )
         );
       }
-
-      deckLogger.info(
-        "New deck after replace:",
-        newSpells.map((s, i) => ({
-          deckIndex: i,
-          name: s.name,
-          id: s.id
-        }))
-      );
-
-      setCurrentDeck((prev) => ({
-        ...prev,
-        spells: newSpells
-      }));
-
-      setDecks((prev) =>
-        prev.map((deck) =>
-          deck.id === currentDeck.id ? { ...deck, spells: newSpells } : deck
-        )
-      );
-
-      deckLogger.info("=== replaceSpell completed ===");
     },
-    [currentDeck.id, currentDeck.spells]
+    [currentDeck.id]
   );
 
   const createNewDeck = useCallback(() => {
@@ -242,22 +246,24 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
 
       const sortedSpells = [...currentDeck.spells].sort((a, b) => {
         if (by === "school") {
-          const schoolA = a.school.toLowerCase();
-          const schoolB = b.school.toLowerCase();
+          const schoolA = (a.school || "unknown").toLowerCase();
+          const schoolB = (b.school || "unknown").toLowerCase();
           return order === "asc"
             ? schoolA.localeCompare(schoolB)
             : schoolB.localeCompare(schoolA);
         } else if (by === "pips") {
-          return order === "asc" ? a.pips - b.pips : b.pips - a.pips;
+          return order === "asc"
+            ? getSpellPips(a) - getSpellPips(b)
+            : getSpellPips(b) - getSpellPips(a);
         } else if (by === "utility") {
           const getUtilityType = (spell: Spell): number => {
-            if (spell.damage && spell.damage > 0) return 1;
-            if (spell.damageOverTime && spell.damageOverTime > 0) return 2;
-            if (spell.buffPercentage && spell.buffPercentage > 0) return 3;
-            if (spell.debuffPercentage && spell.debuffPercentage > 0) return 4;
-            if (spell.healing && spell.healing > 0) return 5;
-            if (spell.healingOverTime && spell.healingOverTime > 0) return 6;
-            if (spell.pipsGained && spell.pipsGained > 0) return 7;
+            if (getSpellDamage(spell) > 0) return 1;
+            if (getSpellDamageOverTime(spell) > 0) return 2;
+            if (getSpellBuffPercentage(spell) > 0) return 3;
+            if (getSpellDebuffPercentage(spell) > 0) return 4;
+            if (getSpellHealing(spell) > 0) return 5;
+            if (getSpellHealingOverTime(spell) > 0) return 6;
+            if (getSpellPipsGained(spell) > 0) return 7;
             return 8;
           };
 

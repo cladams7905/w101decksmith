@@ -9,9 +9,28 @@ export function getSpellId(spell: Spell): string {
 export function getSpellPips(spell: Spell): number {
   if (!spell.pip_cost) return 0;
 
+  // Handle "X" pip cost
+  if (spell.pip_cost.toLowerCase().includes("x")) {
+    return 0; // Return 0 for calculations, but we'll handle display separately
+  }
+
   // Extract number from pip cost string (e.g., "3 pips" -> 3)
   const pipMatch = spell.pip_cost.match(/(\d+)/);
   return pipMatch ? parseInt(pipMatch[1], 10) : 0;
+}
+
+// Helper function to get pip cost display value (handles "X" properly)
+export function getSpellPipDisplay(spell: Spell): string {
+  if (!spell.pip_cost) return "0";
+
+  // Handle "X" pip cost
+  if (spell.pip_cost.toLowerCase().includes("x")) {
+    return "X";
+  }
+
+  // Extract number from pip cost string (e.g., "3 pips" -> "3")
+  const pipMatch = spell.pip_cost.match(/(\d+)/);
+  return pipMatch ? pipMatch[1] : "0";
 }
 
 // Helper function to check if spell has utility effects

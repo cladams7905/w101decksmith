@@ -12,6 +12,7 @@ import type { Deck, Spell } from "@/lib/types";
 import { useState, useRef } from "react";
 import SpellSearchPopup from "@/components/deck-grid/spell-search-popup";
 import { uiLogger } from "@/lib/logger";
+import { getSpellPips } from "@/lib/spell-utils";
 
 const POPUP_OFFSET = 260;
 
@@ -52,7 +53,7 @@ export default function DeckBreakdown({
     const breakdown: Record<string, number> = {};
 
     deck.spells.forEach((spell) => {
-      const school = spell.school;
+      const school = spell.school || "unknown";
       breakdown[school] = (breakdown[school] || 0) + 1;
     });
 
@@ -67,18 +68,19 @@ export default function DeckBreakdown({
     const spellCounts: Record<string, { spell: Spell; count: number }> = {};
 
     deck.spells.forEach((spell) => {
-      if (spell.school === school) {
-        if (!spellCounts[spell.id]) {
-          spellCounts[spell.id] = { spell, count: 0 };
+      const spellSchool = spell.school || "unknown";
+      if (spellSchool === school) {
+        if (!spellCounts[spell.name]) {
+          spellCounts[spell.name] = { spell, count: 0 };
         }
-        spellCounts[spell.id].count += 1;
+        spellCounts[spell.name].count += 1;
       }
     });
 
     // Sort by count (descending), then by pip cost (ascending)
     return Object.values(spellCounts).sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
-      return a.spell.pips - b.spell.pips;
+      return getSpellPips(a.spell) - getSpellPips(b.spell);
     });
   };
 
@@ -150,7 +152,7 @@ export default function DeckBreakdown({
   // Handle delete spell click
   const handleDeleteSpell = (spell: Spell) => {
     uiLogger.info(`Deleting all instances of spell: ${spell.name}`);
-    onDeleteSpells(spell.id);
+    onDeleteSpells(spell.name);
   };
 
   // Handle spell selection from popup
@@ -161,7 +163,7 @@ export default function DeckBreakdown({
       uiLogger.info(
         `Replacing all instances of "${activeSpell.name}" with "${newSpell.name}"`
       );
-      onReplaceSpells(activeSpell.id, newSpell);
+      onReplaceSpells(activeSpell.name, newSpell);
     }
     closePopup();
   };
@@ -172,7 +174,7 @@ export default function DeckBreakdown({
       uiLogger.info(
         `Deleting all instances of spell from popup: ${activeSpell.name}`
       );
-      onDeleteSpells(activeSpell.id);
+      onDeleteSpells(activeSpell.name);
     }
     closePopup();
   };
@@ -227,7 +229,7 @@ export default function DeckBreakdown({
                 <div className="pl-8 pr-3 space-y-1 py-1 border-l-2 border-blue-900/20 ml-3">
                   {getSpellCounts(school).map(({ spell, count }) => (
                     <div
-                      key={spell.id}
+                      key={spell.name}
                       className="flex items-center justify-between text-xs py-1 hover:bg-accent/30 px-2 rounded group/spell"
                     >
                       <div className="flex items-center gap-2">

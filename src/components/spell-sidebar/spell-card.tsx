@@ -9,7 +9,8 @@ import {
 import SpellTooltip from "@/components/spell-tooltip";
 import { SpellTierPopup } from "./spell-tier-popup";
 import type { Spell } from "@/lib/types";
-import { getSpellPips, getSpellImageUrl } from "@/lib/spell-utils";
+import { getSpellImageUrl, getSpellPipDisplay } from "@/lib/spell-utils";
+import { ExternalLink } from "lucide-react";
 
 interface SpellCardProps {
   spell: Spell;
@@ -139,14 +140,27 @@ export function SpellCard({
             <div className="absolute inset-0 bg-gradient-to-b via-black/10 to-black/80 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/80 transition-all duration-200" />
             <CardContent className="p-2 relative z-10 h-full flex flex-col">
               <div className="mt-auto flex justify-between items-end gap-1">
-                <div className="font-medium text-white text-sm truncate flex-1 drop-shadow-sm">
-                  {currentSpell.name}
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <div className="font-medium text-white text-sm truncate flex-1 drop-shadow-sm">
+                    {currentSpell.name}
+                  </div>
+                  {currentSpell.wiki_url && (
+                    <a
+                      href={currentSpell.wiki_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white/70 hover:text-white transition-colors shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
                 </div>
                 <Badge
                   variant="outline"
                   className={`bg-${schoolColor}-900 text-${schoolColor}-100 shrink-0 text-xs border-${schoolColor}-700`}
                 >
-                  {getSpellPips(currentSpell)}
+                  {getSpellPipDisplay(currentSpell)}
                 </Badge>
               </div>
             </CardContent>

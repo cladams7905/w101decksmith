@@ -26,7 +26,7 @@ export function useSpellSorting() {
     by: "pips" | "utility" | "none"
   ) => {
     setSchoolSortOptions((prev) => {
-      const currentSort = prev[schoolId] || { by: "none", order: "asc" };
+      const currentSort = prev[schoolId] || { by: "pips", order: "asc" };
       const newOrder =
         currentSort.by === by && currentSort.order === "asc" ? "desc" : "asc";
       return {
@@ -40,16 +40,21 @@ export function useSpellSorting() {
     spells: Spell[],
     sortOption: SortOption | undefined
   ) => {
-    if (!sortOption || sortOption.by === "none") {
+    // Default to sorting by pips in ascending order if no sort option is provided
+    const effectiveSortOption = sortOption || { by: "pips", order: "asc" };
+
+    if (effectiveSortOption.by === "none") {
       return spells;
     }
 
     return [...spells].sort((a, b) => {
-      if (sortOption.by === "pips") {
+      if (effectiveSortOption.by === "pips") {
         const pipsA = getSpellPips(a);
         const pipsB = getSpellPips(b);
-        return sortOption.order === "asc" ? pipsA - pipsB : pipsB - pipsA;
-      } else if (sortOption.by === "utility") {
+        return effectiveSortOption.order === "asc"
+          ? pipsA - pipsB
+          : pipsB - pipsA;
+      } else if (effectiveSortOption.by === "utility") {
         const getUtilityType = (spell: Spell): number => {
           if (getSpellDamage(spell) > 0) return 1;
           if (getSpellDamageOverTime(spell) > 0) return 2;
@@ -63,7 +68,9 @@ export function useSpellSorting() {
 
         const typeA = getUtilityType(a);
         const typeB = getUtilityType(b);
-        return sortOption.order === "asc" ? typeA - typeB : typeB - typeA;
+        return effectiveSortOption.order === "asc"
+          ? typeA - typeB
+          : typeB - typeA;
       }
       return 0;
     });

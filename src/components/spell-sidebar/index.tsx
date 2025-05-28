@@ -36,7 +36,7 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
 
   if (loading) {
     return (
-      <div className="w-80 border-r border-border bg-card p-4">
+      <div className="border-r border-border bg-card p-4 w-full">
         <div className="flex items-center justify-center h-32">
           <div className="text-muted-foreground">Loading spells...</div>
         </div>
@@ -46,7 +46,7 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
 
   if (error) {
     return (
-      <div className="w-80 border-r border-border bg-card p-4">
+      <div className="border-r border-border bg-card p-4 w-full">
         <div className="flex items-center justify-center h-32">
           <div className="text-red-500">Error: {error}</div>
         </div>
@@ -55,7 +55,7 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
   }
 
   return (
-    <div className="w-80 border-r border-border bg-card flex flex-col h-full">
+    <div className="border-r border-border bg-card flex flex-col h-full w-full">
       <SpellSearchBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

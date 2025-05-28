@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import type { Deck } from "@/lib/types"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import type { Deck } from "@/lib/types";
 import {
   Bar,
   BarChart,
@@ -16,82 +22,91 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis,
-} from "@/components/ui/chart"
+  YAxis
+} from "recharts";
+import {
+  getSpellPips,
+  getSpellDamage,
+  getSpellHealing,
+  getSpellHealingOverTime
+} from "@/lib/spell-utils";
 
 interface DeckStatsModalProps {
-  deck: Deck
+  deck: Deck;
 }
 
 export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
   // Calculate pip cost distribution
   const pipCostDistribution = () => {
-    const distribution: Record<number, number> = {}
-    const maxPips = 10 // Maximum pips to display
+    const distribution: Record<number, number> = {};
+    const maxPips = 10; // Maximum pips to display
 
     // Initialize distribution with zeros
     for (let i = 1; i <= maxPips; i++) {
-      distribution[i] = 0
+      distribution[i] = 0;
     }
 
     // Count spells by pip cost
     deck.spells.forEach((spell) => {
-      const pips = spell.pips
+      const pips = getSpellPips(spell);
       if (pips <= maxPips) {
-        distribution[pips] = (distribution[pips] || 0) + 1
+        distribution[pips] = (distribution[pips] || 0) + 1;
       } else {
         // Group all spells with pips > maxPips into the maxPips category
-        distribution[maxPips] = (distribution[maxPips] || 0) + 1
+        distribution[maxPips] = (distribution[maxPips] || 0) + 1;
       }
-    })
+    });
 
     // Convert to array format for chart
     return Object.entries(distribution).map(([pips, count]) => ({
       pips: pips === maxPips.toString() ? `${maxPips}+` : pips,
-      count,
-    }))
-  }
+      count
+    }));
+  };
 
   // Calculate school distribution
   const schoolDistribution = () => {
-    const distribution: Record<string, number> = {}
+    const distribution: Record<string, number> = {};
 
     // Count spells by school
     deck.spells.forEach((spell) => {
-      const school = spell.school
-      distribution[school] = (distribution[school] || 0) + 1
-    })
+      const school = spell.school || "unknown";
+      distribution[school] = (distribution[school] || 0) + 1;
+    });
 
     // Convert to array format for chart
     return Object.entries(distribution).map(([school, count]) => ({
       school: school.charAt(0).toUpperCase() + school.slice(1),
       count,
-      percentage: Math.round((count / deck.spells.length) * 100) || 0,
-    }))
-  }
+      percentage: Math.round((count / deck.spells.length) * 100) || 0
+    }));
+  };
 
   // Calculate spell type distribution
   const spellTypeDistribution = () => {
-    let damageCount = 0
-    let healingCount = 0
-    let utilityCount = 0
+    let damageCount = 0;
+    let healingCount = 0;
+    let utilityCount = 0;
 
     deck.spells.forEach((spell) => {
-      if (spell.damage && spell.damage > 0) {
-        damageCount++
-      } else if ((spell.healing && spell.healing > 0) || (spell.healingOverTime && spell.healingOverTime > 0)) {
-        healingCount++
+      if (getSpellDamage(spell) > 0) {
+        damageCount++;
+      } else if (
+        getSpellHealing(spell) > 0 ||
+        getSpellHealingOverTime(spell) > 0
+      ) {
+        healingCount++;
       } else {
-        utilityCount++
+        utilityCount++;
       }
-    })
+    });
 
     return [
       { name: "Damage", value: damageCount },
       { name: "Healing", value: healingCount },
-      { name: "Utility", value: utilityCount },
-    ]
-  }
+      { name: "Utility", value: utilityCount }
+    ];
+  };
 
   // Calculate average stats
   const calculateAverageStats = () => {
@@ -101,33 +116,54 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
         avgDamage: 0,
         avgDPP: 0,
         totalDamage: 0,
-        totalHealing: 0,
-      }
+        totalHealing: 0
+      };
     }
 
-    const totalPips = deck.spells.reduce((sum, spell) => sum + spell.pips, 0)
-    const damageSpells = deck.spells.filter((spell) => spell.damage && spell.damage > 0)
-    const totalDamage = damageSpells.reduce((sum, spell) => sum + (spell.damage || 0), 0)
+    const totalPips = deck.spells.reduce(
+      (sum, spell) => sum + getSpellPips(spell),
+      0
+    );
+    const damageSpells = deck.spells.filter(
+      (spell) => getSpellDamage(spell) > 0
+    );
+    const totalDamage = damageSpells.reduce(
+      (sum, spell) => sum + getSpellDamage(spell),
+      0
+    );
     const totalHealing =
-      deck.spells.reduce((sum, spell) => sum + (spell.healing || 0), 0) +
-      deck.spells.reduce((sum, spell) => sum + (spell.healingOverTime || 0), 0)
+      deck.spells.reduce((sum, spell) => sum + getSpellHealing(spell), 0) +
+      deck.spells.reduce(
+        (sum, spell) => sum + getSpellHealingOverTime(spell),
+        0
+      );
 
     return {
       avgPipCost: Math.round((totalPips / deck.spells.length) * 10) / 10,
-      avgDamage: damageSpells.length > 0 ? Math.round(totalDamage / damageSpells.length) : 0,
+      avgDamage:
+        damageSpells.length > 0
+          ? Math.round(totalDamage / damageSpells.length)
+          : 0,
       avgDPP:
         damageSpells.length > 0
-          ? Math.round((totalDamage / damageSpells.reduce((sum, spell) => sum + spell.pips, 0)) * 10) / 10
+          ? Math.round(
+              (totalDamage /
+                damageSpells.reduce(
+                  (sum, spell) => sum + getSpellPips(spell),
+                  0
+                )) *
+                10
+            ) / 10
           : 0,
       totalDamage,
-      totalHealing,
-    }
-  }
+      totalHealing
+    };
+  };
 
-  const pipDistData = pipCostDistribution()
-  const schoolDistData = schoolDistribution()
-  const spellTypeData = spellTypeDistribution()
-  const averageStats = calculateAverageStats()
+  const pipDistData = pipCostDistribution();
+  const schoolDistData = schoolDistribution();
+  const spellTypeData = spellTypeDistribution();
+  const averageStats = calculateAverageStats();
 
   // Colors for the school pie chart
   const schoolColors: Record<string, string> = {
@@ -138,11 +174,11 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
     Death: "#666666",
     Myth: "#cccc00",
     Balance: "#cc6600",
-    Utility: "#9933ff",
-  }
+    Utility: "#9933ff"
+  };
 
   // Colors for the spell type pie chart
-  const spellTypeColors = ["#cc0000", "#009900", "#9933ff"]
+  const spellTypeColors = ["#cc0000", "#009900", "#9933ff"];
 
   return (
     <div className="py-4">
@@ -162,7 +198,10 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
             <CardContent>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={pipDistData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart
+                    data={pipDistData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="pips" />
                     <YAxis allowDecimals={false} />
@@ -173,18 +212,26 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                             <div className="rounded-lg border bg-background p-2 shadow-sm">
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">Pip Cost</span>
-                                  <span className="font-bold text-foreground">{label}</span>
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Pip Cost
+                                  </span>
+                                  <span className="font-bold text-foreground">
+                                    {label}
+                                  </span>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">Count</span>
-                                  <span className="font-bold text-foreground">{payload[0].value}</span>
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Count
+                                  </span>
+                                  <span className="font-bold text-foreground">
+                                    {payload[0].value}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                          )
+                          );
                         }
-                        return null
+                        return null;
                       }}
                     />
                     <Bar
@@ -202,7 +249,9 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle>Spell Type Distribution</CardTitle>
-              <CardDescription>Breakdown of spell types in your deck</CardDescription>
+              <CardDescription>
+                Breakdown of spell types in your deck
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 flex items-center justify-center">
@@ -216,10 +265,15 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name}: ${(percent * 100).toFixed(0)}%`
+                      }
                     >
                       {spellTypeData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={spellTypeColors[index % spellTypeColors.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={spellTypeColors[index % spellTypeColors.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip
@@ -229,18 +283,26 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                             <div className="rounded-lg border bg-background p-2 shadow-sm">
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">Type</span>
-                                  <span className="font-bold text-foreground">{payload[0].name}</span>
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Type
+                                  </span>
+                                  <span className="font-bold text-foreground">
+                                    {payload[0].name}
+                                  </span>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">Count</span>
-                                  <span className="font-bold text-foreground">{payload[0].value}</span>
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Count
+                                  </span>
+                                  <span className="font-bold text-foreground">
+                                    {payload[0].value}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                          )
+                          );
                         }
-                        return null
+                        return null;
                       }}
                     />
                     <Legend />
@@ -255,7 +317,9 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle>School Distribution</CardTitle>
-              <CardDescription>Breakdown of schools in your deck</CardDescription>
+              <CardDescription>
+                Breakdown of schools in your deck
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-80 flex items-center justify-center">
@@ -269,12 +333,17 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="count"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name}: ${(percent * 100).toFixed(0)}%`
+                      }
                     >
                       {schoolDistData.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={schoolColors[entry.school] || `hsl(${index * 45}, 70%, 50%)`}
+                          fill={
+                            schoolColors[entry.school] ||
+                            `hsl(${index * 45}, 70%, 50%)`
+                          }
                         />
                       ))}
                     </Pie>
@@ -285,18 +354,26 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                             <div className="rounded-lg border bg-background p-2 shadow-sm">
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">School</span>
-                                  <span className="font-bold text-foreground">{payload[0].payload.school}</span>
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    School
+                                  </span>
+                                  <span className="font-bold text-foreground">
+                                    {payload[0].payload.school}
+                                  </span>
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">Count</span>
-                                  <span className="font-bold text-foreground">{payload[0].value}</span>
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Count
+                                  </span>
+                                  <span className="font-bold text-foreground">
+                                    {payload[0].value}
+                                  </span>
                                 </div>
                               </div>
                             </div>
-                          )
+                          );
                         }
-                        return null
+                        return null;
                       }}
                     />
                     <Legend />
@@ -306,11 +383,16 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
 
               <div className="mt-4 grid grid-cols-2 gap-4">
                 {schoolDistData.map((school) => (
-                  <div key={school.school} className="flex items-center justify-between">
+                  <div
+                    key={school.school}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-2">
                       <div
                         className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: schoolColors[school.school] || "#888" }}
+                        style={{
+                          backgroundColor: schoolColors[school.school] || "#888"
+                        }}
                       ></div>
                       <span>{school.school}</span>
                     </div>
@@ -328,7 +410,9 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
           <Card>
             <CardHeader>
               <CardTitle>Deck Summary</CardTitle>
-              <CardDescription>Overall statistics for your deck</CardDescription>
+              <CardDescription>
+                Overall statistics for your deck
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -337,22 +421,37 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                   <Separator className="my-2" />
                   <dl className="grid grid-cols-2 gap-4">
                     <div>
-                      <dt className="text-sm text-muted-foreground">Total Cards</dt>
-                      <dd className="text-2xl font-bold">{deck.spells.length}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Total Cards
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {deck.spells.length}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Average Pip Cost</dt>
-                      <dd className="text-2xl font-bold">{averageStats.avgPipCost}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Average Pip Cost
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {averageStats.avgPipCost}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Schools Used</dt>
-                      <dd className="text-2xl font-bold">{schoolDistData.length}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Schools Used
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {schoolDistData.length}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Dominant School</dt>
+                      <dt className="text-sm text-muted-foreground">
+                        Dominant School
+                      </dt>
                       <dd className="text-2xl font-bold">
                         {schoolDistData.length > 0
-                          ? schoolDistData.sort((a, b) => b.count - a.count)[0].school
+                          ? schoolDistData.sort((a, b) => b.count - a.count)[0]
+                              .school
                           : "None"}
                       </dd>
                     </div>
@@ -364,20 +463,36 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                   <Separator className="my-2" />
                   <dl className="grid grid-cols-2 gap-4">
                     <div>
-                      <dt className="text-sm text-muted-foreground">Total Damage Potential</dt>
-                      <dd className="text-2xl font-bold">{averageStats.totalDamage}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Total Damage Potential
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {averageStats.totalDamage}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Average Damage</dt>
-                      <dd className="text-2xl font-bold">{averageStats.avgDamage}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Average Damage
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {averageStats.avgDamage}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Damage Per Pip (DPP)</dt>
-                      <dd className="text-2xl font-bold">{averageStats.avgDPP}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Damage Per Pip (DPP)
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {averageStats.avgDPP}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Damage Spells</dt>
-                      <dd className="text-2xl font-bold">{spellTypeData[0].value}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Damage Spells
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {spellTypeData[0].value}
+                      </dd>
                     </div>
                   </dl>
                 </div>
@@ -387,22 +502,39 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                   <Separator className="my-2" />
                   <dl className="grid grid-cols-2 gap-4">
                     <div>
-                      <dt className="text-sm text-muted-foreground">Total Healing Potential</dt>
-                      <dd className="text-2xl font-bold">{averageStats.totalHealing}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Total Healing Potential
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {averageStats.totalHealing}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Healing Spells</dt>
-                      <dd className="text-2xl font-bold">{spellTypeData[1].value}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Healing Spells
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {spellTypeData[1].value}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Utility Spells</dt>
-                      <dd className="text-2xl font-bold">{spellTypeData[2].value}</dd>
+                      <dt className="text-sm text-muted-foreground">
+                        Utility Spells
+                      </dt>
+                      <dd className="text-2xl font-bold">
+                        {spellTypeData[2].value}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-sm text-muted-foreground">Utility Ratio</dt>
+                      <dt className="text-sm text-muted-foreground">
+                        Utility Ratio
+                      </dt>
                       <dd className="text-2xl font-bold">
                         {deck.spells.length > 0
-                          ? `${Math.round((spellTypeData[2].value / deck.spells.length) * 100)}%`
+                          ? `${Math.round(
+                              (spellTypeData[2].value / deck.spells.length) *
+                                100
+                            )}%`
                           : "0%"}
                       </dd>
                     </div>
@@ -414,5 +546,5 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

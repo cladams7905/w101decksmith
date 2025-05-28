@@ -50,7 +50,11 @@ export default function DeckGrid({
   useEffect(() => {
     gridLogger.debug("Deck changed, grid should re-render:", {
       deckLength: deck.spells.length,
-      spells: deck.spells.map((s, i) => ({ index: i, name: s.name, id: s.id }))
+      spells: deck.spells.map((s, i) => ({
+        index: i,
+        name: s.name,
+        id: s.name
+      }))
     });
   }, [deck.spells]);
 
@@ -64,14 +68,14 @@ export default function DeckGrid({
     gridLogger.debug("Selected slots:", slots);
     gridLogger.debug(
       "Current deck:",
-      deck.spells.map((s, i) => ({ deckIndex: i, name: s.name, id: s.id }))
+      deck.spells.map((s, i) => ({ deckIndex: i, name: s.name, id: s.name }))
     );
     gridLogger.debug(
       "Grid state for selected slots:",
       slots.map((gridIndex) => ({
         gridIndex,
         spell: currentGrid[gridIndex]?.name || "empty",
-        spellId: currentGrid[gridIndex]?.id || null
+        spellId: currentGrid[gridIndex]?.name || null
       }))
     );
 
@@ -253,25 +257,27 @@ export default function DeckGrid({
   return (
     <div className="w-full pb-4 mb-12">
       <TooltipProvider>
-        <div
-          key={`grid-${deck.spells.length}-${deck.spells
-            .map((s) => s.id)
-            .join("-")}`}
-          className="grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid"
-        >
-          {grid.map((spell, index) => (
-            <div key={`slot-${index}-${spell?.id || "empty"}`}>
-              <DeckGridSlot
-                spell={spell}
-                index={index}
-                isSelected={selectedSlots.has(index)}
-                onEmptySlotClick={handleSlotClick}
-                onFilledSlotClick={handleSlotClick}
-                onMouseDown={handleMouseDown}
-                onMouseEnter={handleMouseEnter}
-              />
-            </div>
-          ))}
+        <div className="max-w-lg max-h-96 mx-auto">
+          <div
+            key={`grid-${deck.spells.length}-${deck.spells
+              .map((s) => s.name)
+              .join("-")}`}
+            className="grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid"
+          >
+            {grid.map((spell, index) => (
+              <div key={`slot-${index}-${spell?.name || "empty"}`}>
+                <DeckGridSlot
+                  spell={spell}
+                  index={index}
+                  isSelected={selectedSlots.has(index)}
+                  onEmptySlotClick={handleSlotClick}
+                  onFilledSlotClick={handleSlotClick}
+                  onMouseDown={handleMouseDown}
+                  onMouseEnter={handleMouseEnter}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </TooltipProvider>
 
