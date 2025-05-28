@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { X, GripHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Spell } from "@/lib/types";
@@ -21,7 +21,7 @@ interface SpellSearchPopupProps {
   grid?: (Spell | null)[];
 }
 
-export default function SpellSearchPopup({
+const SpellSearchPopup = memo(function SpellSearchPopup({
   position,
   onClose,
   onSelectSpell,
@@ -31,9 +31,14 @@ export default function SpellSearchPopup({
   onDeleteSelected,
   grid = []
 }: SpellSearchPopupProps) {
-  const selectedSlotsCount = selectedSlots.size;
-  const maxQuantity =
-    selectedSlotsCount > 0 ? selectedSlotsCount : Math.min(4, availableSlots);
+  // Memoize computed values to prevent unnecessary recalculations
+  const selectedSlotsCount = useMemo(() => selectedSlots.size, [selectedSlots]);
+  const maxQuantity = useMemo(
+    () =>
+      selectedSlotsCount > 0 ? selectedSlotsCount : Math.min(4, availableSlots),
+    [selectedSlotsCount, availableSlots]
+  );
+
   const [spellQuantity, setSpellQuantity] = useState(
     selectedSlotsCount > 0 ? selectedSlotsCount : 1
   );
@@ -62,17 +67,26 @@ export default function SpellSearchPopup({
     }
   }, [position, hasBeenDragged]);
 
-  // Calculate filled and empty slots for better messaging
-  const filledSlotsCount =
-    selectedSlotsCount > 0
-      ? Array.from(selectedSlots).filter((index) => grid[index] !== null).length
-      : 0;
+  // Memoize slot calculations
+  const { filledSlotsCount, emptySlotsCount, isMixedOperation } =
+    useMemo(() => {
+      const filled =
+        selectedSlotsCount > 0
+          ? Array.from(selectedSlots).filter((index) => grid[index] !== null)
+              .length
+          : 0;
+      const empty = selectedSlotsCount - filled;
+      const mixed = filled > 0 && empty > 0;
 
-  const emptySlotsCount = selectedSlotsCount - filledSlotsCount;
-  const isMixedOperation = filledSlotsCount > 0 && emptySlotsCount > 0;
+      return {
+        filledSlotsCount: filled,
+        emptySlotsCount: empty,
+        isMixedOperation: mixed
+      };
+    }, [selectedSlotsCount, selectedSlots, grid]);
 
-  // Drag functionality
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // Memoize drag handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (popupRef.current) {
       const rect = popupRef.current.getBoundingClientRect();
       setDragOffset({
@@ -82,8 +96,35 @@ export default function SpellSearchPopup({
       setIsDragging(true);
       setHasBeenDragged(true);
     }
-  };
+  }, []);
 
+  // Memoize delete handler
+  const handleDeleteClick = useCallback(() => {
+    if (onDeleteSelected) {
+      onDeleteSelected();
+      onClose();
+    }
+  }, [onDeleteSelected, onClose]);
+
+  // Memoize spell selection handler
+  const handleSpellSelect = useCallback(
+    (spell: Spell) => {
+      onSelectSpell(spell, isReplacing ? 1 : spellQuantity);
+    },
+    [onSelectSpell, isReplacing, spellQuantity]
+  );
+
+  // Memoize quantity change handler
+  const handleQuantityChange = useCallback((value: number[]) => {
+    setSpellQuantity(value[0]);
+  }, []);
+
+  // Update spell quantity when selected slots change
+  useEffect(() => {
+    setSpellQuantity(selectedSlotsCount > 0 ? selectedSlotsCount : 1);
+  }, [selectedSlotsCount]);
+
+  // Drag functionality effects
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
@@ -168,10 +209,7 @@ export default function SpellSearchPopup({
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => {
-                onDeleteSelected();
-                onClose();
-              }}
+              onClick={handleDeleteClick}
               className="h-6 text-xs"
             >
               Delete
@@ -222,7 +260,7 @@ export default function SpellSearchPopup({
                 max={maxQuantity}
                 step={1}
                 value={[spellQuantity]}
-                onValueChange={(value) => setSpellQuantity(value[0])}
+                onValueChange={handleQuantityChange}
                 className="w-full"
               />
             </div>
@@ -277,13 +315,13 @@ export default function SpellSearchPopup({
           ) : (
             <SpellList
               filteredSpells={filteredSpells}
-              onSpellClick={(spell) =>
-                onSelectSpell(spell, isReplacing ? 1 : spellQuantity)
-              }
+              onSpellClick={handleSpellSelect}
             />
           )}
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default SpellSearchPopup;

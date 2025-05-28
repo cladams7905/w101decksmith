@@ -12,7 +12,7 @@ import {
   getSchoolColor,
   groupSpellsByName
 } from "@/lib/spell-utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
 import { SpellTierPopup } from "@/components/spell-sidebar/spell-tier-popup";
 import { gridLogger } from "@/lib/logger";
@@ -29,7 +29,7 @@ interface DeckGridSlotProps {
   onReplaceSpell?: (spellName: string, newSpell: Spell, index: number) => void;
 }
 
-export function DeckGridSlot({
+export const DeckGridSlot = memo(function DeckGridSlot({
   spell,
   index,
   isSelected,
@@ -48,78 +48,121 @@ export function DeckGridSlot({
 
   const { spellCategories } = useSpellsData();
 
-  const imageUrl = spell ? getSpellImageUrl(spell) : null;
-  const schoolColor = spell ? getSchoolColor(spell) : "gray";
+  // Memoize expensive computations
+  const imageUrl = useMemo(
+    () => (spell ? getSpellImageUrl(spell) : null),
+    [spell]
+  );
+  const schoolColor = useMemo(
+    () => (spell ? getSchoolColor(spell) : "gray"),
+    [spell]
+  );
 
-  // Get spell group (all tiers) for the current spell
-  const getSpellGroup = (): Spell[] | undefined => {
+  // Memoize spell group computation
+  const spellGroup = useMemo((): Spell[] | undefined => {
     if (!spell) return undefined;
 
     // Find all spells with the same name across all categories
     const allSpells = spellCategories.flatMap((category) => category.spells);
     const groupedSpells = groupSpellsByName(allSpells);
     return groupedSpells.get(spell.name);
-  };
+  }, [spell, spellCategories]);
 
-  const spellGroup = getSpellGroup();
+  // Memoize CSS colors object
+  const schoolColors = useMemo(() => {
+    if (!spell) return null;
 
-  // Handle tier button click
-  const handleTierButtonClick = () => {
-    setCurrentSelectedSpell(spell); // Initialize with current spell
-    setIsTierPopupOpen(true);
-  };
-
-  // Handle tier selection (just updates the selected spell, doesn't close popup)
-  const handleTierSelect = (selectedSpell: Spell) => {
-    setCurrentSelectedSpell(selectedSpell);
-  };
-
-  // Get CSS color values for the school
-  const getSchoolCSSColor = (color: string) => {
-    const colorMap: Record<
-      string,
-      { border: string; bg: string; hover: string }
-    > = {
-      red: {
-        border: "rgb(239 68 68 / 0.6)",
-        bg: "rgb(127 29 29 / 0.2)",
-        hover: "rgb(248 113 113)"
-      },
-      blue: {
-        border: "rgb(59 130 246 / 0.6)",
-        bg: "rgb(30 58 138 / 0.2)",
-        hover: "rgb(96 165 250)"
-      },
-      purple: {
-        border: "rgb(147 51 234 / 0.6)",
-        bg: "rgb(88 28 135 / 0.2)",
-        hover: "rgb(168 85 247)"
-      },
-      green: {
-        border: "rgb(34 197 94 / 0.6)",
-        bg: "rgb(20 83 45 / 0.2)",
-        hover: "rgb(74 222 128)"
-      },
-      gray: {
-        border: "rgb(107 114 128 / 0.6)",
-        bg: "rgb(55 65 81 / 0.2)",
-        hover: "rgb(156 163 175)"
-      },
-      yellow: {
-        border: "rgb(234 179 8 / 0.6)",
-        bg: "rgb(133 77 14 / 0.2)",
-        hover: "rgb(250 204 21)"
-      },
-      orange: {
-        border: "rgb(249 115 22 / 0.6)",
-        bg: "rgb(154 52 18 / 0.2)",
-        hover: "rgb(251 146 60)"
-      }
+    const getSchoolCSSColor = (color: string) => {
+      const colorMap: Record<
+        string,
+        { border: string; bg: string; hover: string }
+      > = {
+        red: {
+          border: "rgb(239 68 68 / 0.6)",
+          bg: "rgb(127 29 29 / 0.2)",
+          hover: "rgb(248 113 113)"
+        },
+        blue: {
+          border: "rgb(59 130 246 / 0.6)",
+          bg: "rgb(30 58 138 / 0.2)",
+          hover: "rgb(96 165 250)"
+        },
+        purple: {
+          border: "rgb(147 51 234 / 0.6)",
+          bg: "rgb(88 28 135 / 0.2)",
+          hover: "rgb(168 85 247)"
+        },
+        green: {
+          border: "rgb(34 197 94 / 0.6)",
+          bg: "rgb(20 83 45 / 0.2)",
+          hover: "rgb(74 222 128)"
+        },
+        gray: {
+          border: "rgb(107 114 128 / 0.6)",
+          bg: "rgb(55 65 81 / 0.2)",
+          hover: "rgb(156 163 175)"
+        },
+        yellow: {
+          border: "rgb(234 179 8 / 0.6)",
+          bg: "rgb(133 77 14 / 0.2)",
+          hover: "rgb(250 204 21)"
+        },
+        orange: {
+          border: "rgb(249 115 22 / 0.6)",
+          bg: "rgb(154 52 18 / 0.2)",
+          hover: "rgb(251 146 60)"
+        }
+      };
+      return colorMap[color] || colorMap.gray;
     };
-    return colorMap[color] || colorMap.gray;
-  };
 
-  const schoolColors = spell ? getSchoolCSSColor(schoolColor) : null;
+    return getSchoolCSSColor(schoolColor);
+  }, [schoolColor, spell]);
+
+  // Memoize base classes
+  const baseClasses = useMemo(
+    () =>
+      `aspect-square w-full h-auto min-w-0 min-h-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${
+        isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""
+      }`,
+    [isSelected]
+  );
+
+  // Memoize stable callback functions
+  const handleTierButtonClick = useCallback(() => {
+    setCurrentSelectedSpell(spell);
+    setIsTierPopupOpen(true);
+  }, [spell]);
+
+  const handleTierSelect = useCallback((selectedSpell: Spell) => {
+    setCurrentSelectedSpell(selectedSpell);
+  }, []);
+
+  const handleClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Only trigger click if not part of a drag selection
+      if (event.detail === 1) {
+        // Single click
+        if (spell) {
+          onFilledSlotClick(index, event);
+        } else {
+          onEmptySlotClick(index, event);
+        }
+      }
+    },
+    [spell, onFilledSlotClick, onEmptySlotClick, index]
+  );
+
+  const handleMouseEnterSlot = useCallback(() => {
+    onMouseEnter(index);
+  }, [onMouseEnter, index]);
+
+  const handleMouseDownSlot = useCallback(
+    (e: React.MouseEvent) => {
+      onMouseDown(index, e);
+    },
+    [onMouseDown, index]
+  );
 
   // Preload image to track loading state
   useEffect(() => {
@@ -162,29 +205,13 @@ export function DeckGridSlot({
     }
   }, [imageUrl, spell]);
 
-  const handleClick = (event: React.MouseEvent) => {
-    // Only trigger click if not part of a drag selection
-    if (event.detail === 1) {
-      // Single click
-      if (spell) {
-        onFilledSlotClick(index, event);
-      } else {
-        onEmptySlotClick(index, event);
-      }
-    }
-  };
-
-  const baseClasses = `aspect-square w-full h-auto min-w-0 min-h-0 flex items-center justify-center transition-all duration-200 cursor-pointer ${
-    isSelected ? "ring-2 ring-blue-500 ring-offset-1" : ""
-  }`;
-
   if (spell) {
     const cardElement = (
       <Card
         className={`${baseClasses} group py-0 p-1 rounded-lg overflow-hidden transition-colors duration-200`}
         onClick={handleClick}
-        onMouseDown={(e) => onMouseDown(index, e)}
-        onMouseEnter={() => onMouseEnter(index)}
+        onMouseDown={handleMouseDownSlot}
+        onMouseEnter={handleMouseEnterSlot}
         style={{
           minWidth: 0,
           minHeight: 0,
@@ -339,8 +366,8 @@ export function DeckGridSlot({
     <Card
       className={`${baseClasses} border-blue-900/30 bg-linear-to-br from-blue-900/40 hover:bg-gray-600/30 hover:border-gray-400/50 group overflow-hidden py-0`}
       onClick={handleClick}
-      onMouseDown={(e) => onMouseDown(index, e)}
-      onMouseEnter={() => onMouseEnter(index)}
+      onMouseDown={handleMouseDownSlot}
+      onMouseEnter={handleMouseEnterSlot}
       style={{ minWidth: 0, minHeight: 0 }}
     >
       <CardContent className="p-1 h-full w-full flex flex-col items-center justify-center text-center overflow-hidden">
@@ -349,4 +376,4 @@ export function DeckGridSlot({
       </CardContent>
     </Card>
   );
-}
+});

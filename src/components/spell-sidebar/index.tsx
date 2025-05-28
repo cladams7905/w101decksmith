@@ -1,4 +1,11 @@
-import { useRef, useState, type MutableRefObject } from "react";
+import {
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  memo,
+  type MutableRefObject
+} from "react";
 import type { Spell } from "@/lib/types";
 import { SpellList } from "./spell-list";
 import { SpellQuantityPopup } from "./spell-quantity-popup";
@@ -13,7 +20,10 @@ interface SpellSidebarProps {
   onAddSpell: (spell: Spell, quantity: number) => void;
 }
 
-export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
+export const SpellSidebar = memo(function SpellSidebar({
+  currentDeck,
+  onAddSpell
+}: SpellSidebarProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -29,29 +39,56 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
     null
   ) as MutableRefObject<HTMLElement | null>;
 
-  const handleSpellClick = (spell: Spell, event: React.MouseEvent) => {
-    selectedCardRef.current = event.currentTarget as HTMLElement;
-    setSelectedSpell(spell);
-  };
+  // Memoize available slots calculation
+  const availableSlots = useMemo(
+    () => 64 - currentDeck.spells.length,
+    [currentDeck.spells.length]
+  );
 
-  if (loading) {
-    return (
+  // Memoize spell click handler
+  const handleSpellClick = useCallback(
+    (spell: Spell, event: React.MouseEvent) => {
+      selectedCardRef.current = event.currentTarget as HTMLElement;
+      setSelectedSpell(spell);
+    },
+    []
+  );
+
+  // Memoize spell popup close handler
+  const handleCloseSpellPopup = useCallback(() => {
+    setSelectedSpell(null);
+  }, []);
+
+  // Memoize loading component
+  const loadingComponent = useMemo(
+    () => (
       <div className="bg-card p-4 w-full">
         <div className="flex items-center justify-center h-32">
           <div className="text-muted-foreground">Loading spells...</div>
         </div>
       </div>
-    );
-  }
+    ),
+    []
+  );
 
-  if (error) {
-    return (
+  // Memoize error component
+  const errorComponent = useMemo(
+    () => (
       <div className="bg-card p-4 w-full">
         <div className="flex items-center justify-center h-32">
           <div className="text-red-500">Error: {error}</div>
         </div>
       </div>
-    );
+    ),
+    [error]
+  );
+
+  if (loading) {
+    return loadingComponent;
+  }
+
+  if (error) {
+    return errorComponent;
   }
 
   return (
@@ -77,9 +114,9 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
         <SpellQuantityPopup
           spell={selectedSpell}
           triggerRef={selectedCardRef}
-          onClose={() => setSelectedSpell(null)}
+          onClose={handleCloseSpellPopup}
           onAddSpell={onAddSpell}
-          availableSlots={64 - currentDeck.spells.length}
+          availableSlots={availableSlots}
         />
       )}
 
@@ -92,4 +129,4 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
       </div>
     </div>
   );
-}
+});
