@@ -7,7 +7,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 import SpellTooltip from "@/components/spell-tooltip";
-import { getSpellImageUrl } from "@/lib/spell-utils";
+import { getSpellImageUrl, getSchoolColor } from "@/lib/spell-utils";
 import { useState, useEffect } from "react";
 
 interface DeckGridSlotProps {
@@ -33,6 +33,54 @@ export function DeckGridSlot({
   const [imageError, setImageError] = useState(false);
 
   const imageUrl = spell ? getSpellImageUrl(spell) : null;
+  const schoolColor = spell ? getSchoolColor(spell) : "gray";
+
+  // Get CSS color values for the school
+  const getSchoolCSSColor = (color: string) => {
+    const colorMap: Record<
+      string,
+      { border: string; bg: string; hover: string }
+    > = {
+      red: {
+        border: "rgb(239 68 68 / 0.6)",
+        bg: "rgb(127 29 29 / 0.2)",
+        hover: "rgb(248 113 113)"
+      },
+      blue: {
+        border: "rgb(59 130 246 / 0.6)",
+        bg: "rgb(30 58 138 / 0.2)",
+        hover: "rgb(96 165 250)"
+      },
+      purple: {
+        border: "rgb(147 51 234 / 0.6)",
+        bg: "rgb(88 28 135 / 0.2)",
+        hover: "rgb(168 85 247)"
+      },
+      green: {
+        border: "rgb(34 197 94 / 0.6)",
+        bg: "rgb(20 83 45 / 0.2)",
+        hover: "rgb(74 222 128)"
+      },
+      gray: {
+        border: "rgb(107 114 128 / 0.6)",
+        bg: "rgb(55 65 81 / 0.2)",
+        hover: "rgb(156 163 175)"
+      },
+      yellow: {
+        border: "rgb(234 179 8 / 0.6)",
+        bg: "rgb(133 77 14 / 0.2)",
+        hover: "rgb(250 204 21)"
+      },
+      orange: {
+        border: "rgb(249 115 22 / 0.6)",
+        bg: "rgb(154 52 18 / 0.2)",
+        hover: "rgb(251 146 60)"
+      }
+    };
+    return colorMap[color] || colorMap.gray;
+  };
+
+  const schoolColors = spell ? getSchoolCSSColor(schoolColor) : null;
 
   // Preload image to track loading state
   useEffect(() => {
@@ -96,11 +144,27 @@ export function DeckGridSlot({
       <Tooltip>
         <TooltipTrigger asChild>
           <Card
-            className={`${baseClasses} bg-purple-900/50 border-purple-700/50 hover:border-purple-500 group py-0 p-1 rounded-lg overflow-hidden`}
+            className={`${baseClasses} group py-0 p-1 rounded-lg overflow-hidden transition-colors duration-200`}
             onClick={handleClick}
             onMouseDown={(e) => onMouseDown(index, e)}
             onMouseEnter={() => onMouseEnter(index)}
-            style={{ minWidth: 0, minHeight: 0 }}
+            style={{
+              minWidth: 0,
+              minHeight: 0,
+              borderWidth: "2px",
+              borderColor: schoolColors?.border || "rgb(107 114 128 / 0.6)",
+              backgroundColor: schoolColors?.bg || "rgb(55 65 81 / 0.2)"
+            }}
+            onMouseOver={(e) => {
+              if (schoolColors) {
+                e.currentTarget.style.borderColor = schoolColors.hover;
+              }
+            }}
+            onMouseOut={(e) => {
+              if (schoolColors) {
+                e.currentTarget.style.borderColor = schoolColors.border;
+              }
+            }}
           >
             <CardContent className="p-0 h-full w-full relative overflow-hidden">
               {/* Spell Image */}
@@ -169,7 +233,7 @@ export function DeckGridSlot({
           align="center"
           className="p-0 border-0 rounded-xl"
         >
-          <SpellTooltip spell={spell} schoolColor={spell.school || "gray"} />
+          <SpellTooltip spell={spell} schoolColor={schoolColor} />
         </TooltipContent>
       </Tooltip>
     );

@@ -54,6 +54,23 @@ export function getSpellSchool(spell: Spell): string {
   return spell.school || "balance";
 }
 
+// Helper function to get school color for styling
+export function getSchoolColor(spell: Spell): string {
+  const school = getSpellSchool(spell);
+  const schoolColors: Record<string, string> = {
+    fire: "red",
+    ice: "blue",
+    storm: "purple",
+    life: "green",
+    death: "gray",
+    myth: "yellow",
+    balance: "orange",
+    astral: "purple",
+    shadow: "gray"
+  };
+  return schoolColors[school] || "gray";
+}
+
 // Helper function to generate Supabase storage URL for spell card images
 export function getSpellImageUrl(spell: Spell): string {
   const supabaseUrl = "https://rnsdsclvovqpgqdrvzmv.supabase.co";

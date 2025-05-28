@@ -10,7 +10,6 @@ import SpellTooltip from "@/components/spell-tooltip";
 import { SpellTierPopup } from "./spell-tier-popup";
 import type { Spell } from "@/lib/types";
 import { getSpellImageUrl, getSpellPipDisplay } from "@/lib/spell-utils";
-import { ExternalLink } from "lucide-react";
 
 interface SpellCardProps {
   spell: Spell;
@@ -55,6 +54,60 @@ export function SpellCard({
   };
 
   const imageUrl = getSpellImageUrl(currentSpell);
+
+  // Get CSS color values for the school
+  const getSchoolCSSColor = (color: string) => {
+    const colorMap: Record<
+      string,
+      { border: string; bg: string; hover: string; active: string }
+    > = {
+      red: {
+        border: "rgb(239 68 68 / 0.6)",
+        bg: "rgb(127 29 29 / 0.1)",
+        hover: "rgb(248 113 113)",
+        active: "rgb(252 165 165)"
+      },
+      blue: {
+        border: "rgb(59 130 246 / 0.6)",
+        bg: "rgb(30 58 138 / 0.1)",
+        hover: "rgb(96 165 250)",
+        active: "rgb(147 197 253)"
+      },
+      purple: {
+        border: "rgb(147 51 234 / 0.6)",
+        bg: "rgb(88 28 135 / 0.1)",
+        hover: "rgb(168 85 247)",
+        active: "rgb(196 181 253)"
+      },
+      green: {
+        border: "rgb(34 197 94 / 0.6)",
+        bg: "rgb(20 83 45 / 0.1)",
+        hover: "rgb(74 222 128)",
+        active: "rgb(134 239 172)"
+      },
+      gray: {
+        border: "rgb(107 114 128 / 0.6)",
+        bg: "rgb(55 65 81 / 0.1)",
+        hover: "rgb(156 163 175)",
+        active: "rgb(209 213 219)"
+      },
+      yellow: {
+        border: "rgb(234 179 8 / 0.6)",
+        bg: "rgb(133 77 14 / 0.1)",
+        hover: "rgb(250 204 21)",
+        active: "rgb(254 240 138)"
+      },
+      orange: {
+        border: "rgb(249 115 22 / 0.6)",
+        bg: "rgb(154 52 18 / 0.1)",
+        hover: "rgb(251 146 60)",
+        active: "rgb(253 186 116)"
+      }
+    };
+    return colorMap[color] || colorMap.gray;
+  };
+
+  const schoolColors = getSchoolCSSColor(schoolColor);
 
   // Preload image to track loading state
   useEffect(() => {
@@ -102,8 +155,25 @@ export function SpellCard({
       <Tooltip>
         <TooltipTrigger asChild>
           <Card
-            className="cursor-pointer hover:bg-accent hover:border-primary active:border-primary transition-all duration-200 spell-card relative overflow-hidden h-20 group pb-0"
+            className="cursor-pointer hover:bg-accent transition-all duration-200 spell-card relative overflow-hidden h-20 group pb-0"
+            style={{
+              borderWidth: "2px",
+              borderColor: schoolColors.border,
+              backgroundColor: schoolColors.bg
+            }}
             onClick={(e) => onClick(currentSpell, e)}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = schoolColors.hover;
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = schoolColors.border;
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.borderColor = schoolColors.active;
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.borderColor = schoolColors.hover;
+            }}
           >
             {/* Background Image as a div instead of CSS background */}
             {imageLoaded && !imageError && imageUrl && (
@@ -144,21 +214,15 @@ export function SpellCard({
                   <div className="font-medium text-white text-sm truncate flex-1 drop-shadow-sm">
                     {currentSpell.name}
                   </div>
-                  {currentSpell.wiki_url && (
-                    <a
-                      href={currentSpell.wiki_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-white/70 hover:text-white transition-colors shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
                 </div>
                 <Badge
                   variant="outline"
-                  className={`bg-${schoolColor}-900 text-${schoolColor}-100 shrink-0 text-xs border-${schoolColor}-700`}
+                  className="shrink-0 text-xs"
+                  style={{
+                    backgroundColor: schoolColors.bg,
+                    borderColor: schoolColors.border,
+                    color: "white"
+                  }}
                 >
                   {getSpellPipDisplay(currentSpell)}
                 </Badge>
