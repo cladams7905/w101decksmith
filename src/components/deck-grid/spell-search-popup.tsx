@@ -4,11 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { X, GripHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Spell } from "@/lib/types";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { SpellSearchBar } from "@/components/shared/spell-search-bar";
 import { useSpellFilter } from "@/components/shared/use-spell-filter";
 import { SpellList } from "../spell-sidebar/spell-list";
+import { Progress } from "@/components/ui/progress";
 
 interface SpellSearchPopupProps {
   position: { top: number; left: number };
@@ -32,11 +31,9 @@ export default function SpellSearchPopup({
   grid = []
 }: SpellSearchPopupProps) {
   const selectedSlotsCount = selectedSlots.size;
-  const maxQuantity =
-    selectedSlotsCount > 0 ? selectedSlotsCount : Math.min(4, availableSlots);
-  const [spellQuantity, setSpellQuantity] = useState(
-    selectedSlotsCount > 0 ? selectedSlotsCount : 1
-  );
+  // Automatically determine quantity based on selected slots or default to 1
+  const quantity = selectedSlotsCount > 0 ? selectedSlotsCount : 1;
+  const [progress, setProgress] = useState(0);
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Drag functionality state
@@ -143,9 +140,22 @@ export default function SpellSearchPopup({
     };
   }, [onClose]);
 
+  // Animate progress bar while loading
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setProgress((prev) => (prev >= 90 ? 0 : prev + 10));
+      }, 400);
+      return () => clearInterval(interval);
+    } else {
+      setProgress(100);
+    }
+  }, [loading]);
+
   return (
     <div
       ref={popupRef}
+      data-spell-popup="true"
       className="fixed z-50 bg-background border rounded-lg shadow-2xl w-80 max-h-[80vh] flex flex-col"
       style={{
         top: `${currentPosition.top}px`,
@@ -199,34 +209,15 @@ export default function SpellSearchPopup({
         />
 
         {!isReplacing && selectedSlotsCount === 0 && (
-          <>
-            <div className="text-xs text-muted-foreground mb-3">
-              {availableSlots} {availableSlots === 1 ? "slot" : "slots"}{" "}
-              available in deck
-              {spellQuantity > 1 && (
-                <span className="ml-1">
-                  (adding {spellQuantity}{" "}
-                  {spellQuantity === 1 ? "copy" : "copies"})
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-3 mb-3 border-t border-blue-900/30 pt-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="popup-spell-quantity">Quantity</Label>
-                <span className="text-sm font-medium">{spellQuantity}</span>
-              </div>
-              <Slider
-                id="popup-spell-quantity"
-                min={1}
-                max={maxQuantity}
-                step={1}
-                value={[spellQuantity]}
-                onValueChange={(value) => setSpellQuantity(value[0])}
-                className="w-full"
-              />
-            </div>
-          </>
+          <div className="text-xs text-muted-foreground mb-3">
+            {availableSlots} {availableSlots === 1 ? "slot" : "slots"} available
+            in deck
+            {quantity > 1 && (
+              <span className="ml-1">
+                (adding {quantity} {quantity === 1 ? "copy" : "copies"})
+              </span>
+            )}
+          </div>
         )}
 
         {!isReplacing && selectedSlotsCount > 0 && (
@@ -267,8 +258,11 @@ export default function SpellSearchPopup({
 
         <div className="overflow-y-auto flex-1">
           {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="text-muted-foreground">Loading spells...</div>
+            <div className="flex flex-col items-center justify-center p-8 gap-2">
+              <Progress value={progress} className="w-[60%]" />
+              <div className="text-xs text-muted-foreground">
+                Loading spells...
+              </div>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center p-8">
@@ -277,9 +271,7 @@ export default function SpellSearchPopup({
           ) : (
             <SpellList
               filteredSpells={filteredSpells}
-              onSpellClick={(spell) =>
-                onSelectSpell(spell, isReplacing ? 1 : spellQuantity)
-              }
+              onSpellClick={(spell) => onSelectSpell(spell, quantity)}
             />
           )}
         </div>

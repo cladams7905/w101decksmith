@@ -181,11 +181,15 @@ export function SpellTierPopup({
     // Don't close the popup - let user click "Select Tier" button to close
   };
 
-  const handleFinalSelect = () => {
+  const handleFinalSelect = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     onOpenChange(false);
   };
 
-  const handleCancel = () => {
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     onOpenChange(false);
   };
 
@@ -200,7 +204,6 @@ export function SpellTierPopup({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          // Don't close on overlay click
         }}
       />
       <DialogContent
@@ -217,6 +220,9 @@ export function SpellTierPopup({
           e.preventDefault();
           e.stopPropagation();
         }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         <DialogHeader className="relative">
           <DialogTitle className="text-center text-lg pr-8">
@@ -224,12 +230,16 @@ export function SpellTierPopup({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Branching Paths - Only show if there are branches */}
-        {hasBranches && (
-          <div className="flex justify-center w-full h-fit mt-20">
+        {/* Tier Selection Interface - Show if there are branches OR multiple base tiers */}
+        {(hasBranches || baseTiers.length > 1) && (
+          <div
+            className={`flex justify-center w-full h-fit ${
+              hasBranches ? "mt-20" : "py-10"
+            }`}
+          >
             <div className="relative">
-              {/* Base Tiers Column (Left side) */}
-              {baseTiers.length > 0 && (
+              {/* For branching spells: Base Tiers Column (Left side) */}
+              {hasBranches && baseTiers.length > 0 && (
                 <div className="absolute mt-12 left-0 top-0 flex flex-col items-center gap-8">
                   <div className="text-xs font-medium text-muted-foreground mb-2">
                     Base Tier
@@ -273,82 +283,150 @@ export function SpellTierPopup({
                 </div>
               )}
 
-              {/* Branch Rows */}
-              <div className="ml-52">
-                {branchKeys.map((branchKey, branchIndex) => (
-                  <div
-                    key={branchKey}
-                    className="space-y-16 mb-12"
-                    style={{
-                      top: `${branchIndex * 160}px`,
-                      transform: `translateY(-${
-                        (branchKeys.length - 1) * 80
-                      }px)`
-                    }}
-                  >
-                    {/* Branch Header */}
-                    <div className="flex items-center gap-3 mb-6">
-                      <Button
-                        variant="outline_primary"
-                        className="w-10 h-10 rounded-full border-2 flex items-center justify-center"
-                      >
-                        <span className="text-white font-bold text-base">
-                          {branchKey}
-                        </span>
-                      </Button>
-                    </div>
-
-                    {/* Tier Progression for this branch */}
-                    <div className="flex items-center gap-4">
-                      {branches[branchKey].map((spell, index) => (
-                        <div key={spell.tier} className="flex items-center">
-                          {/* Tier Node */}
+              {/* For linear progressions: Horizontal tier progression */}
+              {!hasBranches && baseTiers.length > 1 && (
+                <div className="flex flex-col items-center gap-6">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Tier Progression
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {baseTiers.map((spell, index) => (
+                      <div key={spell.tier} className="flex items-center">
+                        {/* Tier Node */}
+                        <div
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleTierSelect(spell);
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className={`relative group transition-all duration-200 cursor-pointer ${
+                            spell.tier === selectedSpell.tier
+                              ? "scale-110"
+                              : "hover:scale-105"
+                          }`}
+                        >
+                          {/* Spell Image */}
                           <div
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleTierSelect(spell);
-                            }}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            className={`relative group transition-all duration-200 cursor-pointer ${
+                            className={`w-28 h-44 rounded-md overflow-hidden border-2 ${
                               spell.tier === selectedSpell.tier
-                                ? "scale-110"
-                                : "hover:scale-105"
+                                ? "border-primary shadow-lg"
+                                : "border-border hover:border-primary/50"
                             }`}
                           >
-                            {/* Spell Image */}
-                            <div
-                              className={`w-28 h-44 rounded-md overflow-hidden border-2 ${
-                                spell.tier === selectedSpell.tier
-                                  ? "border-primary shadow-lg"
-                                  : "border-border hover:border-primary/50"
-                              }`}
-                            >
-                              <SpellImage
-                                spell={spell}
-                                className="w-full h-full"
-                              />
-                            </div>
-
-                            {/* Tooltip on hover */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                              {`${spell.name} - ${spell.tier}`}
-                            </div>
+                            <SpellImage
+                              spell={spell}
+                              className="w-full h-full"
+                            />
                           </div>
 
-                          {/* Arrow to next tier in same branch */}
-                          {index < branches[branchKey].length - 1 && (
-                            <ArrowRight className="w-5 h-5 text-muted-foreground mx-3" />
-                          )}
+                          {/* Tier Number Badge */}
+                          <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
+                            {spell.tier}
+                          </div>
+
+                          {/* Tooltip on hover */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                            {`${spell.name} - ${spell.tier}`}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+
+                        {/* Arrow to next tier */}
+                        {index < baseTiers.length - 1 && (
+                          <ArrowRight className="w-5 h-5 text-muted-foreground mx-3" />
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Branch Rows (for branching spells) */}
+              {hasBranches && (
+                <div className="ml-52">
+                  {branchKeys.map((branchKey, branchIndex) => (
+                    <div
+                      key={branchKey}
+                      className="space-y-16 mb-12"
+                      style={{
+                        top: `${branchIndex * 160}px`,
+                        transform: `translateY(-${
+                          (branchKeys.length - 1) * 80
+                        }px)`
+                      }}
+                    >
+                      {/* Branch Header */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <Button
+                          variant="outline_primary"
+                          className="w-10 h-10 border-2 flex items-center justify-center"
+                        >
+                          <span className="text-white font-bold text-base">
+                            {branchKey}
+                          </span>
+                        </Button>
+                      </div>
+
+                      {/* Tier Progression for this branch */}
+                      <div className="flex items-center gap-4">
+                        {branches[branchKey].map((spell, index) => (
+                          <div key={spell.tier} className="flex items-center">
+                            {/* Tier Node */}
+                            <div
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleTierSelect(spell);
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }}
+                              className={`relative group transition-all duration-200 cursor-pointer ${
+                                spell.tier === selectedSpell.tier
+                                  ? "scale-110"
+                                  : "hover:scale-105"
+                              }`}
+                            >
+                              {/* Spell Image */}
+                              <div
+                                className={`w-28 h-44 rounded-md overflow-hidden border-2 ${
+                                  spell.tier === selectedSpell.tier
+                                    ? "border-primary shadow-lg"
+                                    : "border-border hover:border-primary/50"
+                                }`}
+                              >
+                                <SpellImage
+                                  spell={spell}
+                                  className="w-full h-full"
+                                />
+                              </div>
+
+                              {/* Tier Number Badge */}
+                              <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
+                                {spell.tier}
+                              </div>
+
+                              {/* Tooltip on hover */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                                {`${spell.name} - ${spell.tier}`}
+                              </div>
+                            </div>
+
+                            {/* Arrow to next tier in same branch */}
+                            {index < branches[branchKey].length - 1 && (
+                              <ArrowRight className="w-5 h-5 text-muted-foreground mx-3" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

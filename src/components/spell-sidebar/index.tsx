@@ -1,10 +1,18 @@
-import { useRef, useState, type MutableRefObject } from "react";
+import {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  memo,
+  type MutableRefObject
+} from "react";
 import type { Spell } from "@/lib/types";
 import { SpellList } from "./spell-list";
 import { SpellQuantityPopup } from "./spell-quantity-popup";
 import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
 import { useSpellFilter } from "../shared/use-spell-filter";
 import { SpellSearchBar } from "../shared/spell-search-bar";
+import { Progress } from "@/components/ui/progress";
 
 interface SpellSidebarProps {
   currentDeck: {
@@ -13,7 +21,10 @@ interface SpellSidebarProps {
   onAddSpell: (spell: Spell, quantity: number) => void;
 }
 
-export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
+export const SpellSidebar = memo(function SpellSidebar({
+  currentDeck,
+  onAddSpell
+}: SpellSidebarProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -28,17 +39,38 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
   const selectedCardRef = useRef<HTMLElement | null>(
     null
   ) as MutableRefObject<HTMLElement | null>;
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
-  const handleSpellClick = (spell: Spell, event: React.MouseEvent) => {
-    selectedCardRef.current = event.currentTarget as HTMLElement;
-    setSelectedSpell(spell);
-  };
+  // Animate loading progress
+  useEffect(() => {
+    if (loading) {
+      const interval = setInterval(() => {
+        setLoadingProgress((prev) => (prev >= 90 ? 0 : prev + 10));
+      }, 400);
+      return () => clearInterval(interval);
+    } else {
+      setLoadingProgress(100);
+    }
+  }, [loading]);
+
+  const handleSpellClick = useCallback(
+    (spell: Spell, event: React.MouseEvent) => {
+      selectedCardRef.current = event.currentTarget as HTMLElement;
+      setSelectedSpell(spell);
+    },
+    []
+  );
+
+  const handleCloseQuantityPopup = useCallback(() => {
+    setSelectedSpell(null);
+  }, []);
 
   if (loading) {
     return (
       <div className="bg-card p-4 w-full">
-        <div className="flex items-center justify-center h-32">
-          <div className="text-muted-foreground">Loading spells...</div>
+        <div className="flex flex-col items-center justify-center h-32 gap-2">
+          <Progress value={loadingProgress} className="w-[60%]" />
+          <div className="text-xs text-muted-foreground">Loading spells...</div>
         </div>
       </div>
     );
@@ -77,7 +109,7 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
         <SpellQuantityPopup
           spell={selectedSpell}
           triggerRef={selectedCardRef}
-          onClose={() => setSelectedSpell(null)}
+          onClose={handleCloseQuantityPopup}
           onAddSpell={onAddSpell}
           availableSlots={64 - currentDeck.spells.length}
         />
@@ -92,4 +124,4 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
       </div>
     </div>
   );
-}
+});

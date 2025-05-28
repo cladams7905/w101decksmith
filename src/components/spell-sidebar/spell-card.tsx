@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger
 } from "@/components/ui/tooltip";
-import SpellTooltip from "@/components/spell-tooltip";
+import SpellTooltip from "@/components/shared/spell-tooltip";
 import { SpellTierPopup } from "./spell-tier-popup";
 import type { Spell } from "@/lib/types";
 import { getSpellImageUrl, getSpellPipDisplay } from "@/lib/spell-utils";
@@ -19,7 +19,59 @@ interface SpellCardProps {
   onTierSelect?: (spell: Spell) => void; // Optional: callback when tier is selected
 }
 
-export function SpellCard({
+// Get CSS color values for the school - move outside component
+const getSchoolCSSColor = (color: string) => {
+  const colorMap: Record<
+    string,
+    { border: string; bg: string; hover: string; active: string }
+  > = {
+    red: {
+      border: "rgb(239 68 68 / 0.6)",
+      bg: "rgb(127 29 29 / 0.1)",
+      hover: "rgb(248 113 113)",
+      active: "rgb(252 165 165)"
+    },
+    blue: {
+      border: "rgb(59 130 246 / 0.6)",
+      bg: "rgb(30 58 138 / 0.1)",
+      hover: "rgb(96 165 250)",
+      active: "rgb(147 197 253)"
+    },
+    purple: {
+      border: "rgb(147 51 234 / 0.6)",
+      bg: "rgb(88 28 135 / 0.1)",
+      hover: "rgb(168 85 247)",
+      active: "rgb(196 181 253)"
+    },
+    green: {
+      border: "rgb(34 197 94 / 0.6)",
+      bg: "rgb(20 83 45 / 0.1)",
+      hover: "rgb(74 222 128)",
+      active: "rgb(134 239 172)"
+    },
+    gray: {
+      border: "rgb(107 114 128 / 0.6)",
+      bg: "rgb(55 65 81 / 0.1)",
+      hover: "rgb(156 163 175)",
+      active: "rgb(209 213 219)"
+    },
+    yellow: {
+      border: "rgb(234 179 8 / 0.6)",
+      bg: "rgb(133 77 14 / 0.1)",
+      hover: "rgb(250 204 21)",
+      active: "rgb(254 240 138)"
+    },
+    orange: {
+      border: "rgb(249 115 22 / 0.6)",
+      bg: "rgb(154 52 18 / 0.1)",
+      hover: "rgb(251 146 60)",
+      active: "rgb(253 186 116)"
+    }
+  };
+  return colorMap[color] || colorMap.gray;
+};
+
+export const SpellCard = memo(function SpellCard({
   spell,
   spellGroup,
   schoolColor,
@@ -39,75 +91,32 @@ export function SpellCard({
     setImageError(false);
   }, [spell]);
 
-  const handleTierButtonClick = () => {
+  // Memoize handlers
+  const handleTierButtonClick = useCallback(() => {
     setIsTierPopupOpen(true);
-  };
+  }, []);
 
-  const handleTierSelect = (selectedSpell: Spell) => {
-    setCurrentSpell(selectedSpell);
-    onTierSelect?.(selectedSpell);
-    // Don't close the popup here - let the popup handle its own closing
-  };
+  const handleTierSelect = useCallback(
+    (selectedSpell: Spell) => {
+      setCurrentSpell(selectedSpell);
+      onTierSelect?.(selectedSpell);
+    },
+    [onTierSelect]
+  );
 
-  const handleTierPopupClose = () => {
+  const handleTierPopupClose = useCallback(() => {
     setIsTierPopupOpen(false);
-  };
+  }, []);
 
-  const imageUrl = getSpellImageUrl(currentSpell);
-
-  // Get CSS color values for the school
-  const getSchoolCSSColor = (color: string) => {
-    const colorMap: Record<
-      string,
-      { border: string; bg: string; hover: string; active: string }
-    > = {
-      red: {
-        border: "rgb(239 68 68 / 0.6)",
-        bg: "rgb(127 29 29 / 0.1)",
-        hover: "rgb(248 113 113)",
-        active: "rgb(252 165 165)"
-      },
-      blue: {
-        border: "rgb(59 130 246 / 0.6)",
-        bg: "rgb(30 58 138 / 0.1)",
-        hover: "rgb(96 165 250)",
-        active: "rgb(147 197 253)"
-      },
-      purple: {
-        border: "rgb(147 51 234 / 0.6)",
-        bg: "rgb(88 28 135 / 0.1)",
-        hover: "rgb(168 85 247)",
-        active: "rgb(196 181 253)"
-      },
-      green: {
-        border: "rgb(34 197 94 / 0.6)",
-        bg: "rgb(20 83 45 / 0.1)",
-        hover: "rgb(74 222 128)",
-        active: "rgb(134 239 172)"
-      },
-      gray: {
-        border: "rgb(107 114 128 / 0.6)",
-        bg: "rgb(55 65 81 / 0.1)",
-        hover: "rgb(156 163 175)",
-        active: "rgb(209 213 219)"
-      },
-      yellow: {
-        border: "rgb(234 179 8 / 0.6)",
-        bg: "rgb(133 77 14 / 0.1)",
-        hover: "rgb(250 204 21)",
-        active: "rgb(254 240 138)"
-      },
-      orange: {
-        border: "rgb(249 115 22 / 0.6)",
-        bg: "rgb(154 52 18 / 0.1)",
-        hover: "rgb(251 146 60)",
-        active: "rgb(253 186 116)"
-      }
-    };
-    return colorMap[color] || colorMap.gray;
-  };
-
-  const schoolColors = getSchoolCSSColor(schoolColor);
+  // Memoize computed values
+  const imageUrl = useMemo(
+    () => getSpellImageUrl(currentSpell),
+    [currentSpell]
+  );
+  const schoolColors = useMemo(
+    () => getSchoolCSSColor(schoolColor),
+    [schoolColor]
+  );
 
   // Preload image to track loading state
   useEffect(() => {
@@ -270,4 +279,4 @@ export function SpellCard({
       )}
     </>
   );
-}
+});

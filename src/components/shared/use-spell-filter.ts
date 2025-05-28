@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Spell } from "@/lib/types";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
 
@@ -38,25 +38,41 @@ export function useSpellFilter(): UseSpellFilterReturn {
     }
   }, [spellCategories, categoryFilters]);
 
-  const getFilteredSpells = useCallback(() => {
-    return spellCategories
-      .filter((category) => categoryFilters[category.id])
+  // Memoize the filtered categories to avoid unnecessary filtering
+  const filteredCategories = useMemo(() => {
+    return spellCategories.filter((category) => categoryFilters[category.id]);
+  }, [spellCategories, categoryFilters]);
+
+  // Memoize the search term processing
+  const searchTerms = useMemo(() => {
+    const terms = searchQuery.toLowerCase().trim().split(/\s+/);
+    return terms.filter((term) => term.length > 0);
+  }, [searchQuery]);
+
+  // Memoize the spell filtering function
+  const filterSpell = useCallback(
+    (spell: Spell): boolean => {
+      if (searchTerms.length === 0) return true;
+
+      const name = spell.name.toLowerCase();
+      const description = spell.description?.toLowerCase() || "";
+
+      return searchTerms.every(
+        (term) => name.includes(term) || description.includes(term)
+      );
+    },
+    [searchTerms]
+  );
+
+  // Memoize the final filtered spells
+  const filteredSpells = useMemo(() => {
+    return filteredCategories
       .map((category) => ({
         ...category,
-        spells: category.spells.filter(
-          (spell: Spell) =>
-            spell.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            spell.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        spells: category.spells.filter(filterSpell)
       }))
       .filter((category) => category.spells.length > 0);
-  }, [spellCategories, categoryFilters, searchQuery]);
-
-  const [filteredSpells, setFilteredSpells] = useState(getFilteredSpells());
-
-  useEffect(() => {
-    setFilteredSpells(getFilteredSpells());
-  }, [categoryFilters, searchQuery, getFilteredSpells]);
+  }, [filteredCategories, filterSpell]);
 
   return {
     searchQuery,

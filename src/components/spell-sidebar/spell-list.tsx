@@ -2,6 +2,7 @@ import type { Spell } from "@/lib/types";
 import { Accordion } from "@/components/ui/accordion";
 import { SpellSchoolAccordion } from "./spell-school-accordion";
 import { useSpellSorting } from "./use-spell-sorting";
+import { memo } from "react";
 
 interface SpellListProps {
   filteredSpells: {
@@ -13,7 +14,10 @@ interface SpellListProps {
   onSpellClick: (spell: Spell, event: React.MouseEvent) => void;
 }
 
-export function SpellList({ filteredSpells, onSpellClick }: SpellListProps) {
+export const SpellList = memo(function SpellList({
+  filteredSpells,
+  onSpellClick
+}: SpellListProps) {
   const { schoolSortOptions, toggleSchoolSort, getSortedSpells } =
     useSpellSorting();
 
@@ -34,4 +38,4 @@ export function SpellList({ filteredSpells, onSpellClick }: SpellListProps) {
       ))}
     </Accordion>
   );
-}
+});
