@@ -1,6 +1,6 @@
 import type { Spell } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Edit, Plus, ImageIcon } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -12,10 +12,11 @@ import {
   getSchoolColor,
   groupSpellsByName
 } from "@/lib/spell-utils";
-import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
 import { SpellTierPopup } from "@/components/spell-sidebar/spell-tier-popup";
 import { gridLogger } from "@/lib/logger";
+import { SpellImage } from "./spell-image";
 
 interface DeckGridSlotProps {
   spell: Spell | null;
@@ -41,15 +42,9 @@ export const DeckGridSlot = memo(
     onMouseEnter,
     onReplaceSpell
   }: DeckGridSlotProps) {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [imageError, setImageError] = useState(false);
     const [isTierPopupOpen, setIsTierPopupOpen] = useState(false);
     const [currentSelectedSpell, setCurrentSelectedSpell] =
       useState<Spell | null>(null);
-
-    // Use refs to track previous values and prevent unnecessary effects
-    const prevSpellRef = useRef<Spell | null>(null);
-    const prevImageUrlRef = useRef<string | null>(null);
 
     const { spellCategories } = useSpellsData();
 
@@ -58,6 +53,12 @@ export const DeckGridSlot = memo(
       () => (spell ? getSpellImageUrl(spell) : null),
       [spell]
     );
+
+    // Stable spell image component that never changes during drag
+    const stableSpellImage = useMemo(() => {
+      if (!spell || !imageUrl) return null;
+      return <SpellImage spell={spell} imageUrl={imageUrl} />;
+    }, [spell, imageUrl]);
 
     const schoolColor = useMemo(
       () => (spell ? getSchoolColor(spell) : "gray"),
@@ -170,63 +171,6 @@ export const DeckGridSlot = memo(
       [onMouseDown, index]
     );
 
-    // Optimized image preloading - only run when spell or imageUrl actually changes
-    useEffect(() => {
-      if (imageUrl && spell) {
-        // Only skip if we're dealing with the exact same spell and imageUrl as before
-        const isSameSpellAndImage =
-          prevSpellRef.current === spell &&
-          prevImageUrlRef.current === imageUrl &&
-          imageLoaded; // Don't skip if image hasn't loaded yet
-
-        if (isSameSpellAndImage) {
-          return; // Skip if same spell, imageUrl, and already loaded
-        }
-
-        // Update refs
-        prevSpellRef.current = spell;
-        prevImageUrlRef.current = imageUrl;
-
-        // Reset states only when actually needed
-        setImageLoaded(false);
-        setImageError(false);
-
-        const img = new Image();
-
-        // Add a timeout to catch cases where neither onload nor onerror fires
-        const timeout = setTimeout(() => {
-          setImageError(true);
-        }, 10000); // 10 second timeout
-
-        img.onload = () => {
-          clearTimeout(timeout);
-          setImageLoaded(true);
-          setImageError(false);
-        };
-
-        img.onerror = () => {
-          clearTimeout(timeout);
-          setImageLoaded(false);
-          setImageError(true);
-        };
-
-        img.src = imageUrl;
-
-        // Cleanup function
-        return () => {
-          clearTimeout(timeout);
-          img.onload = null;
-          img.onerror = null;
-        };
-      } else {
-        // No image URL, reset states
-        prevSpellRef.current = spell;
-        prevImageUrlRef.current = imageUrl;
-        setImageLoaded(false);
-        setImageError(false);
-      }
-    }, [imageUrl, spell, imageLoaded]); // Added imageLoaded to dependencies
-
     // Memoize the tooltip content to prevent recreation during drag
     const tooltipContent = useMemo(() => {
       if (!spell || !spellGroup || !schoolColors) return null;
@@ -267,44 +211,7 @@ export const DeckGridSlot = memo(
           }}
         >
           <CardContent className="p-0 h-full w-full relative overflow-hidden">
-            {/* Spell Image */}
-            {imageLoaded && !imageError && imageUrl && (
-              <div
-                className="absolute inset-0 w-full h-full flex items-center justify-center rounded-lg"
-                style={{
-                  backgroundImage: `url("${imageUrl}")`,
-                  backgroundSize: "175%",
-                  backgroundPosition: "center 35%",
-                  backgroundRepeat: "no-repeat"
-                }}
-              />
-            )}
-
-            {/* Fallback background when no image or error */}
-            {(!imageLoaded || imageError || !imageUrl) &&
-              !(!imageLoaded && !imageError && imageUrl) && (
-                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <ImageIcon className="w-6 h-6 mb-1" />
-                    <span className="text-[8px] text-center px-1 leading-tight">
-                      {spell.name}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-            {/* Loading animation */}
-            {!imageLoaded && !imageError && imageUrl && (
-              <div className="absolute inset-0 gradient-special animate-pulse">
-                <div
-                  className="absolute inset-0 gradient-special animate-shimmer"
-                  style={{
-                    backgroundSize: "200% 100%",
-                    animation: "shimmer 1.5s infinite"
-                  }}
-                />
-              </div>
-            )}
+            {stableSpellImage}
 
             {/* Hover edit overlay - hidden during drag to prevent flicker */}
             {!isDragging && (
@@ -312,21 +219,6 @@ export const DeckGridSlot = memo(
                 <Edit className="h-4 w-4 text-white" />
               </div>
             )}
-
-            {/* CSS for shimmer animation */}
-            <style jsx>{`
-              @keyframes shimmer {
-                0% {
-                  transform: translateX(-100%);
-                }
-                100% {
-                  transform: translateX(100%);
-                }
-              }
-              .animate-shimmer {
-                animation: shimmer 1.5s infinite;
-              }
-            `}</style>
           </CardContent>
         </Card>
       );
@@ -411,17 +303,21 @@ export const DeckGridSlot = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Custom comparison function to prevent rerenders during drag when only isDragging changes
-    // Only rerender if spell, index, or isSelected changes
+    // Prevent ALL rerenders during drag operations except for spell changes
+    if (nextProps.isDragging || prevProps.isDragging) {
+      // During drag, only rerender if spell actually changes
+      return (
+        prevProps.spell === nextProps.spell &&
+        prevProps.index === nextProps.index
+      );
+    }
+
+    // When not dragging, allow normal comparison
     return (
       prevProps.spell === nextProps.spell &&
       prevProps.index === nextProps.index &&
       prevProps.isSelected === nextProps.isSelected &&
-      // Only check isDragging if it's a meaningful change (false to true or true to false)
-      (prevProps.isDragging === nextProps.isDragging ||
-        // Allow rerender when drag starts/ends but not during rapid updates
-        (!prevProps.isDragging && nextProps.isDragging) ||
-        (prevProps.isDragging && !nextProps.isDragging))
+      prevProps.isDragging === nextProps.isDragging
     );
   }
 );

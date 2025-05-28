@@ -179,7 +179,7 @@ const DeckGrid = memo(function DeckGrid({
 
   const {
     selectedSlots,
-    shouldDisableTooltips,
+    isDragging,
     handleMouseDown,
     handleMouseEnter,
     handleMouseUp,
@@ -188,6 +188,7 @@ const DeckGrid = memo(function DeckGrid({
 
   // Memoize drag completion handler
   const handleDragComplete = useCallback(() => {
+    // Show popup if we have selected slots after drag
     if (selectedSlots.size > 0) {
       // Check if we have any filled slots in the selection
       const selectedSlotIndices = Array.from(selectedSlots);
@@ -211,13 +212,17 @@ const DeckGrid = memo(function DeckGrid({
       // If only empty slots, it's an add operation
       setIsReplacing(hasFilledSlots && !hasEmptySlots);
     }
-  }, [selectedSlots, setPopupPosition, setActiveSlot, setIsReplacing, grid]);
+  }, [selectedSlots, grid, setPopupPosition, setActiveSlot, setIsReplacing]);
 
   // Memoize global mouse up handler
   const handleGlobalMouseUp = useCallback(() => {
-    handleMouseUp();
-    handleDragComplete();
-  }, [handleMouseUp, handleDragComplete]);
+    if (isDragging) {
+      const wasDrag = handleMouseUp();
+      if (wasDrag) {
+        handleDragComplete();
+      }
+    }
+  }, [isDragging, handleMouseUp, handleDragComplete]);
 
   // Add global mouse up listener for drag selection
   useEffect(() => {
@@ -228,17 +233,50 @@ const DeckGrid = memo(function DeckGrid({
   // Memoize single slot click handler
   const handleSlotClick = useCallback(
     (index: number, event: React.MouseEvent) => {
-      if (selectedSlots.size === 0) {
-        // Normal single slot operation
-        if (grid[index]) {
-          handleFilledSlotClick(index, event);
-        } else {
-          handleEmptySlotClick(index, event);
+      // If we have existing selections, clicking should either:
+      // 1. If clicking on a selected slot, deselect all
+      // 2. If clicking on an unselected slot, deselect all
+      if (selectedSlots.size > 0) {
+        clearSelection();
+        return;
+      }
+
+      // Normal single slot operation when no selections exist
+      if (grid[index]) {
+        handleFilledSlotClick(index, event);
+      } else {
+        handleEmptySlotClick(index, event);
+      }
+    },
+    [
+      selectedSlots.size,
+      grid,
+      handleFilledSlotClick,
+      handleEmptySlotClick,
+      clearSelection
+    ]
+  );
+
+  // Handle clicking outside to clear selection
+  const handleOutsideClick = useCallback(
+    (event: MouseEvent) => {
+      // Only clear if we have selections and it's not a drag operation
+      if (selectedSlots.size > 0 && !isDragging) {
+        const target = event.target as Element;
+        // Check if click is outside the deck grid
+        if (!target.closest(".deck-grid")) {
+          clearSelection();
         }
       }
     },
-    [selectedSlots.size, grid, handleFilledSlotClick, handleEmptySlotClick]
+    [selectedSlots.size, isDragging, clearSelection]
   );
+
+  // Add outside click listener
+  useEffect(() => {
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, [handleOutsideClick]);
 
   // Memoize spell selection handler
   const handleSpellSelection = useCallback(
@@ -303,27 +341,39 @@ const DeckGrid = memo(function DeckGrid({
   );
 
   // Memoized slot component to prevent unnecessary rerenders
-  const MemoizedSlot = memo(function MemoizedSlot({
-    spell,
-    index
-  }: {
-    spell: Spell | null;
-    index: number;
-  }) {
-    return (
-      <DeckGridSlot
-        spell={spell}
-        index={index}
-        isSelected={selectedSlots.has(index)}
-        isDragging={shouldDisableTooltips}
-        onEmptySlotClick={handleSlotClick}
-        onFilledSlotClick={handleSlotClick}
-        onMouseDown={handleMouseDown}
-        onMouseEnter={handleMouseEnter}
-        onReplaceSpell={onReplaceSpell}
-      />
-    );
-  });
+  const MemoizedSlot = memo(
+    function MemoizedSlot({
+      spell,
+      index,
+      isSelected
+    }: {
+      spell: Spell | null;
+      index: number;
+      isSelected: boolean;
+    }) {
+      return (
+        <DeckGridSlot
+          spell={spell}
+          index={index}
+          isSelected={isSelected}
+          isDragging={isDragging}
+          onEmptySlotClick={handleSlotClick}
+          onFilledSlotClick={handleSlotClick}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={handleMouseEnter}
+          onReplaceSpell={onReplaceSpell}
+        />
+      );
+    },
+    (prevProps, nextProps) => {
+      // Only rerender if spell or selection state actually changes
+      return (
+        prevProps.spell === nextProps.spell &&
+        prevProps.index === nextProps.index &&
+        prevProps.isSelected === nextProps.isSelected
+      );
+    }
+  );
 
   return (
     <div className="w-full pb-4 mb-12">
@@ -335,7 +385,11 @@ const DeckGrid = memo(function DeckGrid({
           >
             {grid.map((spell, index) => (
               <div key={`slot-${index}-${spell?.name || "empty"}`}>
-                <MemoizedSlot spell={spell} index={index} />
+                <MemoizedSlot
+                  spell={spell}
+                  index={index}
+                  isSelected={selectedSlots.has(index)}
+                />
               </div>
             ))}
           </div>
