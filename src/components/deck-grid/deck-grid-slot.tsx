@@ -21,6 +21,7 @@ interface DeckGridSlotProps {
   spell: Spell | null;
   index: number;
   isSelected: boolean;
+  isDragging: boolean;
   onEmptySlotClick: (index: number, event: React.MouseEvent) => void;
   onFilledSlotClick: (index: number, event: React.MouseEvent) => void;
   onMouseDown: (index: number, event: React.MouseEvent) => void;
@@ -32,6 +33,7 @@ export function DeckGridSlot({
   spell,
   index,
   isSelected,
+  isDragging,
   onEmptySlotClick,
   onFilledSlotClick,
   onMouseDown,
@@ -177,108 +179,114 @@ export function DeckGridSlot({
   }`;
 
   if (spell) {
+    const cardElement = (
+      <Card
+        className={`${baseClasses} group py-0 p-1 rounded-lg overflow-hidden transition-colors duration-200`}
+        onClick={handleClick}
+        onMouseDown={(e) => onMouseDown(index, e)}
+        onMouseEnter={() => onMouseEnter(index)}
+        style={{
+          minWidth: 0,
+          minHeight: 0,
+          borderWidth: "2px",
+          borderColor: schoolColors?.border || "rgb(107 114 128 / 0.6)",
+          backgroundColor: schoolColors?.bg || "rgb(55 65 81 / 0.2)"
+        }}
+        onMouseOver={(e) => {
+          if (schoolColors) {
+            e.currentTarget.style.borderColor = schoolColors.hover;
+          }
+        }}
+        onMouseOut={(e) => {
+          if (schoolColors) {
+            e.currentTarget.style.borderColor = schoolColors.border;
+          }
+        }}
+      >
+        <CardContent className="p-0 h-full w-full relative overflow-hidden">
+          {/* Spell Image */}
+          {imageLoaded && !imageError && imageUrl && (
+            <div
+              className="absolute inset-0 w-full h-full flex items-center justify-center rounded-lg"
+              style={{
+                backgroundImage: `url("${imageUrl}")`,
+                backgroundSize: "175%",
+                backgroundPosition: "center 35%",
+                backgroundRepeat: "no-repeat"
+              }}
+            />
+          )}
+
+          {/* Fallback background when no image or error */}
+          {(!imageLoaded || imageError || !imageUrl) &&
+            !(!imageLoaded && !imageError && imageUrl) && (
+              <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <ImageIcon className="w-6 h-6 mb-1" />
+                  <span className="text-[8px] text-center px-1 leading-tight">
+                    {spell.name}
+                  </span>
+                </div>
+              </div>
+            )}
+
+          {/* Loading animation */}
+          {!imageLoaded && !imageError && imageUrl && (
+            <div className="absolute inset-0 gradient-special animate-pulse">
+              <div
+                className="absolute inset-0 gradient-special animate-shimmer"
+                style={{
+                  backgroundSize: "200% 100%",
+                  animation: "shimmer 1.5s infinite"
+                }}
+              />
+            </div>
+          )}
+
+          {/* Hover edit overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+            <Edit className="h-4 w-4 text-white" />
+          </div>
+
+          {/* CSS for shimmer animation */}
+          <style jsx>{`
+            @keyframes shimmer {
+              0% {
+                transform: translateX(-100%);
+              }
+              100% {
+                transform: translateX(100%);
+              }
+            }
+            .animate-shimmer {
+              animation: shimmer 1.5s infinite;
+            }
+          `}</style>
+        </CardContent>
+      </Card>
+    );
+
     return (
       <>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Card
-              className={`${baseClasses} group py-0 p-1 rounded-lg overflow-hidden transition-colors duration-200`}
-              onClick={handleClick}
-              onMouseDown={(e) => onMouseDown(index, e)}
-              onMouseEnter={() => onMouseEnter(index)}
-              style={{
-                minWidth: 0,
-                minHeight: 0,
-                borderWidth: "2px",
-                borderColor: schoolColors?.border || "rgb(107 114 128 / 0.6)",
-                backgroundColor: schoolColors?.bg || "rgb(55 65 81 / 0.2)"
-              }}
-              onMouseOver={(e) => {
-                if (schoolColors) {
-                  e.currentTarget.style.borderColor = schoolColors.hover;
-                }
-              }}
-              onMouseOut={(e) => {
-                if (schoolColors) {
-                  e.currentTarget.style.borderColor = schoolColors.border;
-                }
-              }}
+        {!isDragging ? (
+          <Tooltip>
+            <TooltipTrigger asChild>{cardElement}</TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="center"
+              className="p-0 border-0 rounded-xl"
             >
-              <CardContent className="p-0 h-full w-full relative overflow-hidden">
-                {/* Spell Image */}
-                {imageLoaded && !imageError && imageUrl && (
-                  <div
-                    className="absolute inset-0 w-full h-full flex items-center justify-center rounded-lg"
-                    style={{
-                      backgroundImage: `url("${imageUrl}")`,
-                      backgroundSize: "175%",
-                      backgroundPosition: "center 35%",
-                      backgroundRepeat: "no-repeat"
-                    }}
-                  />
-                )}
-
-                {/* Fallback background when no image or error */}
-                {(!imageLoaded || imageError || !imageUrl) &&
-                  !(!imageLoaded && !imageError && imageUrl) && (
-                    <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <ImageIcon className="w-6 h-6 mb-1" />
-                        <span className="text-[8px] text-center px-1 leading-tight">
-                          {spell.name}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                {/* Loading animation */}
-                {!imageLoaded && !imageError && imageUrl && (
-                  <div className="absolute inset-0 gradient-special animate-pulse">
-                    <div
-                      className="absolute inset-0 gradient-special animate-shimmer"
-                      style={{
-                        backgroundSize: "200% 100%",
-                        animation: "shimmer 1.5s infinite"
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Hover edit overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                  <Edit className="h-4 w-4 text-white" />
-                </div>
-
-                {/* CSS for shimmer animation */}
-                <style jsx>{`
-                  @keyframes shimmer {
-                    0% {
-                      transform: translateX(-100%);
-                    }
-                    100% {
-                      transform: translateX(100%);
-                    }
-                  }
-                  .animate-shimmer {
-                    animation: shimmer 1.5s infinite;
-                  }
-                `}</style>
-              </CardContent>
-            </Card>
-          </TooltipTrigger>
-          <TooltipContent
-            side="top"
-            align="center"
-            className="p-0 border-0 rounded-xl"
-          >
-            <SpellTooltip
-              spell={spell}
-              spellGroup={spellGroup}
-              schoolColor={schoolColor}
-              onTierButtonClick={handleTierButtonClick}
-            />
-          </TooltipContent>
-        </Tooltip>
+              <SpellTooltip
+                spell={spell}
+                spellGroup={spellGroup}
+                schoolColor={schoolColor}
+                onTierButtonClick={handleTierButtonClick}
+              />
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          cardElement
+        )}
 
         {/* Tier Selection Popup - Rendered outside tooltip */}
         {spellGroup && spellGroup.length > 1 && currentSelectedSpell && (

@@ -160,6 +160,7 @@ export default function DeckGrid({
 
   const {
     selectedSlots,
+    shouldDisableTooltips,
     handleMouseDown,
     handleMouseEnter,
     handleMouseUp,
@@ -275,6 +276,7 @@ export default function DeckGrid({
                   spell={spell}
                   index={index}
                   isSelected={selectedSlots.has(index)}
+                  isDragging={shouldDisableTooltips}
                   onEmptySlotClick={handleSlotClick}
                   onFilledSlotClick={handleSlotClick}
                   onMouseDown={handleMouseDown}
