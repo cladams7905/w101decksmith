@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from "@/components/ui/popover";
-import { spellCategories } from "@/db/data";
+import { useSpellsData } from "@/lib/hooks/use-spells-data";
 
 interface SpellSearchBarProps {
   searchQuery: string;
@@ -24,6 +24,8 @@ export function SpellSearchBar({
   onCategoryFiltersChange,
   className = ""
 }: SpellSearchBarProps) {
+  const { spellCategories } = useSpellsData();
+
   // Count how many filters are active
   const activeFilterCount =
     Object.values(categoryFilters).filter(Boolean).length;

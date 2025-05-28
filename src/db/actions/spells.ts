@@ -1,15 +1,13 @@
-import { Database } from "../database.types";
-import { supabase } from "../supabase";
+"use server";
 
-export type Spell = Database["public"]["Tables"]["spells"]["Row"];
-export type SpellInsert = Database["public"]["Tables"]["spells"]["Insert"];
-export type SpellUpdate = Database["public"]["Tables"]["spells"]["Update"];
+import { supabase } from "../supabase";
+import { Spell, SpellInsert, SpellUpdate } from "@/lib/types";
 
 export async function getAllSpells(): Promise<Spell[]> {
   const { data, error } = await supabase.from("spells").select("*");
 
   if (error) throw error;
-  return data;
+  return data || [];
 }
 
 export async function getSpellByName(name: string): Promise<Spell> {

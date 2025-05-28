@@ -44,7 +44,9 @@ export default function SpellSearchPopup({
     setSearchQuery,
     categoryFilters,
     setCategoryFilters,
-    filteredSpells
+    filteredSpells,
+    loading,
+    error
   } = useSpellFilter();
 
   // Calculate filled and empty slots for better messaging
@@ -186,12 +188,22 @@ export default function SpellSearchPopup({
       )}
 
       <div className="overflow-y-auto flex-1">
-        <SpellList
-          filteredSpells={filteredSpells}
-          onSpellClick={(spell) =>
-            onSelectSpell(spell, isReplacing ? 1 : spellQuantity)
-          }
-        />
+        {loading ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-muted-foreground">Loading spells...</div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-red-500">Error: {error}</div>
+          </div>
+        ) : (
+          <SpellList
+            filteredSpells={filteredSpells}
+            onSpellClick={(spell) =>
+              onSelectSpell(spell, isReplacing ? 1 : spellQuantity)
+            }
+          />
+        )}
       </div>
     </div>
   );

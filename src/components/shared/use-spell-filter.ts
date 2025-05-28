@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import type { Spell } from "@/lib/types";
-import { spellCategories } from "@/db/data";
+import { useSpellsData } from "@/lib/hooks/use-spells-data";
 
 interface UseSpellFilterReturn {
   searchQuery: string;
@@ -13,18 +13,30 @@ interface UseSpellFilterReturn {
     color: string;
     spells: Spell[];
   }[];
+  loading: boolean;
+  error: string | null;
 }
 
 export function useSpellFilter(): UseSpellFilterReturn {
+  const { spellCategories, loading, error } = useSpellsData();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilters, setCategoryFilters] = useState<
     Record<string, boolean>
-  >(
-    spellCategories.reduce((acc, category) => {
-      acc[category.id] = true;
-      return acc;
-    }, {} as Record<string, boolean>)
-  );
+  >({});
+
+  // Initialize category filters when spell categories are loaded
+  useEffect(() => {
+    if (
+      spellCategories.length > 0 &&
+      Object.keys(categoryFilters).length === 0
+    ) {
+      const initialFilters = spellCategories.reduce((acc, category) => {
+        acc[category.id] = true;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setCategoryFilters(initialFilters);
+    }
+  }, [spellCategories, categoryFilters]);
 
   const getFilteredSpells = useCallback(() => {
     return spellCategories
@@ -34,11 +46,11 @@ export function useSpellFilter(): UseSpellFilterReturn {
         spells: category.spells.filter(
           (spell: Spell) =>
             spell.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            spell.description.toLowerCase().includes(searchQuery.toLowerCase())
+            spell.description?.toLowerCase().includes(searchQuery.toLowerCase())
         )
       }))
       .filter((category) => category.spells.length > 0);
-  }, [categoryFilters, searchQuery]);
+  }, [spellCategories, categoryFilters, searchQuery]);
 
   const [filteredSpells, setFilteredSpells] = useState(getFilteredSpells());
 
@@ -51,6 +63,8 @@ export function useSpellFilter(): UseSpellFilterReturn {
     setSearchQuery,
     categoryFilters,
     setCategoryFilters,
-    filteredSpells
+    filteredSpells,
+    loading,
+    error
   };
 }

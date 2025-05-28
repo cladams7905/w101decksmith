@@ -19,7 +19,9 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
     setSearchQuery,
     categoryFilters,
     setCategoryFilters,
-    filteredSpells
+    filteredSpells,
+    loading,
+    error
   } = useSpellFilter();
 
   const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null);
@@ -32,9 +34,28 @@ export function SpellSidebar({ currentDeck, onAddSpell }: SpellSidebarProps) {
     setSelectedSpell(spell);
   };
 
+  if (loading) {
+    return (
+      <div className="w-80 border-r border-border bg-card p-4">
+        <div className="flex items-center justify-center h-32">
+          <div className="text-muted-foreground">Loading spells...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-80 border-r border-border bg-card p-4">
+        <div className="flex items-center justify-center h-32">
+          <div className="text-red-500">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Spell Searching and Filtering */}
+    <div className="w-80 border-r border-border bg-card flex flex-col h-full">
       <SpellSearchBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

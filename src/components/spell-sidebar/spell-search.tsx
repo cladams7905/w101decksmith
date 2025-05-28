@@ -1,7 +1,7 @@
 import { Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { spellCategories } from "@/db/data";
+import { useSpellsData } from "@/lib/hooks/use-spells-data";
 import {
   Popover,
   PopoverContent,
@@ -29,15 +29,26 @@ export function SpellSearch({
   setSearchQuery,
   onFilterChange
 }: SpellSearchProps) {
+  const { spellCategories } = useSpellsData();
+
   // Category filter state
   const [categoryFilters, setCategoryFilters] = useState<
     Record<string, boolean>
-  >(
-    spellCategories.reduce((acc, category) => {
-      acc[category.id] = true;
-      return acc;
-    }, {} as Record<string, boolean>)
-  );
+  >({});
+
+  // Initialize category filters when spell categories are loaded
+  useEffect(() => {
+    if (
+      spellCategories.length > 0 &&
+      Object.keys(categoryFilters).length === 0
+    ) {
+      const initialFilters = spellCategories.reduce((acc, category) => {
+        acc[category.id] = true;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setCategoryFilters(initialFilters);
+    }
+  }, [spellCategories, categoryFilters]);
 
   const updateFilteredSpells = useCallback(
     (query: string, filters: Record<string, boolean>) => {
@@ -48,18 +59,20 @@ export function SpellSearch({
           spells: category.spells.filter(
             (spell: Spell) =>
               spell.name.toLowerCase().includes(query.toLowerCase()) ||
-              spell.description.toLowerCase().includes(query.toLowerCase())
+              spell.description?.toLowerCase().includes(query.toLowerCase())
           )
         }))
         .filter((category) => category.spells.length > 0);
 
       onFilterChange(filtered);
     },
-    [onFilterChange]
+    [onFilterChange, spellCategories]
   );
 
   useEffect(() => {
-    updateFilteredSpells(searchQuery, categoryFilters);
+    if (Object.keys(categoryFilters).length > 0) {
+      updateFilteredSpells(searchQuery, categoryFilters);
+    }
   }, [categoryFilters, searchQuery, updateFilteredSpells]);
 
   // Count how many filters are active

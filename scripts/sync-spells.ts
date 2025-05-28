@@ -1,7 +1,7 @@
 import { supabase } from "../src/db/supabase";
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
-import type { SpellInsert } from "../src/db/actions/spells";
+import type { SpellInsert } from "../src/lib/types";
 
 const WIKI_BASE_URL = "https://wiki.wizard101central.com";
 

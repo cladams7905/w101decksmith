@@ -1,5 +1,15 @@
 import { useState } from "react";
 import type { Spell } from "@/lib/types";
+import {
+  getSpellPips,
+  getSpellDamage,
+  getSpellDamageOverTime,
+  getSpellBuffPercentage,
+  getSpellDebuffPercentage,
+  getSpellHealing,
+  getSpellHealingOverTime,
+  getSpellPipsGained
+} from "@/lib/spell-utils";
 
 type SortOption = {
   by: "pips" | "utility" | "none";
@@ -36,16 +46,18 @@ export function useSpellSorting() {
 
     return [...spells].sort((a, b) => {
       if (sortOption.by === "pips") {
-        return sortOption.order === "asc" ? a.pips - b.pips : b.pips - a.pips;
+        const pipsA = getSpellPips(a);
+        const pipsB = getSpellPips(b);
+        return sortOption.order === "asc" ? pipsA - pipsB : pipsB - pipsA;
       } else if (sortOption.by === "utility") {
         const getUtilityType = (spell: Spell): number => {
-          if (spell.damage && spell.damage > 0) return 1;
-          if (spell.damageOverTime && spell.damageOverTime > 0) return 2;
-          if (spell.buffPercentage && spell.buffPercentage > 0) return 3;
-          if (spell.debuffPercentage && spell.debuffPercentage > 0) return 4;
-          if (spell.healing && spell.healing > 0) return 5;
-          if (spell.healingOverTime && spell.healingOverTime > 0) return 6;
-          if (spell.pipsGained && spell.pipsGained > 0) return 7;
+          if (getSpellDamage(spell) > 0) return 1;
+          if (getSpellDamageOverTime(spell) > 0) return 2;
+          if (getSpellBuffPercentage(spell) > 0) return 3;
+          if (getSpellDebuffPercentage(spell) > 0) return 4;
+          if (getSpellHealing(spell) > 0) return 5;
+          if (getSpellHealingOverTime(spell) > 0) return 6;
+          if (getSpellPipsGained(spell) > 0) return 7;
           return 8;
         };
 
