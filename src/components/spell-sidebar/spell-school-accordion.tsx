@@ -7,7 +7,12 @@ import {
 } from "@/components/ui/accordion";
 import { SpellCard } from "./spell-card";
 import { SpellSortButtons } from "./spell-sort-buttons";
-import { groupSpellsByName, getPrimarySpell } from "@/lib/spell-utils";
+import {
+  groupSpellsByName,
+  getPrimarySpell,
+  getSchoolIconPath
+} from "@/lib/spell-utils";
+import Image from "next/image";
 
 interface SpellSchoolAccordionProps {
   category: {
@@ -62,9 +67,12 @@ export function SpellSchoolAccordion({
       <div className="sticky top-0 z-20 bg-background pr-3 pl-2">
         <AccordionTrigger className="py-2 px-3 mb-2 bg-linear-to-br from-blue-900/40 border border-border rounded-lg">
           <div className="flex items-center gap-2">
-            <div
-              className={`w-3 h-3 rounded-full bg-${category.color}-500`}
-            ></div>
+            <Image
+              src={getSchoolIconPath(category.id)}
+              alt={category.name}
+              width={20}
+              height={20}
+            />
             <span>{category.name}</span>
           </div>
         </AccordionTrigger>

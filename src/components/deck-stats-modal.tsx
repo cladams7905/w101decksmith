@@ -28,8 +28,10 @@ import {
   getSpellPips,
   getSpellDamage,
   getSpellHealing,
-  getSpellHealingOverTime
+  getSpellHealingOverTime,
+  getSchoolIconPath
 } from "@/lib/spell-utils";
+import Image from "next/image";
 
 interface DeckStatsModalProps {
   deck: Deck;
@@ -388,12 +390,12 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{
-                          backgroundColor: schoolColors[school.school] || "#888"
-                        }}
-                      ></div>
+                      <Image
+                        src={getSchoolIconPath(school.school)}
+                        alt={school.school}
+                        width={20}
+                        height={20}
+                      />
                       <span>{school.school}</span>
                     </div>
                     <Badge variant="outline">

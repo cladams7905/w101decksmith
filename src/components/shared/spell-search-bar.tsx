@@ -8,6 +8,8 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
+import { getSchoolIconPath } from "@/lib/spell-utils";
+import Image from "next/image";
 
 interface SpellSearchBarProps {
   searchQuery: string;
@@ -109,9 +111,13 @@ export function SpellSearchBar({
                     htmlFor={`filter-${category.id}`}
                     className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    <div
-                      className={`w-3 h-3 rounded-full bg-${category.color}-500`}
-                    ></div>
+                    <Image
+                      src={getSchoolIconPath(category.name)}
+                      alt={category.name}
+                      width={20}
+                      height={20}
+                      className="w-3 h-3 rounded-full"
+                    />
                     {category.name}
                   </label>
                 </div>

@@ -207,7 +207,7 @@ export function SpellCard({
             )}
 
             {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b via-black/10 to-black/80 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/80 transition-all duration-200" />
+            <div className="absolute inset-0 bg-gradient-to-b via-black/20 to-black/90 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/80 transition-all duration-200" />
             <CardContent className="p-2 relative z-10 h-full flex flex-col">
               <div className="mt-auto flex justify-between items-end gap-1">
                 <div className="flex items-center gap-1 flex-1 min-w-0">
@@ -217,9 +217,8 @@ export function SpellCard({
                 </div>
                 <Badge
                   variant="outline"
-                  className="shrink-0 text-xs"
+                  className="shrink-0 text-xs bg-background"
                   style={{
-                    backgroundColor: schoolColors.bg,
                     borderColor: schoolColors.border,
                     color: "white"
                   }}

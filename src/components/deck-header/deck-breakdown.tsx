@@ -12,14 +12,19 @@ import type { Deck, Spell } from "@/lib/types";
 import { useState, useRef } from "react";
 import SpellSearchPopup from "@/components/deck-grid/spell-search-popup";
 import { uiLogger } from "@/lib/logger";
-import { getSpellPips } from "@/lib/spell-utils";
+import { getSpellPips, getSchoolIconPath } from "@/lib/spell-utils";
+import Image from "next/image";
 
 const POPUP_OFFSET = 260;
 
 interface DeckBreakdownProps {
   deck: Deck;
-  onReplaceSpells: (oldSpellId: string, newSpell: Spell) => void;
-  onDeleteSpells: (spellId: string) => void;
+  onReplaceSpells: (
+    spellsToReplace: Spell[],
+    newSpell: Spell,
+    quantity: number
+  ) => void;
+  onDeleteSpells: (spellsToDelete: Spell[]) => void;
 }
 
 export default function DeckBreakdown({
@@ -86,22 +91,6 @@ export default function DeckBreakdown({
 
   const schoolBreakdown = getSchoolBreakdown();
 
-  // Get the color for a school
-  const getSchoolColor = (school: string) => {
-    const schoolColors: Record<string, string> = {
-      fire: "red",
-      ice: "blue",
-      storm: "purple",
-      life: "green",
-      death: "gray",
-      myth: "yellow",
-      balance: "orange",
-      astral: "purple",
-      shadow: "gray"
-    };
-    return schoolColors[school] || "purple";
-  };
-
   // Calculate the percentage of each school
   const calculatePercentage = (count: number) => {
     return deck.spells.length > 0
@@ -152,7 +141,7 @@ export default function DeckBreakdown({
   // Handle delete spell click
   const handleDeleteSpell = (spell: Spell) => {
     uiLogger.info(`Deleting all instances of spell: ${spell.name}`);
-    onDeleteSpells(spell.name);
+    onDeleteSpells([spell]);
   };
 
   // Handle spell selection from popup
@@ -163,7 +152,7 @@ export default function DeckBreakdown({
       uiLogger.info(
         `Replacing all instances of "${activeSpell.name}" with "${newSpell.name}"`
       );
-      onReplaceSpells(activeSpell.name, newSpell);
+      onReplaceSpells([activeSpell], newSpell, quantity);
     }
     closePopup();
   };
@@ -174,7 +163,7 @@ export default function DeckBreakdown({
       uiLogger.info(
         `Deleting all instances of spell from popup: ${activeSpell.name}`
       );
-      onDeleteSpells(activeSpell.name);
+      onDeleteSpells([activeSpell]);
     }
     closePopup();
   };
@@ -210,13 +199,12 @@ export default function DeckBreakdown({
                       expandedSchools[school] ? "rotate-90" : ""
                     }`}
                   />
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      school === "shadow"
-                        ? "bg-gray-900"
-                        : `bg-${getSchoolColor(school)}-500`
-                    }`}
-                    aria-hidden="true"
+                  <Image
+                    src={getSchoolIconPath(school)}
+                    alt={school}
+                    width={20}
+                    height={20}
+                    className="h-3 w-3"
                   />
                   <span className="text-sm capitalize">{school}</span>
                   <Badge variant="outline" className="ml-1 text-xs">

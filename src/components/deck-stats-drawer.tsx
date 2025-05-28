@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -7,10 +8,8 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import type { Deck } from "@/lib/types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart,
   Bar,
@@ -18,18 +17,21 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip as RechartsTooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  Legend
 } from "recharts";
+import type { Deck } from "@/lib/types";
 import {
   getSpellPips,
   getSpellDamage,
   getSpellHealing,
-  getSpellHealingOverTime
+  getSpellHealingOverTime,
+  getSchoolIconPath
 } from "@/lib/spell-utils";
+import Image from "next/image";
 
 interface DeckStatsDrawerProps {
   deck: Deck;
@@ -449,12 +451,12 @@ export default function DeckStatsDrawer({ deck }: DeckStatsDrawerProps) {
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{
-                          backgroundColor: schoolColors[school.school] || "#888"
-                        }}
-                      ></div>
+                      <Image
+                        src={getSchoolIconPath(school.school)}
+                        alt={school.school}
+                        width={20}
+                        height={20}
+                      />
                       <span>{school.school}</span>
                     </div>
                     <Badge variant="outline">

@@ -71,6 +71,23 @@ export function getSchoolColor(spell: Spell): string {
   return schoolColors[school] || "gray";
 }
 
+// Helper function to get school icon path
+export function getSchoolIconPath(school: string): string {
+  const normalizedSchool = school.toLowerCase();
+  const iconMap: Record<string, string> = {
+    fire: "/school-icons/(Icon)_Fire_School.png",
+    ice: "/school-icons/(Icon)_Ice_School.png",
+    storm: "/school-icons/(Icon)_Storm_School.png",
+    life: "/school-icons/(Icon)_Life_School.png",
+    death: "/school-icons/(Icon)_Death_School.png",
+    myth: "/school-icons/(Icon)_Myth_School.png",
+    balance: "/school-icons/(Icon)_Balance_School.png",
+    astral: "/school-icons/(Icon)_Astral_School.png",
+    shadow: "/school-icons/(Icon)_Shadow.png"
+  };
+  return iconMap[normalizedSchool] || iconMap.balance;
+}
+
 // Helper function to generate Supabase storage URL for spell card images
 export function getSpellImageUrl(spell: Spell): string {
   const supabaseUrl = "https://rnsdsclvovqpgqdrvzmv.supabase.co";
