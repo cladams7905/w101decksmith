@@ -30,49 +30,24 @@ export function useDragSelection(): UseDragSelectionReturn {
   const initialSlotRef = useRef<number | null>(null);
   const lastDragSlotRef = useRef<number | null>(null);
 
-  // Helper function to get all slots between two positions (including diagonals)
+  // Helper function to get all slots between two positions (treating grid as continuous sequence)
   const getSlotsBetween = useCallback(
     (fromSlot: number, toSlot: number): number[] => {
-      if (fromSlot === toSlot) return [toSlot];
+      // Ensure we have the correct order (smallest to largest)
+      const startSlot = Math.min(fromSlot, toSlot);
+      const endSlot = Math.max(fromSlot, toSlot);
 
-      // Convert slot indices to grid coordinates (8x8 grid)
-      const fromRow = Math.floor(fromSlot / 8);
-      const fromCol = fromSlot % 8;
-      const toRow = Math.floor(toSlot / 8);
-      const toCol = toSlot % 8;
-
+      // Generate all slots in the range (inclusive)
       const slots: number[] = [];
-
-      // Calculate the number of steps needed
-      const rowDiff = toRow - fromRow;
-      const colDiff = toCol - fromCol;
-      const steps = Math.max(Math.abs(rowDiff), Math.abs(colDiff));
-
-      // If no steps needed, just return the target slot
-      if (steps === 0) return [toSlot];
-
-      // Calculate step increments
-      const rowStep = steps === 0 ? 0 : rowDiff / steps;
-      const colStep = steps === 0 ? 0 : colDiff / steps;
-
-      // Generate all slots along the path
-      for (let i = 0; i <= steps; i++) {
-        const currentRow = Math.round(fromRow + rowStep * i);
-        const currentCol = Math.round(fromCol + colStep * i);
-
-        // Ensure we stay within grid bounds
-        if (
-          currentRow >= 0 &&
-          currentRow < 8 &&
-          currentCol >= 0 &&
-          currentCol < 8
-        ) {
-          const slotIndex = currentRow * 8 + currentCol;
-          if (!slots.includes(slotIndex)) {
-            slots.push(slotIndex);
-          }
-        }
+      for (let i = startSlot; i <= endSlot; i++) {
+        slots.push(i);
       }
+
+      console.log(
+        `🔥 Range selection: slots ${startSlot} to ${endSlot} = [${slots.join(
+          ", "
+        )}]`
+      );
 
       return slots;
     },
