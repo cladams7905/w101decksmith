@@ -374,6 +374,7 @@ const DeckGrid = memo(function DeckGrid({
                   index={index}
                   isSelected={selectedStates[index]}
                   isDragging={isDragging}
+                  isPopupOpen={activeSlot !== null}
                   onEmptySlotClick={stableCallbacks.onEmptySlotClick}
                   onFilledSlotClick={stableCallbacks.onFilledSlotClick}
                   onMouseDown={stableCallbacks.onMouseDown}

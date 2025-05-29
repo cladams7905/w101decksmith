@@ -23,6 +23,7 @@ interface DeckGridSlotProps {
   index: number;
   isSelected: boolean;
   isDragging: boolean;
+  isPopupOpen: boolean;
   onEmptySlotClick: (index: number, event: React.MouseEvent) => void;
   onFilledSlotClick: (index: number, event: React.MouseEvent) => void;
   onMouseDown: (index: number, event: React.MouseEvent) => void;
@@ -36,6 +37,7 @@ export const DeckGridSlot = memo(
     index,
     isSelected,
     isDragging,
+    isPopupOpen,
     onEmptySlotClick,
     onFilledSlotClick,
     onMouseDown,
@@ -234,7 +236,7 @@ export const DeckGridSlot = memo(
 
       return (
         <>
-          {!isDragging ? (
+          {!isDragging && !isPopupOpen ? (
             <Tooltip>
               <TooltipTrigger asChild>{cardElement}</TooltipTrigger>
               <TooltipContent
@@ -317,6 +319,7 @@ export const DeckGridSlot = memo(
     const indexSame = prevProps.index === nextProps.index;
     const selectedSame = prevProps.isSelected === nextProps.isSelected;
     const draggingSame = prevProps.isDragging === nextProps.isDragging;
+    const popupSame = prevProps.isPopupOpen === nextProps.isPopupOpen;
 
     // Core principle: Only rerender if something VISUALLY meaningful changed
     // that would actually affect the rendered output
@@ -331,17 +334,17 @@ export const DeckGridSlot = memo(
       return false; // Allow rerender
     }
 
-    // For isDragging changes, we need to be smart:
-    // - isDragging affects tooltips and hover overlays
-    // - But we don't want mass rerenders when dragging starts/stops
+    // For isDragging or isPopupOpen changes, we need to be smart:
+    // - These affect tooltips and hover overlays
+    // - But we don't want mass rerenders when dragging/popup starts/stops
 
-    // If dragging state changed, only rerender if this slot actually needs different behavior
-    if (!draggingSame) {
+    // If dragging or popup state changed, only rerender if this slot actually needs different behavior
+    if (!draggingSame || !popupSame) {
       // If this slot has a spell, it needs to rerender to hide/show tooltips and overlays
       if (nextProps.spell) {
         return false; // Allow rerender for filled slots
       }
-      // Empty slots don't have tooltips/overlays, so dragging state change doesn't matter
+      // Empty slots don't have tooltips/overlays, so dragging/popup state change doesn't matter
       return true; // Skip rerender for empty slots
     }
 
