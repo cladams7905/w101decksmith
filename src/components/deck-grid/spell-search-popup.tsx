@@ -152,12 +152,96 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
   // Close popup when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        popupRef.current &&
-        !popupRef.current.contains(event.target as Node)
-      ) {
-        onClose();
+      const target = event.target as Element;
+
+      // Check if click is on popup
+      if (popupRef.current && popupRef.current.contains(target)) {
+        return;
       }
+
+      // Check if click is on any tooltip-related element (rendered in portals)
+      const tooltipContent = target.closest('[data-slot="tooltip-content"]');
+      if (tooltipContent) {
+        return;
+      }
+
+      const tooltipTrigger = target.closest('[data-slot="tooltip-trigger"]');
+      if (tooltipTrigger) {
+        return;
+      }
+
+      const tooltipRoot = target.closest('[data-slot="tooltip"]');
+      if (tooltipRoot) {
+        return;
+      }
+
+      const tooltipProvider = target.closest('[data-slot="tooltip-provider"]');
+      if (tooltipProvider) {
+        return;
+      }
+
+      // Check if click is on any dialog-related element (SpellTierPopup uses Dialog)
+      const dialogContent = target.closest('[data-slot="dialog-content"]');
+      if (dialogContent) {
+        return;
+      }
+
+      const dialogOverlay = target.closest('[data-slot="dialog-overlay"]');
+      if (dialogOverlay) {
+        return;
+      }
+
+      const dialogPortal = target.closest('[data-slot="dialog-portal"]');
+      if (dialogPortal) {
+        return;
+      }
+
+      const dialogHeader = target.closest('[data-slot="dialog-header"]');
+      if (dialogHeader) {
+        return;
+      }
+
+      const dialogFooter = target.closest('[data-slot="dialog-footer"]');
+      if (dialogFooter) {
+        return;
+      }
+
+      const dialogTitle = target.closest('[data-slot="dialog-title"]');
+      if (dialogTitle) {
+        return;
+      }
+
+      const dialogTrigger = target.closest('[data-slot="dialog-trigger"]');
+      if (dialogTrigger) {
+        return;
+      }
+
+      const dialogClose = target.closest('[data-slot="dialog-close"]');
+      if (dialogClose) {
+        return;
+      }
+
+      const dialogRoot = target.closest('[data-slot="dialog"]');
+      if (dialogRoot) {
+        return;
+      }
+
+      // Additional check for any element that might be part of a tooltip
+      const radixTooltipElement = target.closest(
+        "[data-radix-tooltip-content]"
+      );
+      if (radixTooltipElement) {
+        return;
+      }
+
+      // Additional check for any element that might be part of a dialog
+      const radixDialogElement = target.closest("[data-radix-dialog-content]");
+      if (radixDialogElement) {
+        return;
+      }
+
+      // If click is outside popup and not on tooltip or dialog, close the popup
+      onClose();
     };
 
     document.addEventListener("mousedown", handleClickOutside);

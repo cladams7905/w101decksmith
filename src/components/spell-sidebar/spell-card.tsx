@@ -134,28 +134,28 @@ export const SpellCard = memo(function SpellCard({
   // Memoize mouse event handlers
   const handleMouseOver = useCallback(
     (e: React.MouseEvent) => {
-      e.currentTarget.style.borderColor = schoolColors.hover;
+      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.hover;
     },
     [schoolColors.hover]
   );
 
   const handleMouseOut = useCallback(
     (e: React.MouseEvent) => {
-      e.currentTarget.style.borderColor = schoolColors.border;
+      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.border;
     },
     [schoolColors.border]
   );
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      e.currentTarget.style.borderColor = schoolColors.active;
+      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.active;
     },
     [schoolColors.active]
   );
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent) => {
-      e.currentTarget.style.borderColor = schoolColors.hover;
+      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.hover;
     },
     [schoolColors.hover]
   );
