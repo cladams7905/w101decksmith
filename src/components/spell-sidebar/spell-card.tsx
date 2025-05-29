@@ -64,6 +64,23 @@ export const SpellCard = memo(function SpellCard({
     [onClick, currentSpell]
   );
 
+  // Add drag and drop handlers
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      // Store the spell data in the drag event
+      e.dataTransfer.setData("application/json", JSON.stringify(currentSpell));
+      e.dataTransfer.effectAllowed = "copy";
+
+      // Set a visual feedback for dragging
+      e.dataTransfer.setDragImage(e.currentTarget as HTMLElement, 50, 10);
+    },
+    [currentSpell]
+  );
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    // Clean up any visual effects if needed
+  }, []);
+
   // Memoize expensive computations
   const imageUrl = useMemo(
     () => getSpellImageUrl(currentSpell),
@@ -217,6 +234,8 @@ export const SpellCard = memo(function SpellCard({
             onMouseOut={handleMouseOut}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
           >
             {/* Background Image as a div instead of CSS background */}
             {imageLoaded && !imageError && imageUrl && (
