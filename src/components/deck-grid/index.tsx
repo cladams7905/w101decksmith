@@ -353,6 +353,25 @@ const DeckGrid = memo(function DeckGrid({
     [handleSlotClick, handleMouseDown, handleMouseEnter, onReplaceSpell]
   );
 
+  // Create conditional handlers that disable interactions when popup is open
+  const conditionalCallbacks = useMemo(() => {
+    const isPopupOpen = activeSlot !== null;
+
+    if (isPopupOpen) {
+      // Return no-op handlers when popup is open
+      return {
+        onEmptySlotClick: () => {},
+        onFilledSlotClick: () => {},
+        onMouseDown: () => {},
+        onMouseEnter: () => {},
+        onReplaceSpell: onReplaceSpell // Keep this enabled for tier popups
+      };
+    }
+
+    // Return normal handlers when popup is closed
+    return stableCallbacks;
+  }, [activeSlot, stableCallbacks, onReplaceSpell]);
+
   // Pre-compute isSelected values to minimize during render
   const selectedStates = useMemo(() => {
     const states = new Array(64);
@@ -366,7 +385,11 @@ const DeckGrid = memo(function DeckGrid({
     <div className="w-full pb-4 mb-12">
       <TooltipProvider>
         <div className="max-w-xl max-h-[420px] mx-auto md:mt-6">
-          <div className="grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid">
+          <div
+            className={`grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid ${
+              activeSlot !== null ? "opacity-60 pointer-events-none" : ""
+            }`}
+          >
             {grid.map((spell, index) => (
               <div key={index}>
                 <DeckGridSlot
@@ -375,11 +398,11 @@ const DeckGrid = memo(function DeckGrid({
                   isSelected={selectedStates[index]}
                   isDragging={isDragging}
                   isPopupOpen={activeSlot !== null}
-                  onEmptySlotClick={stableCallbacks.onEmptySlotClick}
-                  onFilledSlotClick={stableCallbacks.onFilledSlotClick}
-                  onMouseDown={stableCallbacks.onMouseDown}
-                  onMouseEnter={stableCallbacks.onMouseEnter}
-                  onReplaceSpell={stableCallbacks.onReplaceSpell}
+                  onEmptySlotClick={conditionalCallbacks.onEmptySlotClick}
+                  onFilledSlotClick={conditionalCallbacks.onFilledSlotClick}
+                  onMouseDown={conditionalCallbacks.onMouseDown}
+                  onMouseEnter={conditionalCallbacks.onMouseEnter}
+                  onReplaceSpell={conditionalCallbacks.onReplaceSpell}
                 />
               </div>
             ))}
