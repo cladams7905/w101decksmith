@@ -12,7 +12,7 @@ import {
   getSchoolColor,
   groupSpellsByName
 } from "@/lib/spell-utils";
-import { useState, useMemo, useCallback, memo } from "react";
+import { useState, useMemo, useCallback, memo, useRef } from "react";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
 import { SpellTierPopup } from "@/components/spell-sidebar/spell-tier-popup";
 import { gridLogger } from "@/lib/logger";
@@ -42,6 +42,15 @@ export const DeckGridSlot = memo(
     onMouseEnter,
     onReplaceSpell
   }: DeckGridSlotProps) {
+    const renderCount = useRef(0);
+    renderCount.current += 1;
+    // Only log if there's a specific issue or selection
+    // console.log(
+    //   `🎰 DeckGridSlot[${index}]: Render count: ${
+    //     renderCount.current
+    //   }, spell: ${spell?.name || "empty"}, selected: ${isSelected}, dragging: ${isDragging}`
+    // );
+
     const [isTierPopupOpen, setIsTierPopupOpen] = useState(false);
     const [currentSelectedSpell, setCurrentSelectedSpell] =
       useState<Spell | null>(null);
@@ -303,21 +312,40 @@ export const DeckGridSlot = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Prevent ALL rerenders during drag operations except for spell changes
-    if (nextProps.isDragging || prevProps.isDragging) {
-      // During drag, only rerender if spell actually changes
-      return (
-        prevProps.spell === nextProps.spell &&
-        prevProps.index === nextProps.index
-      );
+    // Most important props for visual state
+    const spellSame = prevProps.spell === nextProps.spell;
+    const indexSame = prevProps.index === nextProps.index;
+    const selectedSame = prevProps.isSelected === nextProps.isSelected;
+    const draggingSame = prevProps.isDragging === nextProps.isDragging;
+
+    // Core principle: Only rerender if something VISUALLY meaningful changed
+    // that would actually affect the rendered output
+
+    // If spell or index changed, always rerender (fundamental change)
+    if (!spellSame || !indexSame) {
+      return false; // Allow rerender
     }
 
-    // When not dragging, allow normal comparison
-    return (
-      prevProps.spell === nextProps.spell &&
-      prevProps.index === nextProps.index &&
-      prevProps.isSelected === nextProps.isSelected &&
-      prevProps.isDragging === nextProps.isDragging
-    );
+    // If selection state changed, rerender (visual feedback needed)
+    if (!selectedSame) {
+      return false; // Allow rerender
+    }
+
+    // For isDragging changes, we need to be smart:
+    // - isDragging affects tooltips and hover overlays
+    // - But we don't want mass rerenders when dragging starts/stops
+
+    // If dragging state changed, only rerender if this slot actually needs different behavior
+    if (!draggingSame) {
+      // If this slot has a spell, it needs to rerender to hide/show tooltips and overlays
+      if (nextProps.spell) {
+        return false; // Allow rerender for filled slots
+      }
+      // Empty slots don't have tooltips/overlays, so dragging state change doesn't matter
+      return true; // Skip rerender for empty slots
+    }
+
+    // All props are the same, skip rerender
+    return true;
   }
 );

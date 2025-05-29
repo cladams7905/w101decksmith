@@ -1,4 +1,14 @@
+import { gridLogger } from "@/lib/logger";
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
+
+// Helper function for efficient Set comparison
+function areSetsEqual<T>(a: Set<T>, b: Set<T>) {
+  if (a.size !== b.size) return false;
+  for (const item of a) {
+    if (!b.has(item)) return false;
+  }
+  return true;
+}
 
 interface UseDragSelectionReturn {
   selectedSlots: Set<number>;
@@ -30,6 +40,10 @@ export function useDragSelection(): UseDragSelectionReturn {
   const initialSlotRef = useRef<number | null>(null);
   const lastDragSlotRef = useRef<number | null>(null);
 
+  // Add throttling to prevent excessive state updates during drag
+  const updateThrottleRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSelectionRef = useRef<Set<number> | null>(null);
+
   // Helper function to get all slots between two positions (treating grid as continuous sequence)
   const getSlotsBetween = useCallback(
     (fromSlot: number, toSlot: number): number[] => {
@@ -43,7 +57,7 @@ export function useDragSelection(): UseDragSelectionReturn {
         slots.push(i);
       }
 
-      console.log(
+      gridLogger.debug(
         `🔥 Range selection: slots ${startSlot} to ${endSlot} = [${slots.join(
           ", "
         )}]`
@@ -109,7 +123,11 @@ export function useDragSelection(): UseDragSelectionReturn {
         // Set the initial slot as our last drag position but don't modify selection yet
         if (initialSlotRef.current !== null) {
           lastDragSlotRef.current = initialSlotRef.current;
-          initialSelectionRef.current = new Set(selectedSlots);
+          // Capture the current selection state at the start of drag using functional update
+          setSelectedSlots((current) => {
+            initialSelectionRef.current = new Set(current);
+            return current; // Don't change state, just capture it - no new object created
+          });
         }
       }
 
@@ -118,46 +136,82 @@ export function useDragSelection(): UseDragSelectionReturn {
         return;
       }
 
-      // Process immediately without debounce to fix lag
-      setSelectedSlots(() => {
-        // Get all slots from initial position to current position
-        const fromSlot =
-          initialSlotRef.current !== null ? initialSlotRef.current : index;
-        const slotsInPath = getSlotsBetween(fromSlot, index);
+      // Process with throttling to reduce rerenders during drag
+      const updateSelection = (newSelection: Set<number>) => {
+        pendingSelectionRef.current = newSelection;
 
-        console.log(`🔥 Drag: from slot ${fromSlot} to ${index}`);
-        console.log(`🔥 Path slots:`, slotsInPath);
+        if (updateThrottleRef.current) {
+          clearTimeout(updateThrottleRef.current);
+        }
 
-        // Start with the initial selection state
-        const newSelection = new Set(initialSelectionRef.current);
+        updateThrottleRef.current = setTimeout(() => {
+          const selectionToUpdate = pendingSelectionRef.current;
+          if (selectionToUpdate) {
+            setSelectedSlots((prev) => {
+              // Use efficient Set comparison
+              const hasChanged = !areSetsEqual(selectionToUpdate, prev);
 
-        // Determine the action based on the initial slot's state
-        const initialSlotSelected = initialSelectionRef.current.has(fromSlot);
-        const targetState = !initialSlotSelected; // If initial was selected, we're deselecting; if not, we're selecting
+              gridLogger.debug(
+                `🔥 Throttled update - Selection changed: ${hasChanged}`
+              );
+              if (hasChanged) {
+                gridLogger.debug(
+                  `🔥 Final selection:`,
+                  Array.from(selectionToUpdate)
+                );
+              }
 
-        console.log(
-          `🔥 Initial slot ${fromSlot} was selected: ${initialSlotSelected}, target state: ${targetState}`
-        );
-
-        // Apply consistent state to all slots in the path
-        slotsInPath.forEach((slotIndex) => {
-          if (targetState) {
-            newSelection.add(slotIndex);
-          } else {
-            newSelection.delete(slotIndex);
+              return hasChanged ? selectionToUpdate : prev;
+            });
           }
-        });
+          updateThrottleRef.current = null;
+          pendingSelectionRef.current = null;
+        }, 16); // ~60fps throttling
+      };
 
-        console.log(`🔥 Final selection:`, Array.from(newSelection));
+      // Calculate new selection immediately for consistency
+      const fromSlot =
+        initialSlotRef.current !== null ? initialSlotRef.current : index;
+      const slotsInPath = getSlotsBetween(fromSlot, index);
 
-        return newSelection;
+      gridLogger.debug(`🔥 Drag: from slot ${fromSlot} to ${index}`);
+      gridLogger.debug(`🔥 Path slots:`, slotsInPath);
+
+      // Start with the initial selection state
+      const newSelection = new Set(initialSelectionRef.current);
+
+      // Determine the action based on the initial slot's state
+      const initialSlotSelected = initialSelectionRef.current.has(fromSlot);
+      const targetState = !initialSlotSelected;
+
+      gridLogger.debug(
+        `🔥 Initial slot ${fromSlot} was selected: ${initialSlotSelected}, target state: ${targetState}`
+      );
+
+      // Apply consistent state to all slots in the path
+      slotsInPath.forEach((slotIndex) => {
+        if (targetState) {
+          newSelection.add(slotIndex);
+        } else {
+          newSelection.delete(slotIndex);
+        }
       });
+
+      // Update with throttling
+      updateSelection(newSelection);
     },
-    [isDragging, getSlotsBetween, selectedSlots]
+    [isDragging, getSlotsBetween]
   );
 
   const handleMouseUp = useCallback(() => {
     const wasDragging = hasDraggedRef.current;
+
+    // Clear any pending throttled updates
+    if (updateThrottleRef.current) {
+      clearTimeout(updateThrottleRef.current);
+      updateThrottleRef.current = null;
+    }
+    pendingSelectionRef.current = null;
 
     // Reset all drag state
     setIsDragging(false);

@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["rnsdsclvovqpgqdrvzmv.supabase.co"]
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "rnsdsclvovqpgqdrvzmv.supabase.co"
+      }
+    ]
   }
 };
 
