@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "gen-types": "./src/db/gen-types.sh",
     "sync-spells": "ts-node --project scripts/tsconfig.json scripts/sync-spells.ts",
     "sync-card-images": "ts-node --project scripts/tsconfig.json scripts/sync-card-images.ts"
   },

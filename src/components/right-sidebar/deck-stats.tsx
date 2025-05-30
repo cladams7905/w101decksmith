@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/collapsible";
 import { BarChart, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import UtilityMeter from "@/components/utility-meter";
+import UtilityMeter from "@/components/shared/utility-meter";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,7 +19,7 @@ import {
   SheetTitle,
   SheetTrigger
 } from "@/components/ui/sheet";
-import DeckStatsDrawer from "@/components/deck-stats-drawer";
+import DeckStatsDrawer from "@/components/right-sidebar/deck-stats-drawer";
 import {
   getSpellPips,
   getSpellDamage,

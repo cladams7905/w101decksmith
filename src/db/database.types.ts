@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      decks: {
+        Row: {
+          can_comment: boolean
+          created_at: string
+          description: string | null
+          id: number
+          is_public: boolean
+          is_pve: boolean
+          level: number
+          school: Database["public"]["Enums"]["school"]
+          spells: Json | null
+          user_id: string
+          weaving_school: Database["public"]["Enums"]["school"] | null
+        }
+        Insert: {
+          can_comment?: boolean
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_public?: boolean
+          is_pve?: boolean
+          level: number
+          school: Database["public"]["Enums"]["school"]
+          spells?: Json | null
+          user_id: string
+          weaving_school?: Database["public"]["Enums"]["school"] | null
+        }
+        Update: {
+          can_comment?: boolean
+          created_at?: string
+          description?: string | null
+          id?: number
+          is_public?: boolean
+          is_pve?: boolean
+          level?: number
+          school?: Database["public"]["Enums"]["school"]
+          spells?: Json | null
+          user_id?: string
+          weaving_school?: Database["public"]["Enums"]["school"] | null
+        }
+        Relationships: []
+      }
       spells: {
         Row: {
           accuracy: number | null

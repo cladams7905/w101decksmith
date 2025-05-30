@@ -4,9 +4,9 @@ import { BarChart, MessageSquare, PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ResizablePanel } from "@/components/resizable-panel";
-import DeckStats from "@/components/deck-stats";
-import DeckComments from "@/components/deck-comments";
+import { ResizablePanel } from "@/components/shared/resizable-panel";
+import DeckStats from "@/components/right-sidebar/deck-stats";
+import DeckComments from "@/components/right-sidebar/deck-comments";
 import type { Deck } from "@/lib/types";
 import { useEffect, useState } from "react";
 

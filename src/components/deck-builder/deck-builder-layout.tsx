@@ -1,7 +1,7 @@
-import { ResizablePanel } from "@/components/resizable-panel";
+import { ResizablePanel } from "@/components/shared/resizable-panel";
 import { AppHeader } from "@/components/app-header";
 import { DeckHeader } from "@/components/deck-header";
-import { RightSidebar } from "@/components/right-sidebar";
+import { RightSidebar } from "@/components/right-sidebar/";
 import { SpellSidebar } from "@/components/spell-sidebar";
 import DeckGrid from "@/components/deck-grid";
 import { useDeck } from "@/lib/contexts/deck-context";
