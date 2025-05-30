@@ -44,9 +44,40 @@ export function useDeckGrid({
   const handleEmptySlotClick = useCallback(
     (index: number, event: React.MouseEvent) => {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+
+      // Popup dimensions (w-80 = 320px)
+      const popupWidth = 320;
+      const popupHeight = 585;
+
+      // Calculate initial position
+      let top = rect.top;
+      let left = rect.right + 10;
+
+      // Check if popup would go off the right edge of the screen
+      if (left + popupWidth > window.innerWidth) {
+        // Position to the left of the slot instead
+        left = rect.left - popupWidth - 10;
+
+        // If still off-screen to the left, center it horizontally
+        if (left < 0) {
+          left = Math.max(10, (window.innerWidth - popupWidth) / 2);
+        }
+      }
+
+      // Check if popup would go below the bottom of the screen
+      if (top + popupHeight > window.innerHeight) {
+        // Position it so the bottom aligns with the viewport bottom (with some margin)
+        top = window.innerHeight - popupHeight;
+
+        // Ensure it doesn't go above the top of the screen
+        if (top < 10) {
+          top = 10;
+        }
+      }
+
       setPopupPosition({
-        top: rect.top,
-        left: rect.right + 10
+        top,
+        left
       });
       setActiveSlot(index);
       setIsReplacing(false);

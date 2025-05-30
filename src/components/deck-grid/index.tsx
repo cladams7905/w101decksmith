@@ -162,11 +162,25 @@ const DeckGrid = memo(function DeckGrid({
         (index) => grid[index] === null
       );
 
-      // Position popup in center of screen or use a default position
+      // Position popup in center of screen with proper bounds checking
+      const popupWidth = 320;
+      const popupEstimatedHeight = 400; // Realistic estimate instead of max height
+
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
 
-      setPopupPosition({ top: centerY - 200, left: centerX - 160 });
+      // Center horizontally and vertically with bounds checking
+      let left = centerX - popupWidth / 2;
+      let top = centerY - popupEstimatedHeight / 2;
+
+      // Ensure popup stays within viewport bounds
+      left = Math.max(10, Math.min(left, window.innerWidth - popupWidth - 10));
+      top = Math.max(
+        10,
+        Math.min(top, window.innerHeight - popupEstimatedHeight - 10)
+      );
+
+      setPopupPosition({ top, left });
       setActiveSlot(selectedSlotIndices[0]); // Use first selected slot as reference
 
       // Set mode based on selection content
