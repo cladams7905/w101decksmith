@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect
+} from "react";
 import type { Spell, Deck } from "@/lib/types";
 import {
   getSpellPips,
@@ -18,7 +24,7 @@ interface DeckContextType {
   wizardLevel: string;
   wizardSchool: string;
   weavingClass: string;
-  sortBy: "school" | "pips" | "utility" | "none";
+  sortBy: "school" | "pips" | "utility";
   sortOrder: "asc" | "desc";
   addSpell: (spell: Spell, quantity: number) => void;
   addSpellToSlot: (spell: Spell, slotIndex: number, quantity?: number) => void;
@@ -28,10 +34,7 @@ interface DeckContextType {
   switchDeck: (deck: Deck) => void;
   updateDeckName: (name: string) => void;
   deleteDeck: () => void;
-  sortDeck: (
-    by: "school" | "pips" | "utility" | "none",
-    order: "asc" | "desc"
-  ) => void;
+  sortDeck: (by: "school" | "pips" | "utility", order: "asc" | "desc") => void;
   setWizardLevel: (level: string) => void;
   setWizardSchool: (school: string) => void;
   setWeavingClass: (weavingClass: string) => void;
@@ -86,10 +89,156 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const [wizardLevel, setWizardLevel] = useState("150");
   const [wizardSchool, setWizardSchool] = useState("fire");
   const [weavingClass, setWeavingClass] = useState("pyromancer");
-  const [sortBy, setSortBy] = useState<"school" | "pips" | "utility" | "none">(
-    "none"
-  );
+  const [sortBy, setSortBy] = useState<"school" | "pips" | "utility">("school");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Auto-group spells based on current sorting selection whenever deck spells change
+  useEffect(() => {
+    if (currentDeck.spells.length === 0) return;
+
+    setCurrentDeck((prev) => {
+      // Create a sorted copy of spells based on current sorting selection
+      const sortedSpells = [...prev.spells].sort((a, b) => {
+        if (sortBy === "school") {
+          const schoolA = (a.school || "unknown").toLowerCase();
+          const schoolB = (b.school || "unknown").toLowerCase();
+          const schoolComparison =
+            sortOrder === "asc"
+              ? schoolA.localeCompare(schoolB)
+              : schoolB.localeCompare(schoolA);
+
+          // If same school, sort by spell name to group identical spells together
+          if (schoolComparison === 0) {
+            return a.name.localeCompare(b.name);
+          }
+
+          return schoolComparison;
+        } else if (sortBy === "pips") {
+          const pipComparison =
+            sortOrder === "asc"
+              ? getSpellPips(a) - getSpellPips(b)
+              : getSpellPips(b) - getSpellPips(a);
+
+          // If same pip cost, sort by spell name to group identical spells together
+          if (pipComparison === 0) {
+            return a.name.localeCompare(b.name);
+          }
+
+          return pipComparison;
+        } else if (sortBy === "utility") {
+          const getUtilityType = (spell: Spell): number => {
+            if (getSpellDamage(spell) > 0) return 1;
+            if (getSpellDamageOverTime(spell) > 0) return 2;
+            if (getSpellBuffPercentage(spell) > 0) return 3;
+            if (getSpellDebuffPercentage(spell) > 0) return 4;
+            if (getSpellHealing(spell) > 0) return 5;
+            if (getSpellHealingOverTime(spell) > 0) return 6;
+            if (getSpellPipsGained(spell) > 0) return 7;
+            return 8;
+          };
+
+          const typeA = getUtilityType(a);
+          const typeB = getUtilityType(b);
+          const utilityComparison =
+            sortOrder === "asc" ? typeA - typeB : typeB - typeA;
+
+          // If same utility type, sort by spell name to group identical spells together
+          if (utilityComparison === 0) {
+            return a.name.localeCompare(b.name);
+          }
+
+          return utilityComparison;
+        }
+
+        return 0;
+      });
+
+      // Only update if the order actually changed
+      const hasOrderChanged = prev.spells.some(
+        (spell, index) =>
+          !sortedSpells[index] ||
+          spell.name !== sortedSpells[index].name ||
+          spell.school !== sortedSpells[index].school
+      );
+
+      if (hasOrderChanged) {
+        return { ...prev, spells: sortedSpells };
+      }
+
+      return prev;
+    });
+
+    // Also update the decks array
+    setDecks((prev) =>
+      prev.map((deck) => {
+        if (deck.id === currentDeck.id) {
+          const sortedSpells = [...deck.spells].sort((a, b) => {
+            if (sortBy === "school") {
+              const schoolA = (a.school || "unknown").toLowerCase();
+              const schoolB = (b.school || "unknown").toLowerCase();
+              const schoolComparison =
+                sortOrder === "asc"
+                  ? schoolA.localeCompare(schoolB)
+                  : schoolB.localeCompare(schoolA);
+
+              if (schoolComparison === 0) {
+                return a.name.localeCompare(b.name);
+              }
+
+              return schoolComparison;
+            } else if (sortBy === "pips") {
+              const pipComparison =
+                sortOrder === "asc"
+                  ? getSpellPips(a) - getSpellPips(b)
+                  : getSpellPips(b) - getSpellPips(a);
+
+              if (pipComparison === 0) {
+                return a.name.localeCompare(b.name);
+              }
+
+              return pipComparison;
+            } else if (sortBy === "utility") {
+              const getUtilityType = (spell: Spell): number => {
+                if (getSpellDamage(spell) > 0) return 1;
+                if (getSpellDamageOverTime(spell) > 0) return 2;
+                if (getSpellBuffPercentage(spell) > 0) return 3;
+                if (getSpellDebuffPercentage(spell) > 0) return 4;
+                if (getSpellHealing(spell) > 0) return 5;
+                if (getSpellHealingOverTime(spell) > 0) return 6;
+                if (getSpellPipsGained(spell) > 0) return 7;
+                return 8;
+              };
+
+              const typeA = getUtilityType(a);
+              const typeB = getUtilityType(b);
+              const utilityComparison =
+                sortOrder === "asc" ? typeA - typeB : typeB - typeA;
+
+              if (utilityComparison === 0) {
+                return a.name.localeCompare(b.name);
+              }
+
+              return utilityComparison;
+            }
+
+            return 0;
+          });
+
+          const hasOrderChanged = deck.spells.some(
+            (spell, index) =>
+              !sortedSpells[index] ||
+              spell.name !== sortedSpells[index].name ||
+              spell.school !== sortedSpells[index].school
+          );
+
+          if (hasOrderChanged) {
+            return { ...deck, spells: sortedSpells };
+          }
+        }
+        return deck;
+      })
+    );
+  }, [currentDeck.spells.length, currentDeck.id, sortBy, sortOrder]); // Added sortBy and sortOrder to dependencies
 
   const addSpell = useCallback(
     (spell: Spell, quantity: number) => {
@@ -286,9 +435,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   );
 
   const sortDeckSpells = useCallback(
-    (by: "school" | "pips" | "utility" | "none", order: "asc" | "desc") => {
-      if (by === "none") return;
-
+    (by: "school" | "pips" | "utility", order: "asc" | "desc") => {
       setSortBy(by);
       setSortOrder(order);
 

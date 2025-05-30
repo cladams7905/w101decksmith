@@ -1,6 +1,5 @@
 "use client";
-import { Edit, Trash2, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,41 +8,19 @@ import {
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
 import type { Deck, Spell } from "@/lib/types";
-import { useState, useRef } from "react";
-import SpellSearchPopup from "@/components/deck-grid/spell-search-popup";
-import { uiLogger } from "@/lib/logger";
-import { getSpellPips, getSchoolIconPath } from "@/lib/spell-utils";
+import { useState } from "react";
+import { getSchoolIconPath, getSpellPips } from "@/lib/spell-utils";
 import Image from "next/image";
-
-const POPUP_OFFSET = 260;
 
 interface DeckBreakdownProps {
   deck: Deck;
-  onReplaceSpells: (
-    spellsToReplace: Spell[],
-    newSpell: Spell,
-    quantity: number
-  ) => void;
-  onDeleteSpells: (spellsToDelete: Spell[]) => void;
 }
 
-export default function DeckBreakdown({
-  deck,
-  onReplaceSpells,
-  onDeleteSpells
-}: DeckBreakdownProps) {
+export default function DeckBreakdown({ deck }: DeckBreakdownProps) {
   // Track which school categories are expanded
   const [expandedSchools, setExpandedSchools] = useState<
     Record<string, boolean>
   >({});
-
-  // Popup state
-  const [activeSpell, setActiveSpell] = useState<Spell | null>(null);
-  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
-  const [isReplacing, setIsReplacing] = useState(false);
-
-  // Ref to the deck breakdown container
-  const breakdownRef = useRef<HTMLDivElement>(null);
 
   // Toggle expanded state for a school
   const toggleSchoolExpanded = (school: string) => {
@@ -98,84 +75,8 @@ export default function DeckBreakdown({
       : 0;
   };
 
-  // Handle edit spell click
-  const handleEditSpell = (spell: Spell) => {
-    uiLogger.info("Edit button clicked for spell:", spell.name);
-    uiLogger.info(`Opening spell replacement popup for: ${spell.name}`);
-
-    // Check if there's enough room on the right side for the popup
-    const viewportWidth = window.innerWidth;
-    const popupWidth = 254; // Width of the popup
-
-    // Get the breakdown modal's position to calculate available space
-    if (!breakdownRef.current) {
-      uiLogger.error("Breakdown ref is null, using fallback position");
-      const left = 0;
-      const top = 0;
-      setPopupPosition({ top, left });
-      setActiveSpell(spell);
-      setIsReplacing(true);
-      return;
-    }
-
-    const breakdownRect = breakdownRef.current.getBoundingClientRect();
-    const availableSpaceOnRight = viewportWidth - breakdownRect.right;
-
-    uiLogger.info("Viewport width:", viewportWidth);
-    uiLogger.info("Breakdown right edge:", breakdownRect.right);
-    uiLogger.info("Available space on right:", availableSpaceOnRight);
-
-    // If there's enough room for the popup on the right side, use POPUP_OFFSET, otherwise use left: 0
-    const left = availableSpaceOnRight >= popupWidth ? POPUP_OFFSET : 0;
-    const top = 0;
-
-    uiLogger.info("Calculated position:", { left, top });
-    uiLogger.info("Setting activeSpell:", spell);
-    uiLogger.info("Setting isReplacing:", true);
-
-    setPopupPosition({ top, left });
-    setActiveSpell(spell);
-    setIsReplacing(true);
-  };
-
-  // Handle delete spell click
-  const handleDeleteSpell = (spell: Spell) => {
-    uiLogger.info(`Deleting all instances of spell: ${spell.name}`);
-    onDeleteSpells([spell]);
-  };
-
-  // Handle spell selection from popup
-  const handleSpellSelection = (newSpell: Spell, quantity: number) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _ = quantity; // Quantity is ignored for bulk replacement
-    if (activeSpell) {
-      uiLogger.info(
-        `Replacing all instances of "${activeSpell.name}" with "${newSpell.name}"`
-      );
-      onReplaceSpells([activeSpell], newSpell, quantity);
-    }
-    closePopup();
-  };
-
-  // Handle delete from popup
-  const handleDeleteFromPopup = () => {
-    if (activeSpell) {
-      uiLogger.info(
-        `Deleting all instances of spell from popup: ${activeSpell.name}`
-      );
-      onDeleteSpells([activeSpell]);
-    }
-    closePopup();
-  };
-
-  // Close popup
-  const closePopup = () => {
-    setActiveSpell(null);
-    setIsReplacing(false);
-  };
-
   return (
-    <div className="py-2" ref={breakdownRef}>
+    <div className="py-2">
       <div className="px-3 py-1 font-medium text-sm">Deck Breakdown</div>
       <Separator className="my-1" />
 
@@ -232,30 +133,6 @@ export default function DeckBreakdown({
                         >
                           ×{count}
                         </Badge>
-                        <div className="flex items-center opacity-0 group-hover/spell:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditSpell(spell);
-                            }}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteSpell(spell);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   ))}
@@ -279,18 +156,6 @@ export default function DeckBreakdown({
             </div>
           </div>
         </div>
-      )}
-
-      {/* Spell Search Popup */}
-      {activeSpell && (
-        <SpellSearchPopup
-          position={popupPosition}
-          onClose={closePopup}
-          onSelectSpell={handleSpellSelection}
-          availableSlots={64 - deck.spells.length}
-          isReplacing={isReplacing}
-          onDeleteSelected={handleDeleteFromPopup}
-        />
       )}
     </div>
   );

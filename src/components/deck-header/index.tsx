@@ -24,7 +24,6 @@ import { DeckSettingsModal } from "@/components/deck-header/deck-settings-modal"
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
 import { useState } from "react";
-import type { Spell } from "@/lib/types";
 
 function DeckNameEditor() {
   const { currentDeck, updateDeckName } = useDeck();
@@ -78,23 +77,7 @@ function DeckNameEditor() {
 }
 
 function DeckCardCount() {
-  const { currentDeck, updateDeckSpells } = useDeck();
-
-  // Handle replacing all instances of a specific spell
-  const handleReplaceSpells = (oldSpellId: string, newSpell: Spell) => {
-    const newSpells = currentDeck.spells.map((spell) =>
-      spell.id === oldSpellId ? newSpell : spell
-    );
-    updateDeckSpells(newSpells);
-  };
-
-  // Handle deleting all instances of a specific spell
-  const handleDeleteSpells = (spellId: string) => {
-    const newSpells = currentDeck.spells.filter(
-      (spell) => spell.id !== spellId
-    );
-    updateDeckSpells(newSpells);
-  };
+  const { currentDeck } = useDeck();
 
   return (
     <Popover>
@@ -107,11 +90,7 @@ function DeckCardCount() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0 rounded-lg" align="end">
-        <DeckBreakdown
-          deck={currentDeck}
-          onReplaceSpells={handleReplaceSpells}
-          onDeleteSpells={handleDeleteSpells}
-        />
+        <DeckBreakdown deck={currentDeck} />
       </PopoverContent>
     </Popover>
   );
@@ -122,7 +101,7 @@ function DeckSortButton() {
 
   const handleSort = (value: string) => {
     const [by, order] = value.split("-") as [
-      "school" | "pips" | "utility" | "none",
+      "school" | "pips" | "utility",
       "asc" | "desc"
     ];
     sortDeck(by, order);
@@ -133,11 +112,9 @@ function DeckSortButton() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <Filter className="h-5 w-5" />
-          {sortBy !== "none" && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[10px] text-white">
-              {sortOrder === "asc" ? "↑" : "↓"}
-            </span>
-          )}
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[10px] text-white">
+            {sortOrder === "asc" ? "↑" : "↓"}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="rounded-xl">
@@ -147,8 +124,6 @@ function DeckSortButton() {
           value={`${sortBy}-${sortOrder}`}
           onValueChange={handleSort}
         >
-          <DropdownMenuRadioItem value="none">No Sorting</DropdownMenuRadioItem>
-          <DropdownMenuSeparator />
           <DropdownMenuLabel>School</DropdownMenuLabel>
           <DropdownMenuRadioItem value="school-asc">
             School (A-Z)
