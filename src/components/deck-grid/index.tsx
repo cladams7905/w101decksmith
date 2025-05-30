@@ -6,7 +6,7 @@ import { DeckGridSlot } from "./deck-grid-slot";
 import { useDeckGrid } from "./use-deck-grid";
 import { useDragSelection } from "./use-drag-selection";
 import SpellSearchPopup from "@/components/deck-grid/spell-search-popup";
-import { useCallback, useEffect, useMemo, memo, useRef } from "react";
+import { useCallback, useEffect, useMemo, memo, useRef, useState } from "react";
 // import { gridLogger } from "@/lib/logger";
 
 interface DeckGridProps {
@@ -295,29 +295,11 @@ const DeckGrid = memo(function DeckGrid({
     }
   }, [grid, onBulkRemoveSpells, onRemoveSpell, clearSelection]); // No selectedSlots dependency!
 
-  // Memoize popup close handler
+  // Handle popup close - clear selections when popup closes
   const handlePopupClose = useCallback(() => {
     closePopup();
     clearSelection();
   }, [closePopup, clearSelection]);
-
-  // Handle dropping spells onto grid slots
-  const handleDropSpell = useCallback(
-    (droppedSpell: Spell, slotIndex: number) => {
-      // Check if slot is empty or has a spell
-      if (grid[slotIndex] === null) {
-        // Empty slot - add the spell to the end of the deck
-        onAddSpell(droppedSpell, deck.spells.length, 1); // Use deck.spells.length as index for end
-      } else {
-        // Filled slot - replace the spell at this specific position
-        const existingSpell = grid[slotIndex];
-        if (existingSpell && onReplaceSpell) {
-          onReplaceSpell(existingSpell.name, droppedSpell, slotIndex);
-        }
-      }
-    },
-    [grid, deck.spells.length, onAddSpell, onReplaceSpell]
-  );
 
   // Memoize computed values for popup
   const availableSlots = useMemo(
@@ -372,15 +354,13 @@ const DeckGrid = memo(function DeckGrid({
       onFilledSlotClick: handleSlotClick, // Use unified handler for both empty and filled slots
       onMouseDown: handleMouseDownWrapper, // Use wrapper instead of direct handleMouseDown
       onMouseEnter: handleMouseEnter,
-      onReplaceSpell: onReplaceSpell,
-      onDropSpell: handleDropSpell
+      onReplaceSpell: onReplaceSpell
     }),
     [
       handleSlotClick,
       handleMouseDownWrapper, // Updated dependency
       handleMouseEnter,
-      onReplaceSpell,
-      handleDropSpell
+      onReplaceSpell
     ]
   );
 
@@ -395,14 +375,13 @@ const DeckGrid = memo(function DeckGrid({
         onFilledSlotClick: () => {},
         onMouseDown: () => {},
         onMouseEnter: () => {},
-        onReplaceSpell: onReplaceSpell, // Keep this enabled for tier popups
-        onDropSpell: handleDropSpell // Keep drag and drop enabled even when popup is open
+        onReplaceSpell: onReplaceSpell // Keep this enabled for tier popups
       };
     }
 
     // Return normal handlers when popup is closed
     return stableCallbacks;
-  }, [activeSlot, stableCallbacks, onReplaceSpell, handleDropSpell]);
+  }, [activeSlot, stableCallbacks, onReplaceSpell]);
 
   // Pre-compute isSelected values to minimize during render
   const selectedStates = useMemo(() => {
@@ -413,15 +392,65 @@ const DeckGrid = memo(function DeckGrid({
     return states;
   }, [selectedSlots]); // Only recalculate when selectedSlots actually changes
 
+  const [isSpellBeingDraggedOver, setIsSpellBeingDraggedOver] = useState(false);
+
+  // Handle spell drag and drop over the entire deck
+  const handleDeckDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+    setIsSpellBeingDraggedOver(true);
+  }, []);
+
+  const handleDeckDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsSpellBeingDraggedOver(true);
+  }, []);
+
+  const handleDeckDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    // Only clear if we're actually leaving the deck grid container
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsSpellBeingDraggedOver(false);
+    }
+  }, []);
+
+  const handleDeckDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsSpellBeingDraggedOver(false);
+
+      try {
+        const spellData = e.dataTransfer.getData("application/json");
+        if (spellData) {
+          const spell = JSON.parse(spellData) as Spell;
+          // Always add to the end of the deck (next available slot)
+          onAddSpell(spell, deck.spells.length, 1);
+        }
+      } catch (error) {
+        console.error("Error parsing dropped spell data:", error);
+      }
+    },
+    [deck.spells.length, onAddSpell]
+  );
+
   return (
     <div className="w-full pb-4 mb-12">
       <TooltipProvider>
         <div className="max-w-xl max-h-[420px] mx-auto md:mt-6">
           <div
-            className={`grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid ${
+            className={`grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid relative ${
               activeSlot !== null ? "opacity-60 pointer-events-none" : ""
             }`}
+            onDragOver={handleDeckDragOver}
+            onDragEnter={handleDeckDragEnter}
+            onDragLeave={handleDeckDragLeave}
+            onDrop={handleDeckDrop}
           >
+            {/* Spell drag overlay positioned relative to the deck grid */}
+            {isSpellBeingDraggedOver && (
+              <div className="absolute inset-0 bg-black/20 rounded-lg z-10 pointer-events-none" />
+            )}
+
             {grid.map((spell, index) => (
               <div key={index}>
                 <DeckGridSlot
@@ -435,7 +464,6 @@ const DeckGrid = memo(function DeckGrid({
                   onMouseDown={conditionalCallbacks.onMouseDown}
                   onMouseEnter={conditionalCallbacks.onMouseEnter}
                   onReplaceSpell={conditionalCallbacks.onReplaceSpell}
-                  onDropSpell={conditionalCallbacks.onDropSpell}
                 />
               </div>
             ))}

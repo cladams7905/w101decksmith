@@ -29,7 +29,6 @@ interface DeckGridSlotProps {
   onMouseDown: (index: number, event: React.MouseEvent) => void;
   onMouseEnter: (index: number) => void;
   onReplaceSpell?: (spellName: string, newSpell: Spell, index: number) => void;
-  onDropSpell?: (spell: Spell, index: number) => void;
 }
 
 export const DeckGridSlot = memo(
@@ -43,8 +42,7 @@ export const DeckGridSlot = memo(
     onFilledSlotClick,
     onMouseDown,
     onMouseEnter,
-    onReplaceSpell,
-    onDropSpell
+    onReplaceSpell
   }: DeckGridSlotProps) {
     const renderCount = useRef(0);
     renderCount.current += 1;
@@ -52,7 +50,6 @@ export const DeckGridSlot = memo(
     const [isTierPopupOpen, setIsTierPopupOpen] = useState(false);
     const [currentSelectedSpell, setCurrentSelectedSpell] =
       useState<Spell | null>(null);
-    const [isDragHovering, setIsDragHovering] = useState(false);
 
     const { spellCategories } = useSpellsData();
 
@@ -142,18 +139,8 @@ export const DeckGridSlot = memo(
         classes += " ring-2 ring-blue-500 ring-offset-1";
       }
 
-      if (isDragHovering) {
-        if (spell) {
-          // Filled slot being hovered - show replace intent
-          classes += " ring-2 ring-yellow-500 ring-offset-1 bg-yellow-500/20";
-        } else {
-          // Empty slot being hovered - show add intent
-          classes += " ring-2 ring-green-500 ring-offset-1 bg-green-500/20";
-        }
-      }
-
       return classes;
-    }, [isSelected, isDragHovering, spell]);
+    }, [isSelected]);
 
     // Memoize stable callback functions
     const handleTierButtonClick = useCallback(() => {
@@ -191,50 +178,6 @@ export const DeckGridSlot = memo(
       [onMouseDown, index]
     );
 
-    // Drag and drop handlers
-    const handleDragOver = useCallback(
-      (e: React.DragEvent) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-        setIsDragHovering(true);
-      },
-      [setIsDragHovering]
-    );
-
-    const handleDragEnter = useCallback(
-      (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragHovering(true);
-      },
-      [setIsDragHovering]
-    );
-
-    const handleDragLeave = useCallback(
-      (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragHovering(false);
-      },
-      [setIsDragHovering]
-    );
-
-    const handleDrop = useCallback(
-      (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragHovering(false);
-
-        try {
-          const spellData = e.dataTransfer.getData("application/json");
-          if (spellData && onDropSpell) {
-            const spell = JSON.parse(spellData) as Spell;
-            onDropSpell(spell, index);
-          }
-        } catch (error) {
-          console.error("Error parsing dropped spell data:", error);
-        }
-      },
-      [index, onDropSpell, setIsDragHovering]
-    );
-
     // Memoize the tooltip content to prevent recreation during drag
     const tooltipContent = useMemo(() => {
       if (!spell || !spellGroup || !schoolColors) return null;
@@ -256,10 +199,6 @@ export const DeckGridSlot = memo(
           onClick={handleClick}
           onMouseDown={handleMouseDownSlot}
           onMouseEnter={handleMouseEnterSlot}
-          onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
           style={{
             minWidth: 0,
             minHeight: 0,
@@ -361,10 +300,6 @@ export const DeckGridSlot = memo(
         onClick={handleClick}
         onMouseDown={handleMouseDownSlot}
         onMouseEnter={handleMouseEnterSlot}
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
         style={{ minWidth: 0, minHeight: 0 }}
       >
         <CardContent className="p-1 h-full w-full flex flex-col items-center justify-center text-center overflow-hidden">
