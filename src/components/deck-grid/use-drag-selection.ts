@@ -1,4 +1,4 @@
-import { gridLogger } from "@/lib/logger";
+// import { gridLogger } from "@/lib/logger";
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 
 // Helper function for efficient Set comparison
@@ -40,6 +40,10 @@ export function useDragSelection(): UseDragSelectionReturn {
   const initialSlotRef = useRef<number | null>(null);
   const lastDragSlotRef = useRef<number | null>(null);
 
+  // Add click-and-hold detection (timing now managed at deck grid level)
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoldingRef = useRef(false);
+
   // Add throttling to prevent excessive state updates during drag
   const updateThrottleRef = useRef<NodeJS.Timeout | null>(null);
   const pendingSelectionRef = useRef<Set<number> | null>(null);
@@ -56,12 +60,6 @@ export function useDragSelection(): UseDragSelectionReturn {
       for (let i = startSlot; i <= endSlot; i++) {
         slots.push(i);
       }
-
-      gridLogger.debug(
-        `🔥 Range selection: slots ${startSlot} to ${endSlot} = [${slots.join(
-          ", "
-        )}]`
-      );
 
       return slots;
     },
@@ -96,42 +94,54 @@ export function useDragSelection(): UseDragSelectionReturn {
 
       // Track initial mouse position and state
       mouseDownPosRef.current = { x: event.clientX, y: event.clientY };
-      hasDraggedRef.current = false;
+      hasDraggedRef.current = true; // Set to true since we're immediately starting drag selection
       isMouseDownRef.current = true;
-      initialSlotRef.current = index; // Remember which slot we started on
+      isHoldingRef.current = true; // Set immediately since we only get called after hold delay
+      initialSlotRef.current = index;
+      setIsDragging(true); // Set dragging state immediately
 
-      // Start with potential drag but don't commit to selection change yet
+      // Set drag mode immediately since we've already passed the hold test
       dragModeRef.current = "toggle";
 
-      // We'll only modify selection when we confirm it's a drag or on mouse up
+      // Capture the current selection state at the start of drag
+      setSelectedSlots((current) => {
+        initialSelectionRef.current = new Set(current);
+
+        // Immediately highlight the initial slot
+        const newSelection = new Set(current);
+        const initialSlotSelected = current.has(index);
+        const targetState = !initialSlotSelected;
+
+        if (targetState) {
+          newSelection.add(index);
+        } else {
+          newSelection.delete(index);
+        }
+
+        return newSelection;
+      });
+
+      // Clear any existing timeouts
+      if (holdTimeoutRef.current) {
+        clearTimeout(holdTimeoutRef.current);
+        holdTimeoutRef.current = null;
+      }
     },
     []
   );
 
   const handleMouseEnter = useCallback(
     (index: number) => {
-      // Only process if mouse is down (potential drag)
-      if (!isMouseDownRef.current || dragModeRef.current === null) {
+      // Only process if mouse is down AND we're in holding mode (click-and-hold activated)
+      if (
+        !isMouseDownRef.current ||
+        !isHoldingRef.current ||
+        dragModeRef.current === null
+      ) {
         return;
       }
 
-      // If this is the first mouse enter after mouse down, mark as dragged
-      if (!hasDraggedRef.current) {
-        hasDraggedRef.current = true;
-        setIsDragging(true);
-
-        // Set the initial slot as our last drag position but don't modify selection yet
-        if (initialSlotRef.current !== null) {
-          lastDragSlotRef.current = initialSlotRef.current;
-          // Capture the current selection state at the start of drag using functional update
-          setSelectedSlots((current) => {
-            initialSelectionRef.current = new Set(current);
-            return current; // Don't change state, just capture it - no new object created
-          });
-        }
-      }
-
-      // Continue with normal drag logic only if we're actually dragging
+      // Continue with normal drag logic (initialization now handled in handleMouseDown)
       if (!isDragging && !hasDraggedRef.current) {
         return;
       }
@@ -151,17 +161,11 @@ export function useDragSelection(): UseDragSelectionReturn {
               // Use efficient Set comparison
               const hasChanged = !areSetsEqual(selectionToUpdate, prev);
 
-              gridLogger.debug(
-                `🔥 Throttled update - Selection changed: ${hasChanged}`
-              );
               if (hasChanged) {
-                gridLogger.debug(
-                  `🔥 Final selection:`,
-                  Array.from(selectionToUpdate)
-                );
+                return hasChanged ? selectionToUpdate : prev;
               }
 
-              return hasChanged ? selectionToUpdate : prev;
+              return prev;
             });
           }
           updateThrottleRef.current = null;
@@ -174,19 +178,12 @@ export function useDragSelection(): UseDragSelectionReturn {
         initialSlotRef.current !== null ? initialSlotRef.current : index;
       const slotsInPath = getSlotsBetween(fromSlot, index);
 
-      gridLogger.debug(`🔥 Drag: from slot ${fromSlot} to ${index}`);
-      gridLogger.debug(`🔥 Path slots:`, slotsInPath);
-
       // Start with the initial selection state
       const newSelection = new Set(initialSelectionRef.current);
 
       // Determine the action based on the initial slot's state
       const initialSlotSelected = initialSelectionRef.current.has(fromSlot);
       const targetState = !initialSlotSelected;
-
-      gridLogger.debug(
-        `🔥 Initial slot ${fromSlot} was selected: ${initialSlotSelected}, target state: ${targetState}`
-      );
 
       // Apply consistent state to all slots in the path
       slotsInPath.forEach((slotIndex) => {
@@ -206,6 +203,12 @@ export function useDragSelection(): UseDragSelectionReturn {
   const handleMouseUp = useCallback(() => {
     const wasDragging = hasDraggedRef.current;
 
+    // Clear hold timeout if it's still pending (quick click case)
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+
     // Clear any pending throttled updates
     if (updateThrottleRef.current) {
       clearTimeout(updateThrottleRef.current);
@@ -219,7 +222,8 @@ export function useDragSelection(): UseDragSelectionReturn {
     initialSelectionRef.current = new Set();
     lastProcessedSlotRef.current = null;
     isMouseDownRef.current = false;
-    mouseDownPosRef.current = null;
+    isHoldingRef.current = false;
+    mouseDownPosRef.current = null; // Clear this to signal mouse is no longer down
     hasDraggedRef.current = false;
     initialSlotRef.current = null;
     lastDragSlotRef.current = null;
@@ -230,7 +234,7 @@ export function useDragSelection(): UseDragSelectionReturn {
       processingTimeoutRef.current = null;
     }
 
-    // Return whether this was a drag or just a click
+    // Return whether we were actually dragging
     return wasDragging;
   }, []);
 

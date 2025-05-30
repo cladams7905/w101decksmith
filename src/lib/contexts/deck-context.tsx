@@ -10,6 +10,7 @@ import {
   getSpellHealingOverTime,
   getSpellPipsGained
 } from "@/lib/spell-utils";
+import { uiLogger } from "../logger";
 
 interface DeckContextType {
   currentDeck: Deck;
@@ -21,6 +22,7 @@ interface DeckContextType {
   sortOrder: "asc" | "desc";
   addSpell: (spell: Spell, quantity: number) => void;
   addSpellToSlot: (spell: Spell, slotIndex: number, quantity?: number) => void;
+  removeSpell: (index: number) => void;
   replaceSpell: (spellName: string, newSpell: Spell, index?: number) => void;
   createNewDeck: () => void;
   switchDeck: (deck: Deck) => void;
@@ -91,48 +93,91 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
 
   const addSpell = useCallback(
     (spell: Spell, quantity: number) => {
-      if (currentDeck.spells.length + quantity <= 64) {
-        const spellsToAdd = Array(quantity).fill(spell);
-        setCurrentDeck((prev) => ({
-          ...prev,
-          spells: [...prev.spells, ...spellsToAdd]
-        }));
+      setCurrentDeck((prev) => {
+        if (prev.spells.length + quantity <= 64) {
+          const spellsToAdd = Array(quantity).fill(spell);
+          return {
+            ...prev,
+            spells: [...prev.spells, ...spellsToAdd]
+          };
+        }
+        return prev;
+      });
 
-        setDecks((prev) =>
-          prev.map((deck) =>
-            deck.id === currentDeck.id
-              ? { ...deck, spells: [...deck.spells, ...spellsToAdd] }
-              : deck
-          )
-        );
-      }
+      setDecks((prev) =>
+        prev.map((deck) => {
+          if (deck.id === currentDeck.id) {
+            if (deck.spells.length + quantity <= 64) {
+              const spellsToAdd = Array(quantity).fill(spell);
+              return { ...deck, spells: [...deck.spells, ...spellsToAdd] };
+            }
+          }
+          return deck;
+        })
+      );
     },
-    [currentDeck.id, currentDeck.spells.length]
+    [currentDeck.id]
   );
 
   const addSpellToSlot = useCallback(
     (spell: Spell, slotIndex: number, quantity = 1) => {
-      const newSpells = [...currentDeck.spells];
+      setCurrentDeck((prev) => {
+        const newSpells = [...prev.spells];
 
-      // Add the specified quantity of spells to the end of the deck
-      for (let i = 0; i < quantity; i++) {
-        if (newSpells.length < 64) {
-          newSpells.push(spell);
+        // Only add to slots that are actually empty (beyond current deck length)
+        if (slotIndex >= newSpells.length) {
+          // Add spells to the end of the deck
+          for (let i = 0; i < quantity && newSpells.length < 64; i++) {
+            newSpells.push(spell);
+          }
         }
-      }
+        // If slotIndex < newSpells.length, the slot is already occupied
+        // and this should be handled by replaceSpell instead
 
-      setCurrentDeck((prev) => ({
-        ...prev,
-        spells: newSpells
-      }));
+        return {
+          ...prev,
+          spells: newSpells
+        };
+      });
 
       setDecks((prev) =>
-        prev.map((deck) =>
-          deck.id === currentDeck.id ? { ...deck, spells: newSpells } : deck
-        )
+        prev.map((deck) => {
+          if (deck.id === currentDeck.id) {
+            const newSpells = [...deck.spells];
+            if (slotIndex >= newSpells.length) {
+              for (let i = 0; i < quantity && newSpells.length < 64; i++) {
+                newSpells.push(spell);
+              }
+            }
+            return { ...deck, spells: newSpells };
+          }
+          return deck;
+        })
       );
     },
-    [currentDeck.id, currentDeck.spells]
+    [currentDeck.id]
+  );
+
+  const removeSpell = useCallback(
+    (index: number) => {
+      setCurrentDeck((prev) => {
+        const newSpells = [...prev.spells];
+        newSpells.splice(index, 1);
+        return { ...prev, spells: newSpells };
+      });
+
+      setDecks((prev) =>
+        prev.map((deck) => {
+          if (deck.id === currentDeck.id) {
+            const newSpells = [...deck.spells];
+            newSpells.splice(index, 1);
+            return { ...deck, spells: newSpells };
+          }
+          return deck;
+        })
+      );
+    },
+    [currentDeck.id]
   );
 
   const replaceSpell = useCallback(
@@ -203,23 +248,26 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const updateDeckName = useCallback(
     (name: string) => {
       if (name.trim()) {
-        const updatedDeck = { ...currentDeck, name };
-        setCurrentDeck(updatedDeck);
+        setCurrentDeck((prev) => ({ ...prev, name }));
         setDecks((prev) =>
-          prev.map((deck) => (deck.id === currentDeck.id ? updatedDeck : deck))
+          prev.map((deck) =>
+            deck.id === currentDeck.id ? { ...deck, name } : deck
+          )
         );
       }
     },
-    [currentDeck]
+    [currentDeck.id] // Only depend on stable ID
   );
 
   const deleteDeck = useCallback(() => {
-    if (decks.length <= 1) return;
+    setDecks((prev) => {
+      if (prev.length <= 1) return prev;
 
-    const updatedDecks = decks.filter((deck) => deck.id !== currentDeck.id);
-    setDecks(updatedDecks);
-    setCurrentDeck(updatedDecks[0]);
-  }, [currentDeck.id, decks]);
+      const updatedDecks = prev.filter((deck) => deck.id !== currentDeck.id);
+      setCurrentDeck(updatedDecks[0]);
+      return updatedDecks;
+    });
+  }, [currentDeck.id]); // Only depend on stable ID
 
   const updateDeckSpells = useCallback(
     (spells: Spell[]) => {
@@ -244,62 +292,130 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setSortBy(by);
       setSortOrder(order);
 
-      const sortedSpells = [...currentDeck.spells].sort((a, b) => {
-        if (by === "school") {
-          const schoolA = (a.school || "unknown").toLowerCase();
-          const schoolB = (b.school || "unknown").toLowerCase();
-          return order === "asc"
-            ? schoolA.localeCompare(schoolB)
-            : schoolB.localeCompare(schoolA);
-        } else if (by === "pips") {
-          return order === "asc"
-            ? getSpellPips(a) - getSpellPips(b)
-            : getSpellPips(b) - getSpellPips(a);
-        } else if (by === "utility") {
-          const getUtilityType = (spell: Spell): number => {
-            if (getSpellDamage(spell) > 0) return 1;
-            if (getSpellDamageOverTime(spell) > 0) return 2;
-            if (getSpellBuffPercentage(spell) > 0) return 3;
-            if (getSpellDebuffPercentage(spell) > 0) return 4;
-            if (getSpellHealing(spell) > 0) return 5;
-            if (getSpellHealingOverTime(spell) > 0) return 6;
-            if (getSpellPipsGained(spell) > 0) return 7;
-            return 8;
-          };
+      // Use callback form to access current deck without dependency
+      setCurrentDeck((prev) => {
+        const sortedSpells = [...prev.spells].sort((a, b) => {
+          if (by === "school") {
+            const schoolA = (a.school || "unknown").toLowerCase();
+            const schoolB = (b.school || "unknown").toLowerCase();
+            return order === "asc"
+              ? schoolA.localeCompare(schoolB)
+              : schoolB.localeCompare(schoolA);
+          } else if (by === "pips") {
+            return order === "asc"
+              ? getSpellPips(a) - getSpellPips(b)
+              : getSpellPips(b) - getSpellPips(a);
+          } else if (by === "utility") {
+            const getUtilityType = (spell: Spell): number => {
+              if (getSpellDamage(spell) > 0) return 1;
+              if (getSpellDamageOverTime(spell) > 0) return 2;
+              if (getSpellBuffPercentage(spell) > 0) return 3;
+              if (getSpellDebuffPercentage(spell) > 0) return 4;
+              if (getSpellHealing(spell) > 0) return 5;
+              if (getSpellHealingOverTime(spell) > 0) return 6;
+              if (getSpellPipsGained(spell) > 0) return 7;
+              return 8;
+            };
 
-          const typeA = getUtilityType(a);
-          const typeB = getUtilityType(b);
-          return order === "asc" ? typeA - typeB : typeB - typeA;
-        }
-        return 0;
+            const typeA = getUtilityType(a);
+            const typeB = getUtilityType(b);
+            return order === "asc" ? typeA - typeB : typeB - typeA;
+          }
+          return 0;
+        });
+
+        return { ...prev, spells: sortedSpells };
       });
 
-      updateDeckSpells(sortedSpells);
+      // Update decks array with sorted spells
+      setDecks((prev) =>
+        prev.map((deck) => {
+          if (deck.id === currentDeck.id) {
+            const sortedSpells = [...deck.spells].sort((a, b) => {
+              if (by === "school") {
+                const schoolA = (a.school || "unknown").toLowerCase();
+                const schoolB = (b.school || "unknown").toLowerCase();
+                return order === "asc"
+                  ? schoolA.localeCompare(schoolB)
+                  : schoolB.localeCompare(schoolA);
+              } else if (by === "pips") {
+                return order === "asc"
+                  ? getSpellPips(a) - getSpellPips(b)
+                  : getSpellPips(b) - getSpellPips(a);
+              } else if (by === "utility") {
+                const getUtilityType = (spell: Spell): number => {
+                  if (getSpellDamage(spell) > 0) return 1;
+                  if (getSpellDamageOverTime(spell) > 0) return 2;
+                  if (getSpellBuffPercentage(spell) > 0) return 3;
+                  if (getSpellDebuffPercentage(spell) > 0) return 4;
+                  if (getSpellHealing(spell) > 0) return 5;
+                  if (getSpellHealingOverTime(spell) > 0) return 6;
+                  if (getSpellPipsGained(spell) > 0) return 7;
+                  return 8;
+                };
+
+                const typeA = getUtilityType(a);
+                const typeB = getUtilityType(b);
+                return order === "asc" ? typeA - typeB : typeB - typeA;
+              }
+              return 0;
+            });
+            return { ...deck, spells: sortedSpells };
+          }
+          return deck;
+        })
+      );
     },
-    [currentDeck.spells, updateDeckSpells]
+    [currentDeck.id] // Only depend on currentDeck.id which is stable
   );
 
-  const value = {
-    currentDeck,
-    decks,
-    wizardLevel,
-    wizardSchool,
-    weavingClass,
-    sortBy,
-    sortOrder,
-    addSpell,
-    addSpellToSlot,
-    replaceSpell,
-    createNewDeck,
-    switchDeck,
-    updateDeckName,
-    deleteDeck,
-    sortDeck: sortDeckSpells,
-    setWizardLevel,
-    setWizardSchool,
-    setWeavingClass,
-    updateDeckSpells
-  };
+  const value = React.useMemo(
+    () => ({
+      currentDeck,
+      decks,
+      wizardLevel,
+      wizardSchool,
+      weavingClass,
+      sortBy,
+      sortOrder,
+      addSpell,
+      addSpellToSlot,
+      removeSpell,
+      replaceSpell,
+      createNewDeck,
+      switchDeck,
+      updateDeckName,
+      deleteDeck,
+      sortDeck: sortDeckSpells,
+      setWizardLevel,
+      setWizardSchool,
+      setWeavingClass,
+      updateDeckSpells
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      currentDeck,
+      decks,
+      wizardLevel,
+      wizardSchool,
+      weavingClass,
+      sortBy,
+      sortOrder
+    ]
+  );
+
+  // Debug logging for context value changes - add dependency array to prevent running on every render
+  React.useEffect(
+    () => {
+      uiLogger.debug(`🔄 DeckContext value recreated:`, {
+        currentDeckId: currentDeck.id,
+        currentDeckSpellsLength: currentDeck.spells.length,
+        addSpellRef: addSpell.toString().slice(0, 50),
+        timestamp: Date.now()
+      });
+    }, // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentDeck.id, currentDeck.spells.length]
+  ); // Only log when deck actually changes - removed addSpell to prevent circular logging
 
   return <DeckContext.Provider value={value}>{children}</DeckContext.Provider>;
 }

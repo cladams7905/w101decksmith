@@ -351,7 +351,9 @@ const SpellSearchPopup = memo(function SpellSearchPopup({
             <LoadingProgress text="Loading spells..." className="py-4" />
           ) : error ? (
             <div className="flex items-center justify-center p-8">
-              <div className="text-red-500">Error: {error}</div>
+              <div className="text-red-500">
+                Error: Failed to Load Spells: {error}
+              </div>
             </div>
           ) : (
             <SpellList

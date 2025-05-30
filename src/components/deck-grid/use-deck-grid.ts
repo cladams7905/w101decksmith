@@ -4,6 +4,7 @@ import type { Spell } from "@/lib/types";
 interface UseDeckGridProps {
   onAddSpell: (spell: Spell, index: number, quantity: number) => void;
   onReplaceSpell: (spellName: string, newSpell: Spell, index: number) => void;
+  onRemoveSpell?: (index: number) => void;
   onMultiSlotOperation?: (
     spell: Spell,
     slots: number[],
@@ -33,6 +34,7 @@ interface UseDeckGridReturn {
 export function useDeckGrid({
   onAddSpell,
   onReplaceSpell,
+  onRemoveSpell,
   onMultiSlotOperation
 }: UseDeckGridProps): UseDeckGridReturn {
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
@@ -53,16 +55,13 @@ export function useDeckGrid({
   );
 
   const handleFilledSlotClick = useCallback(
-    (index: number, event: React.MouseEvent) => {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setPopupPosition({
-        top: rect.top,
-        left: rect.right + 10
-      });
-      setActiveSlot(index);
-      setIsReplacing(true);
+    (index: number) => {
+      // Directly remove the spell at this index
+      if (onRemoveSpell) {
+        onRemoveSpell(index);
+      }
     },
-    []
+    [onRemoveSpell]
   );
 
   const handleSelectSpell = useCallback(

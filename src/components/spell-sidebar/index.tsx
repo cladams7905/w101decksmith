@@ -1,14 +1,6 @@
-import {
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-  memo,
-  type MutableRefObject
-} from "react";
+import { useCallback, useMemo, memo } from "react";
 import type { Spell } from "@/lib/types";
 import { SpellList } from "./spell-list";
-import { SpellQuantityPopup } from "./spell-quantity-popup";
 import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
 import { useSpellFilter } from "../shared/use-spell-filter";
 import { SpellSearchBar } from "../shared/spell-search-bar";
@@ -35,30 +27,22 @@ export const SpellSidebar = memo(function SpellSidebar({
     error
   } = useSpellFilter();
 
-  const [selectedSpell, setSelectedSpell] = useState<Spell | null>(null);
-  const selectedCardRef = useRef<HTMLElement | null>(
-    null
-  ) as MutableRefObject<HTMLElement | null>;
-
   // Memoize available slots calculation
   const availableSlots = useMemo(
     () => 64 - currentDeck.spells.length,
     [currentDeck.spells.length]
   );
 
-  // Memoize spell click handler
+  // Memoize spell click handler - now directly adds to deck
   const handleSpellClick = useCallback(
-    (spell: Spell, event: React.MouseEvent) => {
-      selectedCardRef.current = event.currentTarget as HTMLElement;
-      setSelectedSpell(spell);
+    (spell: Spell) => {
+      // Check if deck has space
+      if (availableSlots > 0) {
+        onAddSpell(spell, 1); // Always add 1 spell
+      }
     },
-    []
+    [onAddSpell, availableSlots]
   );
-
-  // Memoize spell popup close handler
-  const handleCloseSpellPopup = useCallback(() => {
-    setSelectedSpell(null);
-  }, []);
 
   // Memoize loading component with progress bar
   const loadingComponent = useMemo(
@@ -75,7 +59,9 @@ export const SpellSidebar = memo(function SpellSidebar({
     () => (
       <div className="bg-card p-4 w-full">
         <div className="flex items-center justify-center h-32">
-          <div className="text-red-500">Error: {error}</div>
+          <div className="text-red-500">
+            Error: Failed to Load Spells: {error}
+          </div>
         </div>
       </div>
     ),
@@ -107,17 +93,6 @@ export const SpellSidebar = memo(function SpellSidebar({
           onSpellClick={handleSpellClick}
         />
       </div>
-
-      {/* Spell Quantity Selection */}
-      {selectedSpell && (
-        <SpellQuantityPopup
-          spell={selectedSpell}
-          triggerRef={selectedCardRef}
-          onClose={handleCloseSpellPopup}
-          onAddSpell={onAddSpell}
-          availableSlots={availableSlots}
-        />
-      )}
 
       {/* Sticky sidebar footer */}
       <div className="border-t p-4 mt-auto bg-background gradient-special backdrop-blur-2xl z-20">

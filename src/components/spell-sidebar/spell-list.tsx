@@ -11,7 +11,7 @@ interface SpellListProps {
     color: string;
     spells: Spell[];
   }[];
-  onSpellClick: (spell: Spell, event: React.MouseEvent) => void;
+  onSpellClick: (spell: Spell) => void;
 }
 
 export const SpellList = memo(function SpellList({

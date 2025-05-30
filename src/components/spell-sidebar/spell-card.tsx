@@ -15,7 +15,7 @@ interface SpellCardProps {
   spell: Spell;
   spellGroup?: Spell[]; // Optional: all tiers of this spell
   schoolColor: string;
-  onClick: (spell: Spell, event: React.MouseEvent) => void;
+  onClick: (spell: Spell) => void;
   onTierSelect?: (spell: Spell) => void; // Optional: callback when tier is selected
 }
 
@@ -26,10 +26,13 @@ export const SpellCard = memo(function SpellCard({
   onClick,
   onTierSelect
 }: SpellCardProps) {
+  // const [isTierPopupOpen, setIsTierPopupOpen] = useState(false);
   const [isTierPopupOpen, setIsTierPopupOpen] = useState(false);
   const [currentSpell, setCurrentSpell] = useState(spell);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartTime, setDragStartTime] = useState<number | null>(null);
 
   // Sync currentSpell when spell prop changes
   useEffect(() => {
@@ -40,10 +43,6 @@ export const SpellCard = memo(function SpellCard({
   }, [spell]);
 
   // Memoize callbacks
-  const handleTierButtonClick = useCallback(() => {
-    setIsTierPopupOpen(true);
-  }, []);
-
   const handleTierSelect = useCallback(
     (selectedSpell: Spell) => {
       setCurrentSpell(selectedSpell);
@@ -53,20 +52,40 @@ export const SpellCard = memo(function SpellCard({
     [onTierSelect]
   );
 
-  const handleTierPopupClose = useCallback(() => {
-    setIsTierPopupOpen(false);
+  const handleTierButtonClick = useCallback(() => {
+    setIsTierPopupOpen(true);
   }, []);
+
+  // const handleTierPopupClose = useCallback(() => {
+  //   setIsTierPopupOpen(false);
+  // }, []);
 
   const handleCardClick = useCallback(
     (e: React.MouseEvent) => {
-      onClick(currentSpell, e);
+      // Prevent click if we just finished dragging
+      if (isDragging) {
+        e.preventDefault();
+        return;
+      }
+
+      // Additional check: if drag ended very recently, prevent click
+      if (dragStartTime && Date.now() - dragStartTime < 200) {
+        e.preventDefault();
+        return;
+      }
+
+      onClick(currentSpell);
     },
-    [onClick, currentSpell]
+    [onClick, currentSpell, isDragging, dragStartTime]
   );
 
   // Add drag and drop handlers
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
+      const startTime = Date.now();
+      setIsDragging(true);
+      setDragStartTime(startTime);
+
       // Store the spell data in the drag event
       e.dataTransfer.setData("application/json", JSON.stringify(currentSpell));
       e.dataTransfer.effectAllowed = "copy";
@@ -77,8 +96,10 @@ export const SpellCard = memo(function SpellCard({
     [currentSpell]
   );
 
-  const handleDragEnd = useCallback((e: React.DragEvent) => {
-    // Clean up any visual effects if needed
+  const handleDragEnd = useCallback(() => {
+    // Reset dragging state immediately
+    setIsDragging(false);
+    setDragStartTime(null);
   }, []);
 
   // Memoize expensive computations
@@ -149,33 +170,33 @@ export const SpellCard = memo(function SpellCard({
   }, [schoolColor]);
 
   // Memoize mouse event handlers
-  const handleMouseOver = useCallback(
-    (e: React.MouseEvent) => {
-      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.hover;
-    },
-    [schoolColors.hover]
-  );
+  // const handleMouseOver = useCallback(
+  //   (e: React.MouseEvent) => {
+  //     (e.currentTarget as HTMLElement).style.borderColor = schoolColors.hover;
+  //   },
+  //   [schoolColors.hover]
+  // );
 
-  const handleMouseOut = useCallback(
-    (e: React.MouseEvent) => {
-      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.border;
-    },
-    [schoolColors.border]
-  );
+  // const handleMouseOut = useCallback(
+  //   (e: React.MouseEvent) => {
+  //     (e.currentTarget as HTMLElement).style.borderColor = schoolColors.border;
+  //   },
+  //   [schoolColors.border]
+  // );
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.active;
-    },
-    [schoolColors.active]
-  );
+  // const handleMouseDown = useCallback(
+  //   (e: React.MouseEvent) => {
+  //     (e.currentTarget as HTMLElement).style.borderColor = schoolColors.active;
+  //   },
+  //   [schoolColors.active]
+  // );
 
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent) => {
-      (e.currentTarget as HTMLElement).style.borderColor = schoolColors.hover;
-    },
-    [schoolColors.hover]
-  );
+  // const handleMouseUp = useCallback(
+  //   (e: React.MouseEvent) => {
+  //     (e.currentTarget as HTMLElement).style.borderColor = schoolColors.hover;
+  //   },
+  //   [schoolColors.hover]
+  // );
 
   // Preload image to track loading state
   useEffect(() => {
@@ -229,13 +250,14 @@ export const SpellCard = memo(function SpellCard({
               borderColor: schoolColors.border,
               backgroundColor: schoolColors.bg
             }}
+            draggable={true}
             onClick={handleCardClick}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            // onMouseOver={handleMouseOver}
+            // onMouseOut={handleMouseOut}
+            // onMouseDown={handleMouseDown}
+            // onMouseUp={handleMouseUp}
           >
             {/* Background Image as a div instead of CSS background */}
             {imageLoaded && !imageError && imageUrl && (
@@ -327,7 +349,7 @@ export const SpellCard = memo(function SpellCard({
           selectedSpell={currentSpell}
           onTierSelect={handleTierSelect}
           isOpen={isTierPopupOpen}
-          onOpenChange={handleTierPopupClose}
+          onOpenChange={setIsTierPopupOpen}
         />
       )}
     </>

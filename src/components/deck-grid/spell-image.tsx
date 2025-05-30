@@ -13,23 +13,12 @@ export const SpellImage = memo(
   function SpellImage({ spell, imageUrl }: SpellImageProps) {
     const renderCount = useRef(0);
     renderCount.current += 1;
-    // Only log if there's an actual issue
-    // console.log(
-    //   `🖼️ SpellImage[${spell.name}]: Render count: ${
-    //     renderCount.current
-    //   }, imageUrl: ${imageUrl ? "has URL" : "no URL"}`
-    // );
 
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
 
     // Simple image loading effect - no complex optimization
     useEffect(() => {
-      // Only log if there's an issue with loading
-      // console.log(
-      //   `🖼️ SpellImage[${spell.name}]: useEffect triggered for imageUrl change`
-      // );
-
       if (!imageUrl) {
         setImageLoaded(false);
         setImageError(false);
@@ -43,13 +32,11 @@ export const SpellImage = memo(
       const img = new Image();
 
       img.onload = () => {
-        // console.log(`✅ SpellImage[${spell.name}]: Image loaded successfully`);
         setImageLoaded(true);
         setImageError(false);
       };
 
       img.onerror = () => {
-        console.log(`❌ SpellImage[${spell.name}]: Image failed to load`);
         setImageLoaded(false);
         setImageError(true);
       };
@@ -102,22 +89,6 @@ export const SpellImage = memo(
     const imageUrlSame = prevProps.imageUrl === nextProps.imageUrl;
 
     const shouldSkip = spellNameSame && spellTierSame && imageUrlSame;
-
-    // Only log if there's an actual problem
-    // if (!shouldSkip) {
-    //   console.log(
-    //     `🖼️ SpellImage[${nextProps.spell.name}]: Props changed, re-rendering`,
-    //     {
-    //       spellNameSame,
-    //       spellTierSame,
-    //       imageUrlSame,
-    //       oldSpell: prevProps.spell.name,
-    //       newSpell: nextProps.spell.name,
-    //       oldImageUrl: prevProps.imageUrl ? "has URL" : "no URL",
-    //       newImageUrl: nextProps.imageUrl ? "has URL" : "no URL"
-    //     }
-    //   );
-    // }
 
     return shouldSkip;
   }

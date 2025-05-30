@@ -18,6 +18,7 @@ export function DeckBuilderLayout() {
     weavingClass,
     addSpell,
     addSpellToSlot,
+    removeSpell,
     replaceSpell,
     createNewDeck,
     switchDeck,
@@ -37,9 +38,7 @@ export function DeckBuilderLayout() {
   } = useUI();
 
   const handleRemoveSpell = (index: number) => {
-    const newSpells = [...currentDeck.spells];
-    newSpells.splice(index, 1);
-    updateDeckSpells(newSpells);
+    removeSpell(index);
   };
 
   const handleBulkRemoveSpells = (indices: number[]) => {
@@ -118,7 +117,11 @@ export function DeckBuilderLayout() {
 
     deckLogger.debug(
       "Final atomic result:",
-      newSpells.map((s, i) => ({ index: i, name: s.name, id: s.id }))
+      newSpells.map((s, i) => ({
+        index: i,
+        name: s.name,
+        id: `${s.name}-${s.tier}`
+      }))
     );
 
     updateDeckSpells(newSpells);
