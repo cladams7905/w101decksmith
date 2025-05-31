@@ -2,22 +2,36 @@
  * Utility functions for ambient canvas animations
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { PI, cos, sin, abs, sqrt, pow, round, random, atan2 } = Math;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const HALF_PI = 0.5 * PI;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TAU = 2 * PI;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const TO_RAD = PI / 180;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const floor = (n) => n | 0;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const rand = (n) => n * random();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const randIn = (min, max) => rand(max - min) + min;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const randRange = (n) => n - rand(2 * n);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const fadeIn = (t, m) => t / m;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const fadeOut = (t, m) => (m - t) / m;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const fadeInOut = (t, m) => {
   let hm = 0.5 * m;
   return abs(((t + hm) % m) - hm) / hm;
 };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const dist = (x1, y1, x2, y2) => sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const angle = (x1, y1, x2, y2) => atan2(y2 - y1, x2 - x1);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const lerp = (n1, n2, speed) => (1 - speed) * n1 + speed * n2;
 
 // Math utilities

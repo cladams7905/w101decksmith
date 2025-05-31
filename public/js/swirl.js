@@ -27,15 +27,22 @@ let container;
 let canvas;
 let ctx;
 let center;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let gradient;
 let tick;
 let simplex;
 let particleProps;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let positions;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let velocities;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let lifeSpans;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let speeds;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let sizes;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let hues;
 
 function setup() {
