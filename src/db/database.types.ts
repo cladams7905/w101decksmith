@@ -18,6 +18,7 @@ export type Database = {
           is_public: boolean
           is_pve: boolean
           level: number
+          name: string
           school: Database["public"]["Enums"]["school"]
           spells: Json | null
           user_id: string
@@ -31,6 +32,7 @@ export type Database = {
           is_public?: boolean
           is_pve?: boolean
           level: number
+          name: string
           school: Database["public"]["Enums"]["school"]
           spells?: Json | null
           user_id: string
@@ -44,6 +46,7 @@ export type Database = {
           is_public?: boolean
           is_pve?: boolean
           level?: number
+          name?: string
           school?: Database["public"]["Enums"]["school"]
           spells?: Json | null
           user_id?: string

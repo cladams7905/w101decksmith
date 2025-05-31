@@ -1,31 +1,40 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Search, FolderPlus } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import type { Deck } from "@/lib/types"
+import { useState } from "react";
+import { Search, FolderPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import type { LegacyDeck, School } from "@/lib/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuLabel
+} from "@/components/ui/dropdown-menu";
 
 interface MyDecksDropdownProps {
-  decks: Deck[]
-  currentDeck: Deck
-  onSwitchDeck: (deck: Deck) => void
-  showNewDeckModal: boolean
-  setShowNewDeckModal: (show: boolean) => void
-  onCreateDeck: (name: string, school: string, level: string, weavingClass: string) => void
-  wizardSchool: string
-  wizardLevel: string
-  weavingClass: string
+  decks: LegacyDeck[];
+  currentDeck: LegacyDeck;
+  onSwitchDeck: (deck: LegacyDeck) => void;
+  showNewDeckModal: boolean;
+  setShowNewDeckModal: (show: boolean) => void;
+  onCreateDeck: (deckData: {
+    name: string;
+    school: School;
+    level: number;
+    weavingSchool?: School;
+    description?: string;
+    isPvE: boolean;
+    isPublic: boolean;
+    canComment: boolean;
+  }) => Promise<void>;
+  wizardSchool: string;
+  wizardLevel: string;
+  weavingClass: string;
 }
 
 export function MyDecksDropdown({
@@ -37,16 +46,22 @@ export function MyDecksDropdown({
   onCreateDeck,
   wizardSchool,
   wizardLevel,
-  weavingClass,
+  weavingClass
 }: MyDecksDropdownProps) {
-  const [deckSearchQuery, setDeckSearchQuery] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
+  const [deckSearchQuery, setDeckSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
-  const filteredDecks = decks.filter((deck) => deck.name.toLowerCase().includes(deckSearchQuery.toLowerCase()))
+  const filteredDecks = decks.filter((deck) =>
+    deck.name.toLowerCase().includes(deckSearchQuery.toLowerCase())
+  );
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
+      <DropdownMenuTrigger
+        asChild
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => setIsOpen(false)}
+      >
         <Button variant="ghost" className="hidden md:flex">
           My Decks
         </Button>
@@ -88,8 +103,8 @@ export function MyDecksDropdown({
                       deck.id === currentDeck.id ? "ring-2 ring-primary" : ""
                     }`}
                     onClick={() => {
-                      onSwitchDeck(deck)
-                      setIsOpen(false)
+                      onSwitchDeck(deck);
+                      setIsOpen(false);
                     }}
                   >
                     <CardContent className="p-3">
@@ -99,12 +114,17 @@ export function MyDecksDropdown({
                             deck.school || wizardSchool
                           }-700 flex items-center justify-center text-white font-bold`}
                         >
-                          {(deck.school || wizardSchool).charAt(0).toUpperCase()}
+                          {(deck.school || wizardSchool)
+                            .charAt(0)
+                            .toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm truncate">{deck.name}</h3>
+                          <h3 className="font-medium text-sm truncate">
+                            {deck.name}
+                          </h3>
                           <p className="text-xs text-muted-foreground">
-                            Level {deck.level || wizardLevel} {deck.weavingClass || weavingClass}
+                            Level {deck.level || wizardLevel}{" "}
+                            {deck.weavingClass || weavingClass}
                           </p>
                         </div>
                       </div>
@@ -114,7 +134,9 @@ export function MyDecksDropdown({
                           {deck.spells.length}/64 cards
                         </Badge>
 
-                        {deck.id === currentDeck.id && <Badge className="bg-primary">Current</Badge>}
+                        {deck.id === currentDeck.id && (
+                          <Badge className="bg-primary">Current</Badge>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -131,9 +153,9 @@ export function MyDecksDropdown({
             variant="default"
             className="w-full bg-primary hover:bg-primary/90"
             onClick={(e) => {
-              e.preventDefault()
-              setShowNewDeckModal(true)
-              setIsOpen(false)
+              e.preventDefault();
+              setShowNewDeckModal(true);
+              setIsOpen(false);
             }}
           >
             <FolderPlus className="h-4 w-4 mr-2" />
@@ -142,5 +164,5 @@ export function MyDecksDropdown({
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

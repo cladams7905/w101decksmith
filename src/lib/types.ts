@@ -4,22 +4,17 @@ export type Spell = Database["public"]["Tables"]["spells"]["Row"];
 export type SpellInsert = Database["public"]["Tables"]["spells"]["Insert"];
 export type SpellUpdate = Database["public"]["Tables"]["spells"]["Update"];
 
+export type Deck = Database["public"]["Tables"]["decks"]["Row"];
+export type DeckInsert = Database["public"]["Tables"]["decks"]["Insert"];
+export type DeckUpdate = Database["public"]["Tables"]["decks"]["Update"];
+
+export type School = Database["public"]["Enums"]["school"];
+
 export interface SpellCategory {
   id: string;
   name: string;
   color: string;
   spells: Spell[];
-}
-
-// Update the Deck interface to include rightSidebarOpen
-export interface Deck {
-  id: string;
-  name: string;
-  spells: Spell[];
-  school?: string;
-  level?: string;
-  weavingClass?: string;
-  rightSidebarOpen?: boolean;
 }
 
 export interface UtilityMetrics {

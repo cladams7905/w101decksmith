@@ -11,21 +11,25 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import type { Deck } from "@/lib/types";
+import type { LegacyDeck, School } from "@/lib/types";
 import { NewDeckModal } from "@/components/app-header/navigation/new-deck-modal";
 
 interface DeckGalleryProps {
-  decks: Deck[];
-  currentDeck: Deck;
-  onSwitchDeck: (deck: Deck) => void;
+  decks: LegacyDeck[];
+  currentDeck: LegacyDeck;
+  onSwitchDeck: (deck: LegacyDeck) => void;
   showNewDeckModal: boolean;
   setShowNewDeckModal: (show: boolean) => void;
-  onCreateDeck: (
-    name: string,
-    school: string,
-    level: string,
-    weavingClass: string
-  ) => void;
+  onCreateDeck: (deckData: {
+    name: string;
+    school: School;
+    level: number;
+    weavingSchool?: School;
+    description?: string;
+    isPvE: boolean;
+    isPublic: boolean;
+    canComment: boolean;
+  }) => Promise<void>;
   wizardSchool: string;
   wizardLevel: string;
   weavingClass: string;

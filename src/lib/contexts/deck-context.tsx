@@ -45,7 +45,7 @@ const DeckContext = createContext<DeckContextType | undefined>(undefined);
 
 export function DeckProvider({ children }: { children: React.ReactNode }) {
   const [currentDeck, setCurrentDeck] = useState<Deck>({
-    id: "1",
+    id: 1,
     name: "Fire PvP Deck",
     spells: [],
     rightSidebarOpen: true
