@@ -95,7 +95,7 @@ export function ShareDeckModal({ deck, trigger }: ShareDeckModalProps) {
         </DialogHeader>
 
         <div className="py-4">
-          <Card className="bg-blue-950/20 border-blue-900/30 mb-4">
+          <Card className="gradient-special mb-4">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div

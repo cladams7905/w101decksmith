@@ -5,6 +5,8 @@ import { HeaderActions } from "./header-actions";
 import { MyDecksDropdown } from "@/components/app-header/navigation/my-decks-dropdown";
 import { NewDeckModal } from "@/components/app-header/navigation/new-deck-modal";
 import { Button } from "@/components/ui/button";
+import DecksmithLogo from "@/../public/DeckSmith_Logo.svg";
+import Image from "next/image";
 
 interface AppHeaderProps {
   currentDeck: Deck;
@@ -34,14 +36,19 @@ export function AppHeader({
   onAddSpell
 }: AppHeaderProps) {
   return (
-    <header className="h-16 border-b gradient-special backdrop-blur supports-[backdrop-filter]:bg-opacity-80 flex items-center px-4 sticky top-0 z-50">
+    <header className="h-16 border-b bg-linear-to-br from-blue-900/40 backdrop-blur supports-[backdrop-filter]:bg-opacity-80 flex items-center px-4 sticky top-0 z-50">
       <div className="flex items-center">
         <MobileMenuTrigger currentDeck={currentDeck} onAddSpell={onAddSpell} />
 
         {/* App Logo */}
-        <div className="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center text-white font-bold mr-4">
-          W
-        </div>
+        <Image
+          src={DecksmithLogo}
+          alt="DeckSmith"
+          width={32}
+          height={32}
+          className="rounded-lg mr-2"
+          priority
+        />
 
         <CommunityDropdown />
 
