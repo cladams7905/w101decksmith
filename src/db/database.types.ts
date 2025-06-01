@@ -102,6 +102,27 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          avatar: Json | null
+          bio: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          avatar?: Json | null
+          bio?: string | null
+          email?: string | null
+          id?: string
+        }
+        Update: {
+          avatar?: Json | null
+          bio?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

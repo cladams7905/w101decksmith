@@ -79,7 +79,7 @@ export default function Home() {
 
           {/* Demo Video */}
           <div className="mb-3 md:mb-4 w-full max-w-xl">
-            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/40 to-blue-900/40 border backdrop-blur-sm shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 hover:scale-[1.02]">
+            <div className="relative rounded-2xl overflow-hidden bg-background/80 border backdrop-blur-sm shadow-2xl hover:shadow-purple-500/20 transition-all duration-500 hover:scale-[1.02]">
               <div className="aspect-video flex items-center justify-center">
                 <div className="text-center">
                   <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mb-3 mx-auto hover:bg-white/20 transition-all duration-300 cursor-pointer hover:scale-110">
