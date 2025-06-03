@@ -20,11 +20,13 @@ import {
   SignUpFormData
 } from "@/lib/validations/auth";
 import {
-  signInWithEmailAndPassword,
   signUpWithEmailAndPassword,
-  signInWithGoogle
+  signInWithGoogle,
+  signInWithTwitch,
+  signInWithDiscord
 } from "@/db/actions/auth";
 import { checkIfUserExists } from "@/db/actions/users";
+import { supabase } from "@/db/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
 import ConfirmEmailWindow from "./confirm-email-window";
 
@@ -76,17 +78,29 @@ export default function SignInModal({
     setError(null);
 
     try {
-      const { error } = await signInWithEmailAndPassword(data);
+      // Use client-side Supabase directly for login
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password
+      });
 
       if (error) {
+        console.error("❌ Login error:", error);
         setError(error.message);
-      } else {
-        // Success - close modal and potentially redirect
+      } else if (authData?.user && authData?.session) {
+        console.log("✅ Login successful! Session established.");
+
+        // Success - close modal
         onOpenChange(false);
-        // You might want to redirect here or handle successful login
-        window.location.href = "/my-decks";
+
+        // Redirect to home page
+        window.location.href = "/home";
+      } else {
+        console.error("❌ Login failed - no user or session returned");
+        setError("Login failed. Please try again.");
       }
-    } catch {
+    } catch (err) {
+      console.error("❌ Login exception:", err);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -157,9 +171,48 @@ export default function SignInModal({
     setError(null);
 
     try {
-      await signInWithGoogle();
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setError("Failed to sign in with Google. Please try again.");
+        setIsLoading(false);
+      }
+      // If successful, the user will be redirected by Supabase
     } catch {
       setError("Failed to sign in with Google. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleTwitchSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await signInWithTwitch();
+      if (error) {
+        setError("Failed to sign in with Twitch. Please try again.");
+        setIsLoading(false);
+      }
+      // If successful, the user will be redirected by Supabase
+    } catch {
+      setError("Failed to sign in with Twitch. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleDiscordSignIn = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await signInWithDiscord();
+      if (error) {
+        setError("Failed to sign in with Discord. Please try again.");
+        setIsLoading(false);
+      }
+      // If successful, the user will be redirected by Supabase
+    } catch {
+      setError("Failed to sign in with Discord. Please try again.");
       setIsLoading(false);
     }
   };
@@ -207,6 +260,7 @@ export default function SignInModal({
             <Button
               variant="outline_primary"
               className="w-full"
+              onClick={handleTwitchSignIn}
               disabled={isLoading}
             >
               <svg
@@ -222,6 +276,7 @@ export default function SignInModal({
             <Button
               variant="outline_primary"
               className="w-full"
+              onClick={handleDiscordSignIn}
               disabled={isLoading}
             >
               <svg
@@ -290,7 +345,10 @@ export default function SignInModal({
           {/* Email/Password Form - Split by mode */}
           {loginMode === "login" ? (
             <form
-              onSubmit={signInForm.handleSubmit(onSignIn)}
+              onSubmit={(e) => {
+                console.log("📝 Form submitted!");
+                signInForm.handleSubmit(onSignIn)(e);
+              }}
               className="space-y-4"
             >
               <div className="space-y-2">

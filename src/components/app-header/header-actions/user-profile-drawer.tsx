@@ -30,6 +30,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
+import { signOut } from "@/db/actions/auth";
 
 interface UserProfileDrawerProps {
   open: boolean;
@@ -46,6 +47,18 @@ export function UserProfileDrawer({
   const [bio, setBio] = useState(
     "Level 150 Fire Wizard. PvP enthusiast and deck builder."
   );
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+
+    if (error) {
+      console.error("Error signing out", error);
+    } else {
+      console.log("Signed out");
+      // Redirect to landing page
+      window.location.href = "/";
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -307,7 +320,9 @@ export function UserProfileDrawer({
                 <div className="flex items-center justify-between p-3 rounded-md hover:bg-destructive/10 cursor-pointer">
                   <div className="flex items-center">
                     <LogOut className="h-5 w-5 mr-3 text-destructive" />
-                    <div className="text-sm">Sign Out</div>
+                    <div className="text-sm" onClick={() => handleSignOut()}>
+                      Sign Out
+                    </div>
                   </div>
                   <Button variant="ghost" size="icon">
                     <ChevronRight className="h-4 w-4" />

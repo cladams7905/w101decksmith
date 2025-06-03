@@ -1,20 +1,21 @@
 "use server";
 
-import { supabase } from "@/db/supabase";
+import { getUrl } from "@/lib/utils";
 import { AuthError, AuthResponse } from "@supabase/supabase-js";
-import { getURL } from "./utils";
+import { createClient } from "../supabase/server";
+
+const REDIRECT_PATHNAME = "/home";
 
 export async function signUpWithEmailAndPassword(data: {
   email: string;
   password: string;
 }): Promise<AuthResponse> {
-  const url = await getURL();
-
+  const supabase = await createClient();
   const result = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
     options: {
-      emailRedirectTo: `${url}/api/auth/confirm?next=/my-decks`
+      emailRedirectTo: `${getUrl()}/auth/confirm?next=${REDIRECT_PATHNAME}`
     }
   });
 
@@ -25,6 +26,7 @@ export async function signInWithEmailAndPassword(data: {
   email: string;
   password: string;
 }): Promise<AuthResponse> {
+  const supabase = await createClient();
   const result = await supabase.auth.signInWithPassword({
     email: data.email,
     password: data.password
@@ -35,21 +37,19 @@ export async function signInWithEmailAndPassword(data: {
 export async function resendConfirmationEmail(email: string): Promise<{
   error: AuthError | null;
 }> {
-  const url = await getURL();
-
+  const supabase = await createClient();
   const result = await supabase.auth.resend({
     type: "signup",
     email: email,
     options: {
-      emailRedirectTo: `${url}/api/auth/confirm?next=/my-decks`
+      emailRedirectTo: `${getUrl()}/auth/confirm?next=${REDIRECT_PATHNAME}`
     }
   });
   return result;
 }
 
 export async function signInWithGoogle() {
-  const url = await getURL();
-
+  const supabase = await createClient();
   const result = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -57,7 +57,29 @@ export async function signInWithGoogle() {
         access_type: "offline",
         prompt: "consent"
       },
-      redirectTo: `${url}/api/auth/callback`
+      redirectTo: `${getUrl()}/api/auth/callback`
+    }
+  });
+  return result;
+}
+
+export async function signInWithTwitch() {
+  const supabase = await createClient();
+  const result = await supabase.auth.signInWithOAuth({
+    provider: "twitch",
+    options: {
+      redirectTo: `${getUrl()}/api/auth/callback`
+    }
+  });
+  return result;
+}
+
+export async function signInWithDiscord() {
+  const supabase = await createClient();
+  const result = await supabase.auth.signInWithOAuth({
+    provider: "discord",
+    options: {
+      redirectTo: `${getUrl()}/api/auth/callback`
     }
   });
   return result;
@@ -66,10 +88,7 @@ export async function signInWithGoogle() {
 export async function signOut(): Promise<{
   error: AuthError | null;
 }> {
+  const supabase = await createClient();
   const result = await supabase.auth.signOut();
   return result;
-}
-
-export async function getRedirectPathname(): Promise<string> {
-  return `/my-decks`;
 }

@@ -1,27 +1,20 @@
-// middleware.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
+import { updateSession } from "./db/supabase/middleware";
 
-export function middleware(request: NextRequest) {
-  const url = request.url;
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-url", url);
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders
-    }
-  });
+export async function middleware(request: NextRequest) {
+  console.log("======MIDDLEWARE=======");
+  return await updateSession(request);
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)"
+    // Match all paths EXCEPT:
+    // - _next/static
+    // - _next/image
+    // - favicon.ico
+    // - Static assets (.js, .css, .json, images, fonts, etc.)
+    // - API routes (/api/*)
+    // - Auth routes (/auth/*)
+    "/((?!_next/static|_next/image|favicon.ico|api/|auth/|.*\\.(?:js|css|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|txt|ico|json)$).*)"
   ]
 };

@@ -1,4 +1,4 @@
-import { supabase } from "../src/db/supabase";
+import { supabase } from "../src/db/supabase/server";
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import type { SpellInsert } from "../src/lib/types";

@@ -1,10 +1,11 @@
 "use server";
 
-import { supabase } from "../supabase";
+import { createClient } from "../supabase/server";
 import { Deck, DeckInsert, DeckUpdate } from "@/lib/types";
 import { Database } from "../database.types";
 
 export async function getAllDecks(): Promise<Deck[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("decks").select("*");
 
   if (error) throw error;
@@ -12,6 +13,7 @@ export async function getAllDecks(): Promise<Deck[]> {
 }
 
 export async function getDeckById(id: number): Promise<Deck> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("decks")
     .select("*")
@@ -23,6 +25,7 @@ export async function getDeckById(id: number): Promise<Deck> {
 }
 
 export async function getDecksByUserId(userId: string): Promise<Deck[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("decks")
     .select("*")
@@ -33,6 +36,7 @@ export async function getDecksByUserId(userId: string): Promise<Deck[]> {
 }
 
 export async function getPublicDecks(): Promise<Deck[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("decks")
     .select("*")
@@ -43,6 +47,7 @@ export async function getPublicDecks(): Promise<Deck[]> {
 }
 
 export async function insertDeck(deck: DeckInsert): Promise<Deck> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("decks")
     .insert(deck)
@@ -57,6 +62,7 @@ export async function updateDeck(
   id: number,
   updates: DeckUpdate
 ): Promise<Deck> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("decks")
     .update(updates)
@@ -69,6 +75,7 @@ export async function updateDeck(
 }
 
 export async function deleteDeck(id: number): Promise<void> {
+  const supabase = await createClient();
   const { error } = await supabase.from("decks").delete().eq("id", id);
 
   if (error) throw error;
@@ -78,6 +85,7 @@ export async function updateDeckSpells(
   id: number,
   spells: Database["public"]["Tables"]["decks"]["Row"]["spells"]
 ): Promise<Deck> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("decks")
     .update({ spells })
