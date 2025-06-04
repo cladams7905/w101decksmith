@@ -32,6 +32,7 @@ export type School = Database["public"]["Enums"]["school"];\
 export type CardEffect = Database["public"]["Enums"]["card_effect"];\
 export type CardType = Database["public"]["Enums"]["card_type"];\
 export type PvpStatus = Database["public"]["Enums"]["pvp_status"];
+\
 ' ./src/db/database.types.ts
 
 # Remove the backup file

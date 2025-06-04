@@ -1,8 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
-import { Deck, DeckInsert, DeckUpdate } from "@/db/database.types";
-import { Database } from "../database.types";
+import { Database, Deck, DeckInsert, DeckUpdate } from "@/db/database.types";
 
 export async function getAllDecks(): Promise<Deck[]> {
   const supabase = await createClient();
