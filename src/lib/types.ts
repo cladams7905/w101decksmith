@@ -1,3 +1,12 @@
+import { Spell } from "@/db/database.types";
+
+export interface SpellCategory {
+  id: string;
+  name: string;
+  color: string;
+  spells: Spell[];
+}
+
 export interface UtilityMetrics {
   dpp: number; // Damage Per Pip
   dot: number; // Damage Over Time
