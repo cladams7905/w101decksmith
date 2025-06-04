@@ -11,13 +11,13 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import type { LegacyDeck, School } from "@/lib/types";
+import type { Deck, School, Spell } from "@/lib/types";
 import { NewDeckModal } from "@/components/app-header/navigation/new-deck-modal";
 
 interface DeckGalleryProps {
-  decks: LegacyDeck[];
-  currentDeck: LegacyDeck;
-  onSwitchDeck: (deck: LegacyDeck) => void;
+  decks: Deck[];
+  currentDeck: Deck;
+  onSwitchDeck: (deck: Deck) => void;
   showNewDeckModal: boolean;
   setShowNewDeckModal: (show: boolean) => void;
   onCreateDeck: (deckData: {
@@ -94,14 +94,14 @@ export function DeckGallery({
                     <h3 className="font-medium truncate">{deck.name}</h3>
                     <p className="text-xs text-muted-foreground">
                       Level {deck.level || wizardLevel}{" "}
-                      {deck.weavingClass || weavingClass}
+                      {deck.weaving_school || weavingClass}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <Badge variant="outline" className="text-xs">
-                    {deck.spells.length}/64 cards
+                    {(deck.spells as Spell[]).length}/64 cards
                   </Badge>
 
                   {deck.id === currentDeck.id && (

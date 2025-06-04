@@ -44,7 +44,7 @@ export function DeckBuilderLayout() {
   const handleBulkRemoveSpells = (indices: number[]) => {
     // Sort indices in descending order to avoid index shifting issues
     const sortedIndices = [...indices].sort((a, b) => b - a);
-    const newSpells = [...currentDeck.spells];
+    const newSpells = [...(currentDeck.spells as Spell[])];
 
     // Remove spells starting from the highest index
     sortedIndices.forEach((index) => {
@@ -57,7 +57,7 @@ export function DeckBuilderLayout() {
   };
 
   const handleBulkReplaceSpells = (spell: Spell, indices: number[]) => {
-    const newSpells = [...currentDeck.spells];
+    const newSpells = [...(currentDeck.spells as Spell[])];
 
     // Replace spells at the specified indices
     indices.forEach((index) => {
@@ -70,7 +70,7 @@ export function DeckBuilderLayout() {
   };
 
   const handleAddSpellToGridPositions = (spell: Spell, positions: number[]) => {
-    const newSpells = [...currentDeck.spells];
+    const newSpells = [...(currentDeck.spells as Spell[])];
 
     // For each position, add the spell to the end of the deck
     // This maintains the current behavior where spells are added sequentially
@@ -93,7 +93,7 @@ export function DeckBuilderLayout() {
     deckLogger.info("Replace indices:", replaceIndices);
     deckLogger.info("Add count:", addCount);
 
-    const newSpells = [...currentDeck.spells];
+    const newSpells = [...(currentDeck.spells as Spell[])];
 
     // First, handle replacements
     replaceIndices.forEach((index) => {

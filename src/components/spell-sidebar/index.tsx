@@ -1,5 +1,5 @@
 import { useCallback, useMemo, memo } from "react";
-import type { Spell } from "@/lib/types";
+import type { Deck, Spell } from "@/lib/types";
 import { SpellList } from "./spell-list";
 import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
 import { useSpellFilter } from "../shared/use-spell-filter";
@@ -7,9 +7,7 @@ import { SpellSearchBar } from "../shared/spell-search-bar";
 import { LoadingProgress } from "@/components/ui/loading-progress";
 
 interface SpellSidebarProps {
-  currentDeck: {
-    spells: Spell[];
-  };
+  currentDeck: Deck;
   onAddSpell: (spell: Spell, quantity: number) => void;
 }
 
@@ -29,8 +27,8 @@ export const SpellSidebar = memo(function SpellSidebar({
 
   // Memoize available slots calculation
   const availableSlots = useMemo(
-    () => 64 - currentDeck.spells.length,
-    [currentDeck.spells.length]
+    () => 64 - (currentDeck.spells as Spell[])?.length,
+    [currentDeck.spells]
   );
 
   // Memoize spell click handler - now directly adds to deck

@@ -39,7 +39,7 @@ const DeckGrid = memo(function DeckGrid({
     const newGrid: (Spell | null)[] = Array(rows * cols).fill(null);
 
     // Fill the grid with spells from the deck
-    deck.spells.forEach((spell, index) => {
+    (deck.spells as Spell[]).forEach((spell, index) => {
       if (index < newGrid.length) {
         newGrid[index] = spell;
       }
@@ -111,7 +111,7 @@ const DeckGrid = memo(function DeckGrid({
 
         // Handle additions
         for (let i = 0; i < addCount; i++) {
-          onAddSpell(spell, deck.spells.length + i, 1);
+          onAddSpell(spell, (deck.spells as Spell[]).length + i, 1);
         }
       }
 
@@ -266,7 +266,7 @@ const DeckGrid = memo(function DeckGrid({
     (spell: Spell, quantity: number) => {
       // Always use the current grid state, not the captured one
       const currentGrid: (Spell | null)[] = Array(64).fill(null);
-      deck.spells.forEach((deckSpell, index) => {
+      (deck.spells as Spell[]).forEach((deckSpell, index) => {
         if (index < currentGrid.length) {
           currentGrid[index] = deckSpell;
         }
@@ -317,8 +317,8 @@ const DeckGrid = memo(function DeckGrid({
 
   // Memoize computed values for popup
   const availableSlots = useMemo(
-    () => 64 - deck.spells.length,
-    [deck.spells.length]
+    () => 64 - (deck.spells as Spell[]).length,
+    [deck.spells]
   );
 
   // Delete handler - use ref to check without dependency
@@ -438,13 +438,13 @@ const DeckGrid = memo(function DeckGrid({
         if (spellData) {
           const spell = JSON.parse(spellData) as Spell;
           // Always add to the end of the deck (next available slot)
-          onAddSpell(spell, deck.spells.length, 1);
+          onAddSpell(spell, (deck.spells as Spell[]).length, 1);
         }
       } catch (error) {
         console.error("Error parsing dropped spell data:", error);
       }
     },
-    [deck.spells.length, onAddSpell]
+    [deck.spells, onAddSpell]
   );
 
   return (
@@ -452,7 +452,7 @@ const DeckGrid = memo(function DeckGrid({
       <TooltipProvider>
         <div className="max-w-xl max-h-[420px] mx-auto md:mt-6">
           <div
-            className={`grid grid-cols-8 gap-1 bg-secondary border border-border p-3 rounded-lg deck-grid relative ${
+            className={`grid grid-cols-8 gap-1 bg-accent border border-border p-3 rounded-lg deck-grid relative ${
               activeSlot !== null ? "opacity-60 pointer-events-none" : ""
             }`}
             onDragOver={handleDeckDragOver}
