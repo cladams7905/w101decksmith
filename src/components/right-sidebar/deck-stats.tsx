@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { Deck, Spell, UtilityMetrics } from "@/lib/types";
+import type { Deck } from "@/db/database.types";
+import { UtilityMetrics } from "@/lib/types";
 import {
   Collapsible,
   CollapsibleContent,
@@ -42,12 +43,12 @@ export default function DeckStats({ deck }: DeckStatsProps) {
 
   // Calculate stats based on the deck
   const calculateDPP = () => {
-    if ((deck.spells as Spell[]).length === 0) return 0;
-    const totalDamage = (deck.spells as Spell[]).reduce(
+    if (deck.spells.length === 0) return 0;
+    const totalDamage = deck.spells.reduce(
       (sum, spell) => sum + getSpellDamage(spell),
       0
     );
-    const totalPips = (deck.spells as Spell[]).reduce(
+    const totalPips = deck.spells.reduce(
       (sum, spell) => sum + getSpellPips(spell),
       0
     );
@@ -55,35 +56,34 @@ export default function DeckStats({ deck }: DeckStatsProps) {
   };
 
   const calculatePipCost = () => {
-    if ((deck.spells as Spell[]).length === 0) return 0;
-    const totalPips = (deck.spells as Spell[]).reduce(
+    if (deck.spells.length === 0) return 0;
+    const totalPips = deck.spells.reduce(
       (sum, spell) => sum + getSpellPips(spell),
       0
     );
-    const avgPipCost = totalPips / (deck.spells as Spell[]).length;
+    const avgPipCost = totalPips / deck.spells.length;
     return Math.round(avgPipCost * 10) / 10;
   };
 
   const calculateUtility = () => {
-    if ((deck.spells as Spell[]).length === 0) return 0;
+    if (deck.spells.length === 0) return 0;
     // Use the isUtilitySpell function to determine utility spells
     return Math.min(
       80,
       Math.round(
-        ((deck.spells as Spell[]).filter((spell) => isUtilitySpell(spell))
-          .length /
-          (deck.spells as Spell[]).length) *
+        (deck.spells.filter((spell) => isUtilitySpell(spell)).length /
+          deck.spells.length) *
           100
       )
     );
   };
 
   const calculateComboLevel = () => {
-    if ((deck.spells as Spell[]).length < 3) return 0;
+    if (deck.spells.length < 3) return 0;
 
     // Count spells by school to determine combo potential
     const schoolCounts: Record<string, number> = {};
-    (deck.spells as Spell[]).forEach((spell) => {
+    deck.spells.forEach((spell) => {
       const school = spell.school || "unknown";
       schoolCounts[school] = (schoolCounts[school] || 0) + 1;
     });
@@ -93,7 +93,7 @@ export default function DeckStats({ deck }: DeckStatsProps) {
       (a, b) => b[1] - a[1]
     )[0];
     const dominantSchoolPercentage = dominantSchool
-      ? (dominantSchool[1] / (deck.spells as Spell[]).length) * 100
+      ? (dominantSchool[1] / deck.spells.length) * 100
       : 0;
 
     return Math.round(dominantSchoolPercentage);
@@ -101,7 +101,7 @@ export default function DeckStats({ deck }: DeckStatsProps) {
 
   // Calculate detailed utility metrics
   const calculateUtilityMetrics = (): UtilityMetrics => {
-    if ((deck.spells as Spell[]).length === 0) {
+    if (deck.spells.length === 0) {
       return {
         dpp: 0,
         dot: 0,
@@ -114,72 +114,72 @@ export default function DeckStats({ deck }: DeckStatsProps) {
     }
 
     // Calculate damage per pip
-    const totalDamage = (deck.spells as Spell[]).reduce(
+    const totalDamage = deck.spells.reduce(
       (sum, spell) => sum + getSpellDamage(spell),
       0
     );
-    const totalPips = (deck.spells as Spell[]).reduce(
+    const totalPips = deck.spells.reduce(
       (sum, spell) => sum + getSpellPips(spell),
       0
     );
     const dpp = totalPips > 0 ? totalDamage / totalPips : 0;
 
     // Calculate damage over time utility
-    const totalDOT = (deck.spells as Spell[]).reduce(
+    const totalDOT = deck.spells.reduce(
       (sum, spell) => sum + getSpellDamageOverTime(spell),
       0
     );
-    const dotSpells = (deck.spells as Spell[]).filter(
+    const dotSpells = deck.spells.filter(
       (spell) => getSpellDamageOverTime(spell) > 0
     ).length;
     const dot = dotSpells > 0 ? totalDOT / dotSpells : 0;
 
     // Calculate buff utility
-    const totalBuffs = (deck.spells as Spell[]).reduce(
+    const totalBuffs = deck.spells.reduce(
       (sum, spell) => sum + getSpellBuffPercentage(spell),
       0
     );
-    const buffSpells = (deck.spells as Spell[]).filter(
+    const buffSpells = deck.spells.filter(
       (spell) => getSpellBuffPercentage(spell) > 0
     ).length;
     const buff = buffSpells > 0 ? totalBuffs / buffSpells : 0;
 
     // Calculate debuff utility
-    const totalDebuffs = (deck.spells as Spell[]).reduce(
+    const totalDebuffs = deck.spells.reduce(
       (sum, spell) => sum + getSpellDebuffPercentage(spell),
       0
     );
-    const debuffSpells = (deck.spells as Spell[]).filter(
+    const debuffSpells = deck.spells.filter(
       (spell) => getSpellDebuffPercentage(spell) > 0
     ).length;
     const debuff = debuffSpells > 0 ? totalDebuffs / debuffSpells : 0;
 
     // Calculate healing per pip
-    const totalHealing = (deck.spells as Spell[]).reduce(
+    const totalHealing = deck.spells.reduce(
       (sum, spell) => sum + getSpellHealing(spell),
       0
     );
-    const healingPips = (deck.spells as Spell[])
+    const healingPips = deck.spells
       .filter((spell) => getSpellHealing(spell) > 0)
       .reduce((sum, spell) => sum + getSpellPips(spell), 0);
     const hpp = healingPips > 0 ? totalHealing / healingPips : 0;
 
     // Calculate healing over time utility
-    const totalHOT = (deck.spells as Spell[]).reduce(
+    const totalHOT = deck.spells.reduce(
       (sum, spell) => sum + getSpellHealingOverTime(spell),
       0
     );
-    const hotSpells = (deck.spells as Spell[]).filter(
+    const hotSpells = deck.spells.filter(
       (spell) => getSpellHealingOverTime(spell) > 0
     ).length;
     const hot = hotSpells > 0 ? totalHOT / hotSpells : 0;
 
     // Calculate pip utility
-    const totalPipsGained = (deck.spells as Spell[]).reduce(
+    const totalPipsGained = deck.spells.reduce(
       (sum, spell) => sum + getSpellPipsGained(spell),
       0
     );
-    const pipSpells = (deck.spells as Spell[]).filter(
+    const pipSpells = deck.spells.filter(
       (spell) => getSpellPipsGained(spell) > 0
     ).length;
     const pip = pipSpells > 0 ? totalPipsGained / pipSpells : 0;
@@ -360,11 +360,9 @@ export default function DeckStats({ deck }: DeckStatsProps) {
           <CardTitle className="text-sm">Deck Size</CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="text-2xl font-bold">
-            {(deck.spells as Spell[]).length}/64
-          </div>
+          <div className="text-2xl font-bold">{deck.spells.length}/64</div>
           <Progress
-            value={((deck.spells as Spell[]).length / 64) * 100}
+            value={(deck.spells.length / 64) * 100}
             className="h-2 mt-2"
           />
         </CardContent>

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { Accordion } from "@/components/ui/accordion";
 import { SpellSchoolAccordion } from "./spell-school-accordion";
 import { useSpellSorting } from "./use-spell-sorting";

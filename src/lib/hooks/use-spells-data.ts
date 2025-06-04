@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getAllSpells } from "@/db/actions/spells";
-import type { Spell, SpellCategory } from "@/lib/types";
+import type { Spell, SpellCategory } from "@/db/database.types";
 
 // School color mapping
 const SCHOOL_COLORS: Record<string, string> = {

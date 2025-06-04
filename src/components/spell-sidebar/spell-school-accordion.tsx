@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, memo } from "react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import {
   AccordionContent,
   AccordionItem,

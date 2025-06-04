@@ -1,6 +1,6 @@
 "use client";
 
-import type { Deck, Spell } from "@/lib/types";
+import type { Deck, Spell } from "@/db/database.types";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DeckGridSlot } from "./deck-grid-slot";
 import { useDeckGrid } from "./use-deck-grid";
@@ -39,7 +39,7 @@ const DeckGrid = memo(function DeckGrid({
     const newGrid: (Spell | null)[] = Array(rows * cols).fill(null);
 
     // Fill the grid with spells from the deck
-    (deck.spells as Spell[]).forEach((spell, index) => {
+    deck.spells.forEach((spell, index) => {
       if (index < newGrid.length) {
         newGrid[index] = spell;
       }
@@ -111,7 +111,7 @@ const DeckGrid = memo(function DeckGrid({
 
         // Handle additions
         for (let i = 0; i < addCount; i++) {
-          onAddSpell(spell, (deck.spells as Spell[]).length + i, 1);
+          onAddSpell(spell, deck.spells.length + i, 1);
         }
       }
 
@@ -266,7 +266,7 @@ const DeckGrid = memo(function DeckGrid({
     (spell: Spell, quantity: number) => {
       // Always use the current grid state, not the captured one
       const currentGrid: (Spell | null)[] = Array(64).fill(null);
-      (deck.spells as Spell[]).forEach((deckSpell, index) => {
+      deck.spells.forEach((deckSpell, index) => {
         if (index < currentGrid.length) {
           currentGrid[index] = deckSpell;
         }
@@ -316,10 +316,7 @@ const DeckGrid = memo(function DeckGrid({
   }, [closePopup, clearSelection]);
 
   // Memoize computed values for popup
-  const availableSlots = useMemo(
-    () => 64 - (deck.spells as Spell[]).length,
-    [deck.spells]
-  );
+  const availableSlots = useMemo(() => 64 - deck.spells.length, [deck.spells]);
 
   // Delete handler - use ref to check without dependency
   const deleteHandler = useMemo(() => {
@@ -438,7 +435,7 @@ const DeckGrid = memo(function DeckGrid({
         if (spellData) {
           const spell = JSON.parse(spellData) as Spell;
           // Always add to the end of the deck (next available slot)
-          onAddSpell(spell, (deck.spells as Spell[]).length, 1);
+          onAddSpell(spell, deck.spells.length, 1);
         }
       } catch (error) {
         console.error("Error parsing dropped spell data:", error);

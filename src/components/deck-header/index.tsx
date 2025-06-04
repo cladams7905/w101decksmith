@@ -24,7 +24,7 @@ import { DeckSettingsModal } from "@/components/deck-header/deck-settings-modal"
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
 import { useState } from "react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 
 function DeckNameEditor() {
   const { currentDeck, updateDeckName } = useDeck();

@@ -7,7 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
-import type { Deck, Spell } from "@/lib/types";
+import type { Deck, Spell } from "@/db/database.types";
 import { useState } from "react";
 import { getSchoolIconPath, getSpellPips } from "@/lib/spell-utils";
 import Image from "next/image";
@@ -34,7 +34,7 @@ export default function DeckBreakdown({ deck }: DeckBreakdownProps) {
   const getSchoolBreakdown = () => {
     const breakdown: Record<string, number> = {};
 
-    (deck.spells as Spell[]).forEach((spell) => {
+    deck.spells.forEach((spell) => {
       const school = spell.school || "unknown";
       breakdown[school] = (breakdown[school] || 0) + 1;
     });
@@ -49,7 +49,7 @@ export default function DeckBreakdown({ deck }: DeckBreakdownProps) {
   const getSpellCounts = (school: string) => {
     const spellCounts: Record<string, { spell: Spell; count: number }> = {};
 
-    (deck.spells as Spell[]).forEach((spell) => {
+    deck.spells.forEach((spell) => {
       const spellSchool = spell.school || "unknown";
       if (spellSchool === school) {
         if (!spellCounts[spell.name]) {
@@ -70,8 +70,8 @@ export default function DeckBreakdown({ deck }: DeckBreakdownProps) {
 
   // Calculate the percentage of each school
   const calculatePercentage = (count: number) => {
-    return (deck.spells as Spell[]).length > 0
-      ? Math.round((count / (deck.spells as Spell[]).length) * 100)
+    return deck.spells.length > 0
+      ? Math.round((count / deck.spells.length) * 100)
       : 0;
   };
 
@@ -80,7 +80,7 @@ export default function DeckBreakdown({ deck }: DeckBreakdownProps) {
       <div className="px-3 py-1 font-medium text-sm">Deck Breakdown</div>
       <Separator className="my-1" />
 
-      {(deck.spells as Spell[]).length === 0 ? (
+      {deck.spells.length === 0 ? (
         <div className="px-3 py-4 text-center text-sm text-muted-foreground">
           No spells in deck
         </div>
@@ -147,12 +147,12 @@ export default function DeckBreakdown({ deck }: DeckBreakdownProps) {
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Total</span>
               <Badge variant="outline" className="ml-1">
-                {(deck.spells as Spell[]).length} / 64
+                {deck.spells.length} / 64
               </Badge>
             </div>
 
             <div className="text-xs text-muted-foreground">
-              {64 - (deck.spells as Spell[]).length} slots available
+              {64 - deck.spells.length} slots available
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 
 interface UseDeckGridProps {
   onAddSpell: (spell: Spell, index: number, quantity: number) => void;

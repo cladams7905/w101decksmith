@@ -6,7 +6,7 @@ import { SpellSidebar } from "@/components/spell-sidebar";
 import DeckGrid from "@/components/deck-grid";
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { deckLogger } from "@/lib/logger";
 
 export function DeckBuilderLayout() {

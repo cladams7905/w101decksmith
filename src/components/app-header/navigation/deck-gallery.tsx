@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
-import type { Deck, School, Spell } from "@/lib/types";
+import type { Deck, School } from "@/db/database.types";
 import { NewDeckModal } from "@/components/app-header/navigation/new-deck-modal";
 
 interface DeckGalleryProps {
@@ -101,7 +101,7 @@ export function DeckGallery({
 
                 <div className="flex justify-between items-center">
                   <Badge variant="outline" className="text-xs">
-                    {(deck.spells as Spell[]).length}/64 cards
+                    {deck.spells.length}/64 cards
                   </Badge>
 
                   {deck.id === currentDeck.id && (

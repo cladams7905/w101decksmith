@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
-import { Deck, DeckInsert, DeckUpdate } from "@/lib/types";
+import { Deck, DeckInsert, DeckUpdate } from "@/db/database.types";
 import { Database } from "../database.types";
 
 export async function getAllDecks(): Promise<Deck[]> {

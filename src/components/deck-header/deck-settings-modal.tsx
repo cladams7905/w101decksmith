@@ -14,7 +14,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import type { Deck } from "@/lib/types";
+import type { Deck } from "@/db/database.types";
 import {
   AlertDialog,
   AlertDialogAction,

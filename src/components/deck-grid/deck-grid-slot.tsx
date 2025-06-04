@@ -1,4 +1,4 @@
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Edit, Plus } from "lucide-react";
 import {
