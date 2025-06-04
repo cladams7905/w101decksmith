@@ -1,4 +1,4 @@
-import { supabase } from "../src/db/supabase/server";
+import { supabaseAdmin } from "../src/db/supabase/server";
 import * as cheerio from "cheerio";
 import type { CheerioAPI } from "cheerio";
 import type { SpellInsert } from "../src/lib/types";
@@ -497,7 +497,7 @@ async function syncSpells() {
                 wiki_url: spell.wiki_url
               };
 
-              const { error } = await supabase
+              const { error } = await supabaseAdmin
                 .from("spells")
                 .upsert(spellData, {
                   onConflict: "name,tier",

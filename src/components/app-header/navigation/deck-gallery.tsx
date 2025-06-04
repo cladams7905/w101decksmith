@@ -41,7 +41,7 @@ export function DeckGallery({
   onSwitchDeck,
   showNewDeckModal,
   setShowNewDeckModal,
-  onCreateDeck,
+  // onCreateDeck,
   wizardSchool,
   wizardLevel,
   weavingClass
@@ -122,7 +122,7 @@ export function DeckGallery({
         <NewDeckModal
           showModal={showNewDeckModal}
           setShowModal={setShowNewDeckModal}
-          onCreateDeck={onCreateDeck}
+          // onCreateDeck={onCreateDeck}
           triggerButton={
             <Button>
               <Plus className="h-4 w-4 mr-2" />

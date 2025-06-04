@@ -48,43 +48,18 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
     id: 1,
     name: "Fire PvP Deck",
     spells: [],
-    rightSidebarOpen: true
+    school: "fire",
+    level: 150,
+    weaving_school: "fire",
+    can_comment: true,
+    created_at: new Date().toISOString(),
+    description: "A deck for PvP",
+    is_public: true,
+    is_pve: false,
+    user_id: "1"
   });
 
-  const [decks, setDecks] = useState<Deck[]>([
-    {
-      id: "1",
-      name: "Fire PvP Deck",
-      spells: [],
-      school: "fire",
-      level: "150",
-      weavingClass: "pyromancer"
-    },
-    {
-      id: "2",
-      name: "Ice Tank Deck",
-      spells: [],
-      school: "ice",
-      level: "140",
-      weavingClass: "thaumaturge"
-    },
-    {
-      id: "3",
-      name: "Storm Damage Deck",
-      spells: [],
-      school: "storm",
-      level: "160",
-      weavingClass: "diviner"
-    },
-    {
-      id: "4",
-      name: "Life Healing Deck",
-      spells: [],
-      school: "life",
-      level: "150",
-      weavingClass: "theurgist"
-    }
-  ]);
+  const [decks, setDecks] = useState<Deck[]>([]);
 
   const [wizardLevel, setWizardLevel] = useState("150");
   const [wizardSchool, setWizardSchool] = useState("fire");
@@ -94,11 +69,11 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-group spells based on current sorting selection whenever deck spells change
   useEffect(() => {
-    if (currentDeck.spells.length === 0) return;
+    if ((currentDeck.spells as Spell[]).length === 0) return;
 
     setCurrentDeck((prev) => {
       // Create a sorted copy of spells based on current sorting selection
-      const sortedSpells = [...prev.spells].sort((a, b) => {
+      const sortedSpells = [...(prev.spells as Spell[])].sort((a, b) => {
         if (sortBy === "school") {
           const schoolA = (a.school || "unknown").toLowerCase();
           const schoolB = (b.school || "unknown").toLowerCase();
@@ -154,7 +129,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Only update if the order actually changed
-      const hasOrderChanged = prev.spells.some(
+      const hasOrderChanged = (prev.spells as Spell[]).some(
         (spell, index) =>
           !sortedSpells[index] ||
           spell.name !== sortedSpells[index].name ||
@@ -172,7 +147,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
     setDecks((prev) =>
       prev.map((deck) => {
         if (deck.id === currentDeck.id) {
-          const sortedSpells = [...deck.spells].sort((a, b) => {
+          const sortedSpells = [...(deck.spells as Spell[])].sort((a, b) => {
             if (sortBy === "school") {
               const schoolA = (a.school || "unknown").toLowerCase();
               const schoolB = (b.school || "unknown").toLowerCase();
@@ -224,7 +199,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
             return 0;
           });
 
-          const hasOrderChanged = deck.spells.some(
+          const hasOrderChanged = (deck.spells as Spell[]).some(
             (spell, index) =>
               !sortedSpells[index] ||
               spell.name !== sortedSpells[index].name ||
@@ -238,16 +213,16 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
         return deck;
       })
     );
-  }, [currentDeck.spells.length, currentDeck.id, sortBy, sortOrder]); // Added sortBy and sortOrder to dependencies
+  }, [currentDeck.spells, currentDeck.id, sortBy, sortOrder]); // Added sortBy and sortOrder to dependencies
 
   const addSpell = useCallback(
     (spell: Spell, quantity: number) => {
       setCurrentDeck((prev) => {
-        if (prev.spells.length + quantity <= 64) {
+        if ((prev.spells as Spell[]).length + quantity <= 64) {
           const spellsToAdd = Array(quantity).fill(spell);
           return {
             ...prev,
-            spells: [...prev.spells, ...spellsToAdd]
+            spells: [...(prev.spells as Spell[]), ...spellsToAdd]
           };
         }
         return prev;
@@ -256,9 +231,12 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            if (deck.spells.length + quantity <= 64) {
+            if ((deck.spells as Spell[]).length + quantity <= 64) {
               const spellsToAdd = Array(quantity).fill(spell);
-              return { ...deck, spells: [...deck.spells, ...spellsToAdd] };
+              return {
+                ...deck,
+                spells: [...(deck.spells as Spell[]), ...spellsToAdd]
+              };
             }
           }
           return deck;
@@ -271,7 +249,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const addSpellToSlot = useCallback(
     (spell: Spell, slotIndex: number, quantity = 1) => {
       setCurrentDeck((prev) => {
-        const newSpells = [...prev.spells];
+        const newSpells = [...(prev.spells as Spell[])];
 
         // Only add to slots that are actually empty (beyond current deck length)
         if (slotIndex >= newSpells.length) {
@@ -292,7 +270,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            const newSpells = [...deck.spells];
+            const newSpells = [...(deck.spells as Spell[])];
             if (slotIndex >= newSpells.length) {
               for (let i = 0; i < quantity && newSpells.length < 64; i++) {
                 newSpells.push(spell);
@@ -310,7 +288,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const removeSpell = useCallback(
     (index: number) => {
       setCurrentDeck((prev) => {
-        const newSpells = [...prev.spells];
+        const newSpells = [...(prev.spells as Spell[])];
         newSpells.splice(index, 1);
         return { ...prev, spells: newSpells };
       });
@@ -318,7 +296,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            const newSpells = [...deck.spells];
+            const newSpells = [...(deck.spells as Spell[])];
             newSpells.splice(index, 1);
             return { ...deck, spells: newSpells };
           }
@@ -334,7 +312,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       if (index !== undefined) {
         // Replace spell at specific index
         setCurrentDeck((prev) => {
-          const newSpells = [...prev.spells];
+          const newSpells = [...(prev.spells as Spell[])];
           newSpells[index] = newSpell;
           return { ...prev, spells: newSpells };
         });
@@ -344,7 +322,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
             deck.id === currentDeck.id
               ? {
                   ...deck,
-                  spells: deck.spells.map((spell, i) =>
+                  spells: (deck.spells as Spell[]).map((spell, i) =>
                     i === index ? newSpell : spell
                   )
                 }
@@ -355,7 +333,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
         // Replace all instances of the spell
         setCurrentDeck((prev) => ({
           ...prev,
-          spells: prev.spells.map((spell) =>
+          spells: (prev.spells as Spell[]).map((spell) =>
             spell.name === spellName ? newSpell : spell
           )
         }));
@@ -365,7 +343,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
             deck.id === currentDeck.id
               ? {
                   ...deck,
-                  spells: deck.spells.map((spell) =>
+                  spells: (deck.spells as Spell[]).map((spell) =>
                     spell.name === spellName ? newSpell : spell
                   )
                 }
@@ -378,17 +356,23 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   );
 
   const createNewDeck = useCallback(() => {
-    const newDeck = {
-      id: Date.now().toString(),
+    const newDeck: Deck = {
+      id: 123,
       name: "New Deck",
-      spells: [],
-      school: wizardSchool,
-      level: wizardLevel,
-      weavingClass: weavingClass
+      spells: [] as Spell[],
+      school: "fire",
+      level: 150,
+      weaving_school: "fire",
+      can_comment: true,
+      created_at: new Date().toISOString(),
+      description: "A deck for PvP",
+      is_public: true,
+      is_pve: false,
+      user_id: "1"
     };
     setDecks((prev) => [...prev, newDeck]);
     setCurrentDeck(newDeck);
-  }, [wizardSchool, wizardLevel, weavingClass]);
+  }, []);
 
   const switchDeck = useCallback((deck: Deck) => {
     setCurrentDeck(deck);
@@ -441,7 +425,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
 
       // Use callback form to access current deck without dependency
       setCurrentDeck((prev) => {
-        const sortedSpells = [...prev.spells].sort((a, b) => {
+        const sortedSpells = [...(prev.spells as Spell[])].sort((a, b) => {
           if (by === "school") {
             const schoolA = (a.school || "unknown").toLowerCase();
             const schoolB = (b.school || "unknown").toLowerCase();
@@ -478,7 +462,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            const sortedSpells = [...deck.spells].sort((a, b) => {
+            const sortedSpells = [...(deck.spells as Spell[])].sort((a, b) => {
               if (by === "school") {
                 const schoolA = (a.school || "unknown").toLowerCase();
                 const schoolB = (b.school || "unknown").toLowerCase();
@@ -556,12 +540,12 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
     () => {
       uiLogger.debug(`🔄 DeckContext value recreated:`, {
         currentDeckId: currentDeck.id,
-        currentDeckSpellsLength: currentDeck.spells.length,
+        currentDeckSpellsLength: (currentDeck.spells as Spell[]).length,
         addSpellRef: addSpell.toString().slice(0, 50),
         timestamp: Date.now()
       });
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentDeck.id, currentDeck.spells.length]
+    [currentDeck.id, (currentDeck.spells as Spell[]).length]
   ); // Only log when deck actually changes - removed addSpell to prevent circular logging
 
   return <DeckContext.Provider value={value}>{children}</DeckContext.Provider>;

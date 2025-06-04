@@ -25,8 +25,8 @@ export function RightSidebar({
   onWidthChange,
   deck
 }: RightSidebarProps) {
-  const [isVisible, setIsVisible] = useState(isOpen);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [, setIsVisible] = useState(isOpen);
+  const [, setIsAnimating] = useState(false);
 
   // Handle animation states when isOpen changes
   useEffect(() => {
@@ -97,7 +97,7 @@ export function RightSidebar({
               value="comments"
               className="p-0 m-0 flex-1 overflow-auto"
             >
-              <DeckComments deck={deck} />
+              <DeckComments />
             </TabsContent>
           </Tabs>
         </ResizablePanel>
@@ -142,7 +142,7 @@ function MobileRightSidebar({ deck }: { deck: Deck }) {
             value="comments"
             className="p-0 m-0 flex-1 overflow-auto"
           >
-            <DeckComments deck={deck} />
+            <DeckComments />
           </TabsContent>
         </Tabs>
       </SheetContent>

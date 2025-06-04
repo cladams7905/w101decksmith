@@ -20,7 +20,7 @@ export function DeckBuilderLayout() {
     addSpellToSlot,
     removeSpell,
     replaceSpell,
-    createNewDeck,
+    // createNewDeck,
     switchDeck,
     updateDeckSpells
   } = useDeck();
@@ -134,7 +134,7 @@ export function DeckBuilderLayout() {
         currentDeck={currentDeck}
         decks={decks}
         onSwitchDeck={switchDeck}
-        onCreateDeck={createNewDeck}
+        // onCreateDeck={createNewDeck}
         onToggleRightSidebar={toggleRightSidebar}
         showNewDeckModal={showNewDeckModal}
         setShowNewDeckModal={setShowNewDeckModal}

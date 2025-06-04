@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import type { Deck } from "@/lib/types";
 
 interface Comment {
   id: string;
@@ -29,11 +28,7 @@ interface Comment {
   showReplyInput?: boolean;
 }
 
-interface DeckCommentsProps {
-  deck: Deck;
-}
-
-export default function DeckComments({ deck }: DeckCommentsProps) {
+export default function DeckComments() {
   // Mock data for comments
   const [comments, setComments] = useState<Comment[]>([
     {

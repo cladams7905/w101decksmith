@@ -12,7 +12,7 @@ interface AppHeaderProps {
   currentDeck: Deck;
   decks: Deck[];
   onSwitchDeck: (deck: Deck) => void;
-  onCreateDeck: () => void;
+  // onCreateDeck: () => void;
   onToggleRightSidebar: () => void;
   showNewDeckModal: boolean;
   setShowNewDeckModal: (show: boolean) => void;
@@ -26,7 +26,7 @@ export function AppHeader({
   currentDeck,
   decks,
   onSwitchDeck,
-  onCreateDeck,
+  // onCreateDeck,
   onToggleRightSidebar,
   showNewDeckModal,
   setShowNewDeckModal,
@@ -58,7 +58,7 @@ export function AppHeader({
           onSwitchDeck={onSwitchDeck}
           showNewDeckModal={showNewDeckModal}
           setShowNewDeckModal={setShowNewDeckModal}
-          onCreateDeck={onCreateDeck}
+          // onCreateDeck={onCreateDeck}
           wizardSchool={wizardSchool}
           wizardLevel={wizardLevel}
           weavingClass={weavingClass}
@@ -67,7 +67,7 @@ export function AppHeader({
         <NewDeckModal
           showModal={showNewDeckModal}
           setShowModal={setShowNewDeckModal}
-          onCreateDeck={onCreateDeck}
+          // onCreateDeck={onCreateDeck}
           triggerButton={
             <Button variant="outline_primary" className="md:ml-4">
               New Deck

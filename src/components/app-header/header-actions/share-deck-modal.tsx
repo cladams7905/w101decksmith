@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Copy, Facebook, Link, Share2, Twitter } from "lucide-react";
-import type { Deck } from "@/lib/types";
+import type { Deck, Spell } from "@/lib/types";
 import {
   Tooltip,
   TooltipContent,
@@ -111,7 +111,7 @@ export function ShareDeckModal({ deck, trigger }: ShareDeckModalProps) {
                     <Badge variant="outline">{deck.school || "Fire"}</Badge>
                     <Badge variant="outline">Level {deck.level || "150"}</Badge>
                     <Badge variant="outline">
-                      {deck.spells.length}/64 cards
+                      {(deck.spells as Spell[]).length}/64 cards
                     </Badge>
                   </div>
                 </div>

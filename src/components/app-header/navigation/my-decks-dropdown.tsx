@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { LegacyDeck, School } from "@/lib/types";
+import type { Deck, Spell } from "@/lib/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,21 +17,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface MyDecksDropdownProps {
-  decks: LegacyDeck[];
-  currentDeck: LegacyDeck;
-  onSwitchDeck: (deck: LegacyDeck) => void;
+  decks: Deck[];
+  currentDeck: Deck;
+  onSwitchDeck: (deck: Deck) => void;
   showNewDeckModal: boolean;
   setShowNewDeckModal: (show: boolean) => void;
-  onCreateDeck: (deckData: {
-    name: string;
-    school: School;
-    level: number;
-    weavingSchool?: School;
-    description?: string;
-    isPvE: boolean;
-    isPublic: boolean;
-    canComment: boolean;
-  }) => Promise<void>;
+  // onCreateDeck: (deckData: {
+  //   name: string;
+  //   school: School;
+  //   level: number;
+  //   weavingSchool?: School;
+  //   description?: string;
+  //   isPvE: boolean;
+  //   isPublic: boolean;
+  //   canComment: boolean;
+  // }) => Promise<void>;
   wizardSchool: string;
   wizardLevel: string;
   weavingClass: string;
@@ -41,9 +41,7 @@ export function MyDecksDropdown({
   decks,
   currentDeck,
   onSwitchDeck,
-  showNewDeckModal,
   setShowNewDeckModal,
-  onCreateDeck,
   wizardSchool,
   wizardLevel,
   weavingClass
@@ -124,14 +122,14 @@ export function MyDecksDropdown({
                           </h3>
                           <p className="text-xs text-muted-foreground">
                             Level {deck.level || wizardLevel}{" "}
-                            {deck.weavingClass || weavingClass}
+                            {deck.weaving_school || weavingClass}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-center">
                         <Badge variant="outline" className="text-xs">
-                          {deck.spells.length}/64 cards
+                          {(deck.spells as Spell[]).length}/64 cards
                         </Badge>
 
                         {deck.id === currentDeck.id && (

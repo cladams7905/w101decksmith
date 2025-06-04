@@ -87,7 +87,7 @@ export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
             spell={displaySpell}
             spellGroup={spellGroup}
             schoolColor={category.color}
-            onClick={onSpellClick}
+            onClick={(spell) => onSpellClick(spell, {} as React.MouseEvent)}
             onTierSelect={(selectedSpell) =>
               handleTierSelect(spellName, selectedSpell)
             }

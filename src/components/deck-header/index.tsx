@@ -24,6 +24,7 @@ import { DeckSettingsModal } from "@/components/deck-header/deck-settings-modal"
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
 import { useState } from "react";
+import type { Spell } from "@/lib/types";
 
 function DeckNameEditor() {
   const { currentDeck, updateDeckName } = useDeck();
@@ -86,7 +87,7 @@ function DeckCardCount() {
           variant="outline"
           className="text-sm px-3 py-1 cursor-pointer hover:bg-accent/50 transition-colors"
         >
-          {currentDeck.spells.length} / 64 cards
+          {(currentDeck.spells as Spell[]).length} / 64 cards
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0 rounded-lg" align="end">

@@ -16,26 +16,26 @@ import { Button } from "@/components/ui/button";
 interface NewDeckModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
-  onCreateDeck: (
-    name: string,
-    school: string,
-    level: string,
-    weavingClass: string
-  ) => void;
+  // onCreateDeck: (
+  //   name: string,
+  //   school: string,
+  //   level: string,
+  //   weaving_school: string
+  // ) => void;
   triggerButton: React.ReactNode;
 }
 
 export function NewDeckModal({
   showModal,
   setShowModal,
-  onCreateDeck,
+  // onCreateDeck,
   triggerButton
 }: NewDeckModalProps) {
   const [newDeckName, setNewDeckName] = useState("");
 
   const handleCreateDeck = () => {
     if (newDeckName.trim()) {
-      onCreateDeck(newDeckName, "fire", "150", "pyromancer"); // Default values
+      // onCreateDeck(newDeckName, "fire", "150", "pyromancer"); // Default values
       setNewDeckName("");
       setShowModal(false);
     }

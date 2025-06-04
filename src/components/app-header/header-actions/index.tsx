@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,18 +20,23 @@ export function HeaderActions({
   currentDeck,
   onToggleRightSidebar
 }: HeaderActionsProps) {
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+
+  const handleToggleSidebar = () => {
+    setRightSidebarOpen(!rightSidebarOpen);
+    onToggleRightSidebar();
+  };
+
   return (
     <div className="ml-auto flex items-center gap-2">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant={currentDeck.rightSidebarOpen ? "secondary" : "ghost"}
+            variant={rightSidebarOpen ? "secondary" : "ghost"}
             size="icon"
             className="hidden md:flex transition-colors"
-            onClick={onToggleRightSidebar}
-            title={
-              currentDeck.rightSidebarOpen ? "Close sidebar" : "Open sidebar"
-            }
+            onClick={handleToggleSidebar}
+            title={rightSidebarOpen ? "Close sidebar" : "Open sidebar"}
           >
             <PanelRight className="h-5 w-5" />
           </Button>
