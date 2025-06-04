@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useCallback } from "react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { getSchoolIconPath } from "@/lib/spell-utils";
 import Image from "next/image";
 

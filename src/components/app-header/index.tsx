@@ -1,4 +1,4 @@
-import type { Deck, Spell } from "@/lib/types";
+import type { Deck, Spell } from "@/db/database.types";
 import { MobileMenuTrigger } from "./mobile-menu-trigger";
 import { CommunityDropdown } from "./navigation/community-dropdown";
 import { HeaderActions } from "./header-actions";

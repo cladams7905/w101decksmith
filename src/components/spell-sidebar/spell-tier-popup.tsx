@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { getSpellImageUrl } from "@/lib/spell-utils";
 import Image from "next/image";
 import { gridLogger } from "@/lib/logger";

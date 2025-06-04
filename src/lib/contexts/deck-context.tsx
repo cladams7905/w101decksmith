@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect
 } from "react";
-import type { Spell, Deck } from "@/lib/types";
+import type { Spell, Deck } from "@/db/database.types";
 import {
   getSpellPips,
   getSpellDamage,
@@ -147,7 +147,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
     setDecks((prev) =>
       prev.map((deck) => {
         if (deck.id === currentDeck.id) {
-          const sortedSpells = [...(deck.spells as Spell[])].sort((a, b) => {
+          const sortedSpells = [...deck.spells].sort((a, b) => {
             if (sortBy === "school") {
               const schoolA = (a.school || "unknown").toLowerCase();
               const schoolB = (b.school || "unknown").toLowerCase();
@@ -199,7 +199,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
             return 0;
           });
 
-          const hasOrderChanged = (deck.spells as Spell[]).some(
+          const hasOrderChanged = deck.spells.some(
             (spell, index) =>
               !sortedSpells[index] ||
               spell.name !== sortedSpells[index].name ||
@@ -231,11 +231,11 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            if ((deck.spells as Spell[]).length + quantity <= 64) {
+            if (deck.spells.length + quantity <= 64) {
               const spellsToAdd = Array(quantity).fill(spell);
               return {
                 ...deck,
-                spells: [...(deck.spells as Spell[]), ...spellsToAdd]
+                spells: [...deck.spells, ...spellsToAdd]
               };
             }
           }
@@ -270,7 +270,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            const newSpells = [...(deck.spells as Spell[])];
+            const newSpells = [...deck.spells];
             if (slotIndex >= newSpells.length) {
               for (let i = 0; i < quantity && newSpells.length < 64; i++) {
                 newSpells.push(spell);
@@ -296,7 +296,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            const newSpells = [...(deck.spells as Spell[])];
+            const newSpells = [...deck.spells];
             newSpells.splice(index, 1);
             return { ...deck, spells: newSpells };
           }
@@ -322,7 +322,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
             deck.id === currentDeck.id
               ? {
                   ...deck,
-                  spells: (deck.spells as Spell[]).map((spell, i) =>
+                  spells: deck.spells.map((spell, i) =>
                     i === index ? newSpell : spell
                   )
                 }
@@ -343,7 +343,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
             deck.id === currentDeck.id
               ? {
                   ...deck,
-                  spells: (deck.spells as Spell[]).map((spell) =>
+                  spells: deck.spells.map((spell) =>
                     spell.name === spellName ? newSpell : spell
                   )
                 }
@@ -462,7 +462,7 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
       setDecks((prev) =>
         prev.map((deck) => {
           if (deck.id === currentDeck.id) {
-            const sortedSpells = [...(deck.spells as Spell[])].sort((a, b) => {
+            const sortedSpells = [...deck.spells].sort((a, b) => {
               if (by === "school") {
                 const schoolA = (a.school || "unknown").toLowerCase();
                 const schoolB = (b.school || "unknown").toLowerCase();

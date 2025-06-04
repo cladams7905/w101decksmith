@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import type { Deck, Spell } from "@/lib/types";
+import type { Deck } from "@/db/database.types";
 import {
   Bar,
   BarChart,
@@ -49,7 +49,7 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
     }
 
     // Count spells by pip cost
-    (deck.spells as Spell[]).forEach((spell) => {
+    deck.spells.forEach((spell) => {
       const pips = getSpellPips(spell);
       if (pips <= maxPips) {
         distribution[pips] = (distribution[pips] || 0) + 1;
@@ -71,7 +71,7 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
     const distribution: Record<string, number> = {};
 
     // Count spells by school
-    (deck.spells as Spell[]).forEach((spell) => {
+    deck.spells.forEach((spell) => {
       const school = spell.school || "unknown";
       distribution[school] = (distribution[school] || 0) + 1;
     });
@@ -80,8 +80,7 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
     return Object.entries(distribution).map(([school, count]) => ({
       school: school.charAt(0).toUpperCase() + school.slice(1),
       count,
-      percentage:
-        Math.round((count / (deck.spells as Spell[]).length) * 100) || 0
+      percentage: Math.round((count / deck.spells.length) * 100) || 0
     }));
   };
 
@@ -91,7 +90,7 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
     let healingCount = 0;
     let utilityCount = 0;
 
-    (deck.spells as Spell[]).forEach((spell) => {
+    deck.spells.forEach((spell) => {
       if (getSpellDamage(spell) > 0) {
         damageCount++;
       } else if (
@@ -113,7 +112,7 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
 
   // Calculate average stats
   const calculateAverageStats = () => {
-    if ((deck.spells as Spell[]).length === 0) {
+    if (deck.spells.length === 0) {
       return {
         avgPipCost: 0,
         avgDamage: 0,
@@ -123,11 +122,11 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
       };
     }
 
-    const totalPips = (deck.spells as Spell[]).reduce(
+    const totalPips = deck.spells.reduce(
       (sum, spell) => sum + getSpellPips(spell),
       0
     );
-    const damageSpells = (deck.spells as Spell[]).filter(
+    const damageSpells = deck.spells.filter(
       (spell) => getSpellDamage(spell) > 0
     );
     const totalDamage = damageSpells.reduce(
@@ -135,18 +134,14 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
       0
     );
     const totalHealing =
-      (deck.spells as Spell[]).reduce(
-        (sum, spell) => sum + getSpellHealing(spell),
-        0
-      ) +
-      (deck.spells as Spell[]).reduce(
+      deck.spells.reduce((sum, spell) => sum + getSpellHealing(spell), 0) +
+      deck.spells.reduce(
         (sum, spell) => sum + getSpellHealingOverTime(spell),
         0
       );
 
     return {
-      avgPipCost:
-        Math.round((totalPips / (deck.spells as Spell[]).length) * 10) / 10,
+      avgPipCost: Math.round((totalPips / deck.spells.length) * 10) / 10,
       avgDamage:
         damageSpells.length > 0
           ? Math.round(totalDamage / damageSpells.length)
@@ -432,7 +427,7 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                         Total Cards
                       </dt>
                       <dd className="text-2xl font-bold">
-                        {(deck.spells as Spell[]).length}
+                        {deck.spells.length}
                       </dd>
                     </div>
                     <div>
@@ -537,10 +532,9 @@ export default function DeckStatsModal({ deck }: DeckStatsModalProps) {
                         Utility Ratio
                       </dt>
                       <dd className="text-2xl font-bold">
-                        {(deck.spells as Spell[]).length > 0
+                        {deck.spells.length > 0
                           ? `${Math.round(
-                              (spellTypeData[2].value /
-                                (deck.spells as Spell[]).length) *
+                              (spellTypeData[2].value / deck.spells.length) *
                                 100
                             )}%`
                           : "0%"}

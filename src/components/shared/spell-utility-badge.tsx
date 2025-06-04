@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import {
   getSpellDamage,
   getSpellDamageOverTime,

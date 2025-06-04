@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ExternalLink } from "lucide-react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import SpellUtilityBadge from "@/components/shared/spell-utility-badge";
 import {
   getSpellPips,

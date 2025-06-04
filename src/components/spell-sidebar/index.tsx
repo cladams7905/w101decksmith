@@ -1,5 +1,5 @@
 import { useCallback, useMemo, memo } from "react";
-import type { Deck, Spell } from "@/lib/types";
+import type { Deck, Spell } from "@/db/database.types";
 import { SpellList } from "./spell-list";
 import { UpgradeMembershipModal } from "@/components/spell-sidebar/upgrade-membership-modal";
 import { useSpellFilter } from "../shared/use-spell-filter";

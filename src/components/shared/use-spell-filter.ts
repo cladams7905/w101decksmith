@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { useSpellsData } from "@/lib/hooks/use-spells-data";
 
 interface UseSpellFilterReturn {

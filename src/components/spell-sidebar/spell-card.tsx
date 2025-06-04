@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import SpellTooltip from "@/components/shared/spell-tooltip";
 import { SpellTierPopup } from "./spell-tier-popup";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { getSpellImageUrl, getSpellPipDisplay } from "@/lib/spell-utils";
 
 interface SpellCardProps {

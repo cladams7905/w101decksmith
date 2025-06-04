@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
-import { Spell, SpellInsert, SpellUpdate } from "@/lib/types";
+import { Spell, SpellInsert, SpellUpdate } from "@/db/database.types";
 
 export async function getAllSpells(): Promise<Spell[]> {
   const supabase = await createClient();

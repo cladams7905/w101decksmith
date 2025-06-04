@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SpellSidebar } from "@/components/spell-sidebar";
-import type { Spell, Deck } from "@/lib/types";
+import type { Spell, Deck } from "@/db/database.types";
 
 interface MobileMenuTriggerProps {
   currentDeck: Deck;

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Deck, Spell } from "@/lib/types";
+import type { Deck } from "@/db/database.types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -129,7 +129,7 @@ export function MyDecksDropdown({
 
                       <div className="flex justify-between items-center">
                         <Badge variant="outline" className="text-xs">
-                          {(deck.spells as Spell[]).length}/64 cards
+                          {deck.spells.length}/64 cards
                         </Badge>
 
                         {deck.id === currentDeck.id && (

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react";
 import { X, GripHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 import { SpellSearchBar } from "@/components/shared/spell-search-bar";
 import { useSpellFilter } from "@/components/shared/use-spell-filter";
 import { SpellList } from "../spell-sidebar/spell-list";

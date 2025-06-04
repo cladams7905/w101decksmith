@@ -2,7 +2,7 @@
 
 import { useState, useEffect, memo, useRef } from "react";
 import { ImageIcon } from "lucide-react";
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 
 interface SpellImageProps {
   spell: Spell;

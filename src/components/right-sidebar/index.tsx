@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizablePanel } from "@/components/shared/resizable-panel";
 import DeckStats from "@/components/right-sidebar/deck-stats";
 import DeckComments from "@/components/right-sidebar/deck-comments";
-import type { Deck } from "@/lib/types";
+import type { Deck } from "@/db/database.types";
 import { useEffect, useState } from "react";
 
 interface RightSidebarProps {

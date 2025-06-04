@@ -1,4 +1,4 @@
-import type { Spell } from "@/lib/types";
+import type { Spell } from "@/db/database.types";
 
 // Helper function to get spell ID (using name as unique identifier)
 export function getSpellId(spell: Spell): string {

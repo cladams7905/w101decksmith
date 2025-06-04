@@ -9,7 +9,7 @@ import {
 import { NotificationMenu } from "@/components/app-header/header-actions/notification-menu";
 import { ShareDeckModal } from "./share-deck-modal";
 import UserMenuComponent from "@/components/app-header/header-actions/user-menu";
-import type { Deck } from "@/lib/types";
+import type { Deck } from "@/db/database.types";
 
 interface HeaderActionsProps {
   currentDeck: Deck;
