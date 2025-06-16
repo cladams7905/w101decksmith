@@ -48,43 +48,6 @@ export async function resendConfirmationEmail(email: string): Promise<{
   return result;
 }
 
-export async function signInWithGoogle() {
-  const supabase = await createClient();
-  const result = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      queryParams: {
-        access_type: "offline",
-        prompt: "consent"
-      },
-      redirectTo: `${getUrl()}/api/auth/callback`
-    }
-  });
-  return result;
-}
-
-export async function signInWithTwitch() {
-  const supabase = await createClient();
-  const result = await supabase.auth.signInWithOAuth({
-    provider: "twitch",
-    options: {
-      redirectTo: `${getUrl()}/api/auth/callback`
-    }
-  });
-  return result;
-}
-
-export async function signInWithDiscord() {
-  const supabase = await createClient();
-  const result = await supabase.auth.signInWithOAuth({
-    provider: "discord",
-    options: {
-      redirectTo: `${getUrl()}/api/auth/callback`
-    }
-  });
-  return result;
-}
-
 export async function signOut(): Promise<{
   error: AuthError | null;
 }> {

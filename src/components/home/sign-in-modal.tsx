@@ -19,12 +19,7 @@ import {
   SignInFormData,
   SignUpFormData
 } from "@/lib/validations/auth";
-import {
-  signUpWithEmailAndPassword,
-  signInWithGoogle,
-  signInWithTwitch,
-  signInWithDiscord
-} from "@/db/actions/auth";
+import { signUpWithEmailAndPassword } from "@/db/actions/auth";
 import { checkIfUserExists } from "@/db/actions/users";
 import { supabase } from "@/db/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -171,7 +166,17 @@ export default function SignInModal({
     setError(null);
 
     try {
-      const { error } = await signInWithGoogle();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent"
+          },
+          redirectTo: `${window.location.origin}/api/auth/callback`
+        }
+      });
+
       if (error) {
         setError("Failed to sign in with Google. Please try again.");
         setIsLoading(false);
@@ -188,7 +193,13 @@ export default function SignInModal({
     setError(null);
 
     try {
-      const { error } = await signInWithTwitch();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "twitch",
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`
+        }
+      });
+
       if (error) {
         setError("Failed to sign in with Twitch. Please try again.");
         setIsLoading(false);
@@ -205,7 +216,13 @@ export default function SignInModal({
     setError(null);
 
     try {
-      const { error } = await signInWithDiscord();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "discord",
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`
+        }
+      });
+
       if (error) {
         setError("Failed to sign in with Discord. Please try again.");
         setIsLoading(false);
