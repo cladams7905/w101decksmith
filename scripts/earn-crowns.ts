@@ -1111,7 +1111,7 @@ async function answerQuiz(page: Page, quiz: Quiz): Promise<boolean> {
                     );
 
                     // Wait a moment and check if answer was selected
-                    await new Promise((resolve) => setTimeout(resolve, 800));
+                    await new Promise((resolve) => setTimeout(resolve, 200));
 
                     const wasSelected = await page.evaluate((answerDiv) => {
                       const radioInput = answerDiv.querySelector(
@@ -1200,7 +1200,7 @@ async function answerQuiz(page: Page, quiz: Quiz): Promise<boolean> {
               }
 
               // Wait a bit for the answer to be processed
-              await new Promise((resolve) => setTimeout(resolve, 800));
+              await new Promise((resolve) => setTimeout(resolve, 200));
             }
             break;
           }
@@ -1269,7 +1269,7 @@ async function answerQuiz(page: Page, quiz: Quiz): Promise<boolean> {
           console.log("🔄 Looking for next question button...");
 
           // Wait a moment to let any answer processing complete
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 300));
 
           // Use only the reliable #nextQuestion selector
           const nextButtonSelector = "#nextQuestion";
@@ -2146,11 +2146,6 @@ async function main() {
     // Test stealth effectiveness
     await testStealthMode(page);
 
-    // Optional: Test against bot detection sites (set TEST_BOT_DETECTION=true in .env.local)
-    if (process.env.TEST_BOT_DETECTION === "true") {
-      await testAgainstBotDetection(page);
-    }
-
     // Go to main page
     console.log("🌐 Navigating to Wizard101...");
     await page.goto("https://www.wizard101.com/game", {
@@ -2452,19 +2447,6 @@ async function main() {
       `\n🎉 Session completed successfully! Thank you for using the automated quiz system.`
     );
     console.log(`${"🎊".repeat(20)}`);
-
-    // Update quiz answers in Supabase if any new answers were added
-    if (quizAnswersUpdated) {
-      console.log("\n📤 Syncing updated quiz answers to Supabase...");
-      try {
-        await updateQuizAnswersInSupabase();
-        console.log("✅ Quiz answers successfully synced to Supabase");
-      } catch (error) {
-        console.error("❌ Failed to sync quiz answers to Supabase:", error);
-      }
-    } else {
-      console.log("\n📋 No new quiz answers to sync");
-    }
   } catch (error) {
     console.error("💥 An error occurred:", error);
   } finally {
@@ -2526,61 +2508,6 @@ async function testStealthMode(page: Page): Promise<void> {
     console.log(`   • Device Memory: ${stealthTest.deviceMemory}`);
   } catch (error) {
     console.log("⚠️ Stealth test failed:", error);
-  }
-}
-
-// Optional function to test against known bot detection sites
-async function testAgainstBotDetection(page: Page): Promise<void> {
-  try {
-    console.log("🎯 Testing against bot detection site...");
-
-    // Test against a simple bot detection page
-    await page.goto("https://bot.sannysoft.com", {
-      waitUntil: "networkidle0",
-      timeout: 15000
-    });
-
-    // Wait for tests to complete
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    // Check results
-    const botTestResults = await page.evaluate(() => {
-      const tests = Array.from(document.querySelectorAll("tr"))
-        .map((row) => {
-          const cells = row.querySelectorAll("td");
-          if (cells.length >= 2) {
-            return {
-              test: cells[0]?.textContent?.trim() || "",
-              result: cells[1]?.textContent?.trim() || "",
-              passed:
-                !cells[1]?.textContent?.includes("failed") &&
-                !cells[1]?.textContent?.includes("FAIL") &&
-                !cells[1]?.textContent?.includes("❌")
-            };
-          }
-          return null;
-        })
-        .filter(Boolean);
-
-      return tests;
-    });
-
-    const passedTests = botTestResults.filter((test) => test?.passed).length;
-    const totalTests = botTestResults.length;
-
-    console.log(
-      `📊 Bot detection test results: ${passedTests}/${totalTests} tests passed`
-    );
-
-    if (passedTests / totalTests > 0.8) {
-      console.log("✅ Stealth mode appears to be working effectively!");
-    } else {
-      console.log(
-        "⚠️ Some bot detection tests failed - stealth may need improvement"
-      );
-    }
-  } catch (error) {
-    console.log("⚠️ Bot detection test failed:", error);
   }
 }
 
