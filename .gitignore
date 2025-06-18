@@ -42,3 +42,6 @@ next-env.d.ts
 
 # vscode
 **/.vscode
+
+# screenshots from recaptcha solver (for debugging)
+/screenshots
