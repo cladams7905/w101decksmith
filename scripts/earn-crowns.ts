@@ -6,6 +6,9 @@ import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import readline from "readline";
 
+// Import TwoCaptcha using the TypeScript-friendly package
+import * as TwoCaptcha from "2captcha-ts";
+
 // Configure stealth plugin with all evasions
 const stealthPlugin = StealthPlugin();
 
@@ -1555,7 +1558,102 @@ async function claimQuizReward(page: Page): Promise<void> {
                   get: () => 4
                 });
 
-                console.log("🛡️ Applied stealth enhancements to popup frame");
+                // Handle OneTrust cookie consent to prevent script blocking
+                try {
+                  (
+                    window as unknown as Record<string, unknown>
+                  ).OnetrustActiveGroups = "C0001,C0002,C0003,C0004,C0005";
+                  (
+                    window as unknown as Record<string, unknown>
+                  ).OptanonWrapperCount = 1;
+
+                  // Simulate cookie consent acceptance
+                  if (
+                    typeof (window as unknown as Record<string, unknown>)
+                      .OneTrust !== "undefined"
+                  ) {
+                    const OneTrust = (
+                      window as unknown as Record<string, unknown>
+                    ).OneTrust as Record<string, unknown>;
+                    if (typeof OneTrust.AllowAll === "function") {
+                      (OneTrust.AllowAll as () => void)();
+                    }
+                  }
+
+                  // Hide OneTrust banner if present in popup
+                  const oneTrustContainer = document.getElementById(
+                    "onetrust-consent-sdk"
+                  );
+                  if (oneTrustContainer) {
+                    oneTrustContainer.style.display = "none";
+                  }
+
+                  console.log("✅ OneTrust cookie consent handled");
+                } catch (cookieError) {
+                  console.log("⚠️ OneTrust handling error:", cookieError);
+                }
+
+                // Set session variables to appear as legitimate user
+                try {
+                  (window as unknown as Record<string, unknown>).kiLoggedIn =
+                    true;
+                  (window as unknown as Record<string, unknown>).kiPayingUser =
+                    true;
+                  (window as unknown as Record<string, unknown>).kiIs18Plus =
+                    true;
+                  (
+                    window as unknown as Record<string, unknown>
+                  ).kiBillingActive = true;
+                  (
+                    window as unknown as Record<string, unknown>
+                  ).isReCaptchaUsed = true;
+                  console.log(
+                    "✅ Session variables set for authenticated user"
+                  );
+                } catch (sessionError) {
+                  console.log("⚠️ Session variable error:", sessionError);
+                }
+
+                // Disable common bot detection methods
+                try {
+                  // Override common bot detection properties
+                  Object.defineProperty(window, "outerHeight", {
+                    get: () => 1080
+                  });
+                  Object.defineProperty(window, "outerWidth", {
+                    get: () => 1920
+                  });
+
+                  // Add realistic timing functions
+                  const originalPerformance = window.performance;
+                  (window as unknown as Record<string, unknown>).performance = {
+                    ...originalPerformance,
+                    now: () => Date.now() + Math.random() * 1000
+                  };
+
+                  // Ensure reCAPTCHA APIs are available
+                  if (
+                    typeof (window as unknown as Record<string, unknown>)
+                      .grecaptcha === "undefined"
+                  ) {
+                    (window as unknown as Record<string, unknown>).grecaptcha =
+                      {
+                        ready: (callback: () => void) =>
+                          setTimeout(callback, 100),
+                        execute: () => Promise.resolve("mock-token"),
+                        render: () => 1,
+                        reset: () => {}
+                      };
+                  }
+
+                  console.log("✅ Bot detection countermeasures applied");
+                } catch (botError) {
+                  console.log("⚠️ Bot detection error:", botError);
+                }
+
+                console.log(
+                  "🛡️ Applied comprehensive stealth enhancements to popup frame"
+                );
               });
             } catch (stealthError) {
               console.log(
@@ -1732,265 +1830,762 @@ async function claimQuizReward(page: Page): Promise<void> {
 
               if (popupClaimSuccess) {
                 console.log(
-                  "🎉 Claim button clicked! Recaptcha image challenge should appear..."
+                  "🎉 Claim button clicked! Recaptcha should appear..."
                 );
 
-                // Wait for recaptcha to appear in the popup
+                // Wait for recaptcha to appear
                 await new Promise((innerResolve) =>
                   setTimeout(innerResolve, 3000)
                 );
 
-                // Now solve the recaptcha directly in the popup frame
+                // First, we need to submit the form in the popup to trigger the reCAPTCHA
                 console.log(
-                  "🤖 Starting Gemini recaptcha solver on popup frame..."
+                  "📋 Submitting form in popup to trigger reCAPTCHA..."
                 );
 
+                // Look for the popup frame first
+                let popupSubmitted = false;
+                const frames = await page.frames();
+                console.log(`📱 Found ${frames.length} frames on the page`);
+
+                for (const frame of frames) {
+                  try {
+                    const frameUrl = frame.url();
+                    console.log(`🔍 Checking frame: ${frameUrl}`);
+
+                    if (
+                      frameUrl.includes("/auth/popup/LoginWithCaptcha") ||
+                      frameUrl.includes("fpSessionAttribute=QUIZ_SESSION")
+                    ) {
+                      console.log("✅ Found login popup frame");
+
+                      // Wait for the form to be ready
+                      await frame.waitForSelector("form#theForm", {
+                        timeout: 10000
+                      });
+                      console.log("✅ Found popup form");
+
+                      // Try to click the submit button in the popup
+                      const submitSelectors = [
+                        "a.buttonsubmit#submit",
+                        'a[onclick="submitForm()"]',
+                        "a.buttonsubmit",
+                        "#submit",
+                        'input[type="submit"]#login'
+                      ];
+
+                      for (const selector of submitSelectors) {
+                        try {
+                          const element = await frame.$(selector);
+                          if (element) {
+                            console.log(
+                              `🎯 Found submit button with selector: ${selector}`
+                            );
+
+                            // Check if element is clickable
+                            const isClickable = await element.evaluate((el) => {
+                              const rect = el.getBoundingClientRect();
+                              const style = window.getComputedStyle(el);
+                              return (
+                                rect.width > 0 &&
+                                rect.height > 0 &&
+                                style.display !== "none" &&
+                                style.visibility !== "hidden"
+                              );
+                            });
+
+                            if (isClickable) {
+                              console.log("🖱️  Clicking submit button...");
+                              await element.click();
+                              console.log(
+                                "✅ Submit button clicked - reCAPTCHA should now load"
+                              );
+                              popupSubmitted = true;
+                              break;
+                            }
+                          }
+                        } catch (selectorError) {
+                          console.log(
+                            `❌ Selector ${selector} failed:`,
+                            selectorError
+                          );
+                          continue;
+                        }
+                      }
+
+                      // Try JavaScript method if button clicking failed
+                      if (!popupSubmitted) {
+                        console.log(
+                          "🔄 Trying JavaScript submitForm() function..."
+                        );
+                        try {
+                          const jsSubmitSuccess = await frame.evaluate(() => {
+                            try {
+                              if (
+                                typeof (
+                                  window as unknown as Record<string, unknown>
+                                ).submitForm === "function"
+                              ) {
+                                (
+                                  (window as unknown as Record<string, unknown>)
+                                    .submitForm as () => void
+                                )();
+                                return true;
+                              }
+
+                              const hiddenSubmit = document.getElementById(
+                                "login"
+                              ) as HTMLInputElement;
+                              if (hiddenSubmit) {
+                                hiddenSubmit.click();
+                                return true;
+                              }
+
+                              const form = document.getElementById(
+                                "theForm"
+                              ) as HTMLFormElement;
+                              if (form) {
+                                form.submit();
+                                return true;
+                              }
+
+                              return false;
+                            } catch (error) {
+                              console.log("JavaScript submit error:", error);
+                              return false;
+                            }
+                          });
+
+                          if (jsSubmitSuccess) {
+                            console.log(
+                              "✅ Successfully submitted via JavaScript"
+                            );
+                            popupSubmitted = true;
+                          }
+                        } catch (jsError) {
+                          console.log("❌ JavaScript submit failed:", jsError);
+                        }
+                      }
+
+                      break; // Found the login frame, no need to check others
+                    }
+                  } catch {
+                    continue; // Skip frames we can't access
+                  }
+                }
+
+                if (!popupSubmitted) {
+                  console.log("❌ Could not submit popup form");
+                  resolve();
+                  return;
+                }
+
+                // Add comprehensive debugging after form submission
+                console.log("🔍 Adding detailed post-submission debugging...");
+
+                // Wait a moment for the form submission to process
+                await new Promise((innerResolve) =>
+                  setTimeout(innerResolve, 2000)
+                );
+
+                // Check the popup frame state after submission
                 try {
-                  const geminiApiKey = process.env.GEMINI_API_KEY;
-                  if (!geminiApiKey) {
-                    console.log("❌ No Gemini API key found");
+                  const postSubmissionState = await popupFrame.evaluate(() => {
+                    return {
+                      url: window.location.href,
+                      title: document.title,
+                      formExists: !!document.getElementById("theForm"),
+                      reCaptchaElementExists:
+                        !!document.querySelector(".g-recaptcha"),
+                      reCaptchaVisible: (() => {
+                        const el = document.querySelector(".g-recaptcha");
+                        if (!el) return false;
+                        const style = window.getComputedStyle(el);
+                        return (
+                          style.display !== "none" &&
+                          style.visibility !== "hidden"
+                        );
+                      })(),
+                      captchaTokenFieldExists:
+                        !!document.getElementById("captchaToken"),
+                      captchaTokenValue:
+                        (
+                          document.getElementById(
+                            "captchaToken"
+                          ) as HTMLInputElement
+                        )?.value || "empty",
+                      scriptsLoaded: {
+                        grecaptcha:
+                          typeof (window as unknown as Record<string, unknown>)
+                            .grecaptcha !== "undefined",
+                        submitForm:
+                          typeof (window as unknown as Record<string, unknown>)
+                            .submitForm !== "undefined",
+                        reCaptchaCallback:
+                          typeof (window as unknown as Record<string, unknown>)
+                            .reCaptchaCallback !== "undefined"
+                      },
+                      bodyHTML:
+                        document.body.innerHTML.substring(0, 500) + "..."
+                    };
+                  });
+
+                  console.log(
+                    "📊 Post-submission popup state:",
+                    JSON.stringify(postSubmissionState, null, 2)
+                  );
+
+                  // Check if reCAPTCHA script loaded properly
+                  if (!postSubmissionState.scriptsLoaded.grecaptcha) {
+                    console.log(
+                      "⚠️ grecaptcha not loaded - may need to wait for script or trigger manually"
+                    );
+                  }
+
+                  // Check if the invisible reCAPTCHA element exists but isn't activated
+                  if (
+                    postSubmissionState.reCaptchaElementExists &&
+                    !postSubmissionState.reCaptchaVisible
+                  ) {
+                    console.log(
+                      "🎯 reCAPTCHA element exists but may not be activated"
+                    );
+
+                    // Try to manually trigger the reCAPTCHA
+                    console.log(
+                      "🔄 Attempting to manually trigger invisible reCAPTCHA..."
+                    );
+                    const manualTriggerResult = await popupFrame.evaluate(
+                      () => {
+                        try {
+                          // Try different ways to trigger the invisible reCAPTCHA
+                          if (
+                            typeof (
+                              window as unknown as Record<string, unknown>
+                            ).grecaptcha !== "undefined"
+                          ) {
+                            const grecaptcha = (
+                              window as unknown as Record<string, unknown>
+                            ).grecaptcha as Record<string, unknown>;
+
+                            // Method 1: Direct execute call
+                            if (typeof grecaptcha.execute === "function") {
+                              console.log(
+                                "🎯 Calling grecaptcha.execute() directly..."
+                              );
+                              (grecaptcha.execute as () => void)();
+                              return "executed_directly";
+                            }
+
+                            // Method 2: Reset and execute
+                            if (
+                              typeof grecaptcha.reset === "function" &&
+                              typeof grecaptcha.execute === "function"
+                            ) {
+                              console.log(
+                                "🎯 Resetting and executing grecaptcha..."
+                              );
+                              (grecaptcha.reset as () => void)();
+                              setTimeout(
+                                () => (grecaptcha.execute as () => void)(),
+                                100
+                              );
+                              return "reset_and_executed";
+                            }
+
+                            // Method 3: Render and execute
+                            if (typeof grecaptcha.render === "function") {
+                              console.log("🎯 Rendering grecaptcha...");
+                              const recaptchaEl =
+                                document.querySelector(".g-recaptcha");
+                              if (recaptchaEl) {
+                                (
+                                  grecaptcha.render as (
+                                    el: Element,
+                                    config: Record<string, unknown>
+                                  ) => void
+                                )(recaptchaEl, {
+                                  sitekey:
+                                    "6LfUFE0UAAAAAGoVniwSC9-MtgxlzzAb5dnr9WWY",
+                                  size: "invisible",
+                                  callback: "reCaptchaCallback"
+                                });
+                                return "rendered";
+                              }
+                            }
+                          }
+
+                          // Method 4: Try calling submitForm again (it should trigger grecaptcha.execute)
+                          if (
+                            typeof (
+                              window as unknown as Record<string, unknown>
+                            ).submitForm === "function"
+                          ) {
+                            console.log("🎯 Calling submitForm again...");
+                            (
+                              (window as unknown as Record<string, unknown>)
+                                .submitForm as () => void
+                            )();
+                            return "submitForm_called_again";
+                          }
+
+                          return "no_methods_available";
+                        } catch (error) {
+                          console.log(
+                            "❌ Manual trigger error:",
+                            (error as Error).message
+                          );
+                          return "error: " + (error as Error).message;
+                        }
+                      }
+                    );
+
+                    console.log(
+                      "🔄 Manual trigger result:",
+                      manualTriggerResult
+                    );
+
+                    // Wait a bit more after manual trigger
+                    await new Promise((innerResolve) =>
+                      setTimeout(innerResolve, 3000)
+                    );
+                  }
+                } catch (debugError) {
+                  console.log(
+                    "❌ Post-submission debugging error:",
+                    debugError
+                  );
+                }
+
+                // FALLBACK: Use known site key directly if iframe doesn't load
+                console.log("🔄 Attempting fallback with known site key...");
+                try {
+                  const knownSiteKey =
+                    "6LfUFE0UAAAAAGoVniwSC9-MtgxlzzAb5dnr9WWY";
+                  const popupUrl = popupFrame.url();
+
+                  console.log(`🔑 Using known site key: ${knownSiteKey}`);
+                  console.log(`🌐 Using popup URL: ${popupUrl}`);
+
+                  const solver = new TwoCaptcha.Solver(
+                    process.env.TWO_CAPTCHA_API_KEY!
+                  );
+
+                  console.log(
+                    "⏳ Submitting to TwoCaptcha with known parameters..."
+                  );
+                  const result = await solver.recaptcha({
+                    pageurl: popupUrl,
+                    googlekey: knownSiteKey,
+                    invisible: true
+                  });
+
+                  console.log("✅ TwoCaptcha solved with fallback method!");
+                  console.log(`📝 Token: ${result.data.substring(0, 50)}...`);
+
+                  // Inject token and submit
+                  const fallbackSuccess = await popupFrame.evaluate((token) => {
+                    try {
+                      console.log(
+                        "🎯 Fallback: Injecting token and submitting..."
+                      );
+
+                      // Set the captchaToken field
+                      const captchaTokenField = document.getElementById(
+                        "captchaToken"
+                      ) as HTMLInputElement;
+                      if (captchaTokenField) {
+                        captchaTokenField.value = token;
+                        console.log(
+                          "✅ Fallback: Token set in captchaToken field"
+                        );
+                      }
+
+                      // Set g-recaptcha-response if it exists
+                      const responseField = document.getElementById(
+                        "g-recaptcha-response"
+                      ) as HTMLTextAreaElement;
+                      if (responseField) {
+                        responseField.value = token;
+                        responseField.innerHTML = token;
+                        console.log(
+                          "✅ Fallback: Token set in g-recaptcha-response field"
+                        );
+                      }
+
+                      // Try to call the callback function directly
+                      if (
+                        typeof (window as unknown as Record<string, unknown>)
+                          .reCaptchaCallback === "function"
+                      ) {
+                        console.log(
+                          "📞 Fallback: Calling reCaptchaCallback..."
+                        );
+                        (
+                          (window as unknown as Record<string, unknown>)
+                            .reCaptchaCallback as (token: string) => void
+                        )(token);
+                        return true;
+                      }
+
+                      // Fallback: click the login button
+                      const loginButton = document.getElementById(
+                        "login"
+                      ) as HTMLInputElement;
+                      if (loginButton) {
+                        console.log("🖱️ Fallback: Clicking login button...");
+                        loginButton.click();
+                        return true;
+                      }
+
+                      console.log("❌ Fallback: No submission method worked");
+                      return false;
+                    } catch (error) {
+                      console.log(
+                        "❌ Fallback error:",
+                        (error as Error).message
+                      );
+                      return false;
+                    }
+                  }, result.data);
+
+                  if (fallbackSuccess) {
+                    console.log("🎉 Fallback submission successful!");
+
+                    // Wait and check for success
+                    await new Promise((innerResolve) =>
+                      setTimeout(innerResolve, 5000)
+                    );
+
+                    const finalStatus = await page.evaluate(() => {
+                      return {
+                        hasSuccess: !!document.querySelector(
+                          ".success, .reward-claimed"
+                        ),
+                        hasError: !!document.querySelector(".error, .alert"),
+                        currentUrl: window.location.href
+                      };
+                    });
+
+                    console.log("📊 Final status:", finalStatus);
                     resolve();
                     return;
                   }
+                } catch (fallbackError) {
+                  console.log("❌ Fallback method failed:", fallbackError);
+                }
 
-                  // Import our custom local solver
-                  const {
-                    generateTokensWithLogin
-                    // eslint-disable-next-line @typescript-eslint/no-require-imports
-                  } = require("../lib/recaptcha-solver/index.js");
-                  // eslint-disable-next-line @typescript-eslint/no-require-imports
-                  const { EventEmitter } = require("events");
-
-                  const eventEmitter = new EventEmitter();
-
-                  // Set up event listeners
-                  eventEmitter.on(
-                    "tokenGenerated",
-                    ({ token }: { token: string }) => {
-                      console.log("✅ Recaptcha token generated successfully!");
-                      console.log(`📝 Token length: ${token.length}`);
-                    }
+                // ENHANCED: Nested iframe detection for reCAPTCHA
+                console.log(
+                  "🔍 Attempting nested iframe detection for reCAPTCHA..."
+                );
+                try {
+                  // Wait a moment for potential iframe loading after form submission
+                  await new Promise((innerResolve) =>
+                    setTimeout(innerResolve, 3000)
                   );
 
-                  eventEmitter.on(
-                    "tokenError",
-                    ({ error }: { error: string }) => {
-                      console.log("❌ Recaptcha solving failed:", error);
+                  // Search for reCAPTCHA in nested iframes with comprehensive inspection
+                  const nestedIframeResult = await page.evaluate(() => {
+                    console.log(
+                      "🔍 Starting comprehensive nested iframe search for reCAPTCHA..."
+                    );
+
+                    interface IframeSearchResult {
+                      found: boolean;
+                      siteKey?: string;
+                      path?: string[];
+                      details?: string;
                     }
-                  );
 
-                  // Create promise to wait for token generation
-                  const tokenPromise = new Promise<string | null>(
-                    (tokenResolve) => {
-                      const timeout = setTimeout(() => {
-                        console.log("⏰ Recaptcha solving timeout");
-                        tokenResolve(null);
-                      }, 120000); // 2 minute timeout
-
-                      eventEmitter.on(
-                        "tokenGenerated",
-                        ({ token }: { token: string }) => {
-                          clearTimeout(timeout);
-                          tokenResolve(token);
-                        }
+                    // Function to recursively search through all iframe levels
+                    const searchNestedIframes = (
+                      doc: Document,
+                      path: string[] = [],
+                      maxDepth: number = 5
+                    ): IframeSearchResult => {
+                      const currentPath = path.join(" → ");
+                      console.log(
+                        `🔍 Level ${path.length}: Searching in ${
+                          currentPath || "main document"
+                        }`
                       );
 
-                      eventEmitter.on("tokenError", () => {
-                        clearTimeout(timeout);
-                        tokenResolve(null);
-                      });
-                    }
-                  );
+                      // First, check the current document for reCAPTCHA elements
+                      const recaptchaElements = [
+                        doc.querySelector("[data-sitekey]"),
+                        doc.querySelector(".g-recaptcha"),
+                        doc.querySelector("#g-recaptcha-response")
+                      ].filter(Boolean);
 
-                  // Use the MAIN page for recaptcha solving since frames are loaded there
-                  console.log(
-                    `🔗 Using main page for recaptcha solving (frames are loaded there)`
-                  );
+                      if (recaptchaElements.length > 0) {
+                        console.log(
+                          `🎯 Found ${recaptchaElements.length} reCAPTCHA elements at level ${path.length}`
+                        );
 
-                  // Simple beforeSolving - recaptcha should be loaded after popup claim
-                  const beforeSolving = async (): Promise<boolean> => {
-                    console.log(
-                      "🔐 beforeSolving: Recaptcha should be loaded in main page frames"
-                    );
-                    // Wait a moment for recaptcha frames to fully load
-                    await new Promise((innerResolve) =>
-                      setTimeout(innerResolve, 2000)
-                    );
+                        for (const element of recaptchaElements) {
+                          const siteKey = element?.getAttribute("data-sitekey");
+                          if (siteKey) {
+                            console.log(
+                              `✅ Found data-sitekey at ${currentPath}: ${siteKey}`
+                            );
+                            return {
+                              found: true,
+                              siteKey,
+                              path,
+                              details: `data-sitekey attribute`
+                            };
+                          }
+                        }
+                      }
 
-                    // Debug: Check what frames are available on the main page
-                    const frames = await page.frames();
-                    console.log(
-                      `🔍 Found ${frames.length} frames on main page:`
-                    );
-                    for (const frame of frames) {
-                      try {
-                        const frameUrl = frame.url();
-                        console.log(`  📱 Frame: ${frameUrl}`);
+                      // Search through all iframes in the current document
+                      const iframes = Array.from(
+                        doc.querySelectorAll("iframe")
+                      );
+                      console.log(
+                        `📱 Found ${iframes.length} iframes at level ${path.length}`
+                      );
 
-                        // Check if this is a recaptcha frame
+                      for (let i = 0; i < iframes.length; i++) {
+                        const iframe = iframes[i];
+                        const src = iframe.src || "no src";
+                        const title = iframe.title || "no title";
+                        const name = iframe.name || "no name";
+                        const id = iframe.id || "no id";
+
+                        const iframePath = [
+                          ...path,
+                          `iframe[${i}](${id || name || "unnamed"})`
+                        ];
+                        console.log(
+                          `📱 Level ${path.length} iframe ${
+                            i + 1
+                          }: src="${src}", title="${title}", name="${name}", id="${id}"`
+                        );
+
+                        // Check if this iframe looks like a reCAPTCHA iframe by its properties
                         if (
-                          frameUrl.includes("api2/anchor") ||
-                          frameUrl.includes("api2/bframe")
+                          src &&
+                          (src.includes("recaptcha/api2/bframe") ||
+                            src.includes("recaptcha/api2/anchor") ||
+                            src.includes("google.com/recaptcha") ||
+                            src.includes("gstatic.com/recaptcha") ||
+                            title.toLowerCase().includes("recaptcha") ||
+                            name.toLowerCase().includes("recaptcha"))
                         ) {
                           console.log(
-                            `  ✅ Found recaptcha frame: ${frameUrl}`
+                            `🎯 Found reCAPTCHA iframe by properties: ${src}`
+                          );
+
+                          try {
+                            const url = new URL(src);
+                            const siteKey = url.searchParams.get("k");
+                            if (siteKey) {
+                              console.log(
+                                `✅ Extracted site key from iframe URL: ${siteKey}`
+                              );
+                              return {
+                                found: true,
+                                siteKey,
+                                path: iframePath,
+                                details: `iframe src parameter 'k'`
+                              };
+                            }
+                          } catch (urlError) {
+                            console.log(
+                              `❌ Error parsing iframe URL: ${urlError}`
+                            );
+                          }
+                        }
+
+                        // Try to access iframe content for deeper search (if same-origin and not max depth)
+                        if (path.length < maxDepth) {
+                          try {
+                            const iframeDoc =
+                              iframe.contentDocument ||
+                              iframe.contentWindow?.document;
+                            if (iframeDoc) {
+                              console.log(
+                                `🔄 Recursing into iframe ${i + 1} at level ${
+                                  path.length + 1
+                                }...`
+                              );
+                              const nestedResult = searchNestedIframes(
+                                iframeDoc,
+                                iframePath,
+                                maxDepth
+                              );
+                              if (nestedResult.found) {
+                                return nestedResult;
+                              }
+                            } else {
+                              console.log(
+                                `❌ Cannot access iframe ${
+                                  i + 1
+                                } content (likely cross-origin)`
+                              );
+                            }
+                          } catch (accessError) {
+                            console.log(
+                              `❌ Cross-origin access blocked for iframe ${
+                                i + 1
+                              }:`,
+                              accessError
+                            );
+                          }
+                        } else {
+                          console.log(
+                            `⚠️ Max depth (${maxDepth}) reached, skipping iframe ${
+                              i + 1
+                            }`
                           );
                         }
-                      } catch {
-                        console.log(`  ❌ Cannot access frame URL`);
                       }
-                    }
 
-                    return true;
-                  };
+                      return { found: false };
+                    };
 
-                  // Start the recaptcha solving process using the MAIN page (not popup)
-                  const solvePromise = generateTokensWithLogin({
-                    eventEmitter,
-                    captchaUrl: "about:blank", // Dummy URL since we're not navigating
-                    tokensToGenerate: 2,
-                    existingPage: page, // Use the MAIN page where frames are loaded
-                    gemini: {
-                      apiKey: geminiApiKey,
-                      model: "gemini-2.5-flash"
-                    },
-                    logger: {
-                      level: "info"
-                    },
-                    beforeSolving,
-                    loginCredentials: { username: "", password: "" } // Not needed since no navigation
-                  })
-                    .then(async (result: unknown) => {
-                      console.log("✅ Recaptcha solver completed on main page");
-                      return result;
-                    })
-                    .catch((error: Error) => {
-                      console.log("❌ Gemini solver error:", error);
-                      eventEmitter.emit("tokenError", { error: error.message });
+                    // Start the search from the main document
+                    return searchNestedIframes(document);
+                  });
+
+                  if (nestedIframeResult.found && nestedIframeResult.siteKey) {
+                    console.log(`🎉 Nested iframe search successful!`);
+                    console.log(`🔑 Site key: ${nestedIframeResult.siteKey}`);
+                    console.log(
+                      `📍 Found at: ${
+                        nestedIframeResult.path?.join(" → ") || "unknown"
+                      }`
+                    );
+                    console.log(`📝 Method: ${nestedIframeResult.details}`);
+
+                    // Use the found site key with TwoCaptcha
+                    const solver = new TwoCaptcha.Solver(
+                      process.env.TWO_CAPTCHA_API_KEY!
+                    );
+                    const popupUrl = popupFrame.url();
+
+                    console.log(
+                      "⏳ Submitting nested iframe reCAPTCHA to TwoCaptcha..."
+                    );
+                    const result = await solver.recaptcha({
+                      pageurl: popupUrl,
+                      googlekey: nestedIframeResult.siteKey,
+                      invisible: true
                     });
 
-                  // Wait for either the token or the solving process to complete
-                  const [token] = await Promise.all([
-                    tokenPromise,
-                    solvePromise
-                  ]);
-
-                  if (token) {
-                    console.log("✅ Recaptcha solved successfully!");
-                    console.log(`📝 Token: ${token.substring(0, 50)}...`);
-
-                    // The token should already be applied to the popup form by the solver
                     console.log(
-                      "🎉 Reward claiming should now proceed automatically!"
+                      "✅ TwoCaptcha solved nested iframe reCAPTCHA!"
                     );
+                    console.log(`📝 Token: ${result.data.substring(0, 50)}...`);
 
-                    // Wait for reward claiming to complete and popup to close
-                    console.log(
-                      "⏳ Waiting for reward claiming to complete..."
-                    );
+                    // Inject token and submit
+                    const nestedSuccess = await popupFrame.evaluate((token) => {
+                      try {
+                        console.log(
+                          "🎯 Nested: Injecting token and submitting..."
+                        );
 
-                    let rewardClaimComplete = false;
-                    const maxWaitTime = 30000; // 30 seconds max wait for completion
-                    const startTime = Date.now();
+                        // Set the captchaToken field
+                        const captchaTokenField = document.getElementById(
+                          "captchaToken"
+                        ) as HTMLInputElement;
+                        if (captchaTokenField) {
+                          captchaTokenField.value = token;
+                          console.log(
+                            "✅ Nested: Token set in captchaToken field"
+                          );
+                        }
 
-                    while (
-                      !rewardClaimComplete &&
-                      Date.now() - startTime < maxWaitTime
-                    ) {
-                      await new Promise((waitResolve) =>
-                        setTimeout(waitResolve, 1000)
+                        // Set g-recaptcha-response if it exists
+                        const responseField = document.getElementById(
+                          "g-recaptcha-response"
+                        ) as HTMLTextAreaElement;
+                        if (responseField) {
+                          responseField.value = token;
+                          responseField.innerHTML = token;
+                          console.log(
+                            "✅ Nested: Token set in g-recaptcha-response field"
+                          );
+                        }
+
+                        // Try to call the callback function directly
+                        if (
+                          typeof (window as unknown as Record<string, unknown>)
+                            .reCaptchaCallback === "function"
+                        ) {
+                          console.log(
+                            "📞 Nested: Calling reCaptchaCallback..."
+                          );
+                          (
+                            (window as unknown as Record<string, unknown>)
+                              .reCaptchaCallback as (token: string) => void
+                          )(token);
+                          return true;
+                        }
+
+                        // Fallback: click the login button
+                        const loginButton = document.getElementById(
+                          "login"
+                        ) as HTMLInputElement;
+                        if (loginButton) {
+                          console.log("🖱️ Nested: Clicking login button...");
+                          loginButton.click();
+                          return true;
+                        }
+
+                        console.log("❌ Nested: No submission method worked");
+                        return false;
+                      } catch (error) {
+                        console.log(
+                          "❌ Nested error:",
+                          (error as Error).message
+                        );
+                        return false;
+                      }
+                    }, result.data);
+
+                    if (nestedSuccess) {
+                      console.log(
+                        "🎉 Nested iframe reCAPTCHA submission successful!"
                       );
 
-                      // Check if popup is closed (indicating completion)
-                      const popupStillOpen = await page.evaluate(() => {
-                        const frames = Array.from(
-                          document.querySelectorAll("iframe")
-                        );
-                        for (const frame of frames) {
-                          if (
-                            frame.src.includes("LoginWithCaptcha") ||
-                            frame.src.includes("popup")
-                          ) {
-                            const rect = frame.getBoundingClientRect();
-                            // Check if iframe is still visible and has dimensions
-                            if (
-                              rect.width > 0 &&
-                              rect.height > 0 &&
-                              frame.style.display !== "none" &&
-                              frame.style.visibility !== "hidden"
-                            ) {
-                              return true;
-                            }
-                          }
-                        }
-                        return false;
+                      // Wait and check for success
+                      await new Promise((innerResolve) =>
+                        setTimeout(innerResolve, 5000)
+                      );
+
+                      const finalStatus = await page.evaluate(() => {
+                        return {
+                          hasSuccess: !!document.querySelector(
+                            ".success, .reward-claimed"
+                          ),
+                          hasError: !!document.querySelector(".error, .alert"),
+                          currentUrl: window.location.href
+                        };
                       });
 
-                      if (!popupStillOpen) {
-                        console.log(
-                          "✅ Popup closed - reward claiming appears complete!"
-                        );
-                        rewardClaimComplete = true;
-                        break;
-                      }
-
-                      // Also check for success indicators on the main page
-                      const successIndicators = await page.evaluate(() => {
-                        // Look for success messages or indicators
-                        const indicators = [
-                          ".success",
-                          ".reward-claimed",
-                          ".claim-success",
-                          "[class*='success']",
-                          "[id*='success']"
-                        ];
-
-                        for (const selector of indicators) {
-                          const element = document.querySelector(selector);
-                          if (
-                            element &&
-                            element.textContent &&
-                            (element.textContent
-                              .toLowerCase()
-                              .includes("success") ||
-                              element.textContent
-                                .toLowerCase()
-                                .includes("claimed") ||
-                              element.textContent
-                                .toLowerCase()
-                                .includes("reward"))
-                          ) {
-                            return true;
-                          }
-                        }
-                        return false;
-                      });
-
-                      if (successIndicators) {
-                        console.log(
-                          "✅ Success indicators found - reward claiming complete!"
-                        );
-                        rewardClaimComplete = true;
-                        break;
-                      }
-
                       console.log(
-                        "⏳ Still waiting for reward claiming to complete..."
+                        "📊 Final nested iframe status:",
+                        finalStatus
                       );
-                    }
-
-                    if (rewardClaimComplete) {
-                      console.log("🎉 Reward claiming completed successfully!");
-                    } else {
-                      console.log(
-                        "⏰ Reward claiming completion timeout - proceeding anyway"
-                      );
+                      resolve();
+                      return;
                     }
                   } else {
-                    console.log("❌ Failed to solve recaptcha");
+                    console.log(
+                      "❌ Nested iframe search did not find reCAPTCHA"
+                    );
+                    console.log(
+                      "🔍 This may indicate the reCAPTCHA is not yet loaded or is in a cross-origin iframe"
+                    );
                   }
-                } catch (geminiError) {
-                  console.log("❌ Error with Gemini solver:", geminiError);
+                } catch (nestedError) {
+                  console.log(
+                    "❌ Nested iframe detection failed:",
+                    nestedError
+                  );
                 }
               } else {
                 console.log("❌ Could not find or click popup claim button");
@@ -2037,7 +2632,7 @@ async function main() {
   // Check for required environment variables
   const username = process.env.WIZARD101_USERNAME;
   const password = process.env.WIZARD101_PASSWORD;
-  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const twoCaptchaApiKey = process.env.TWO_CAPTCHA_API_KEY;
 
   if (!username || !password) {
     console.error(
@@ -2046,23 +2641,26 @@ async function main() {
     process.exit(1);
   }
 
-  if (!geminiApiKey) {
-    console.warn(
-      "⚠️ GEMINI_API_KEY not found in .env.local - recaptcha solving will fall back to manual method"
+  if (!twoCaptchaApiKey) {
+    console.error(
+      "❌ TWO_CAPTCHA_API_KEY not found in .env.local - reCAPTCHA solving will not work"
     );
-    console.warn(
-      "Get a free Gemini API key from: https://aistudio.google.com/app/apikey"
+    console.error(
+      "Get a TwoCaptcha API key from: https://2captcha.com/enterpage"
     );
+    console.error(
+      "Add TWO_CAPTCHA_API_KEY=your_api_key to your .env.local file"
+    );
+    process.exit(1);
   } else {
     console.log(
-      "✅ Gemini API key found - automatic recaptcha solving enabled"
+      "✅ TwoCaptcha API key found - automatic reCAPTCHA solving enabled"
     );
   }
 
   console.log(
-    "ℹ️ For automatic recaptcha solving, you would need additional setup"
+    "🤖 TwoCaptcha service will be used for automatic reCAPTCHA solving"
   );
-  console.log("📋 Manual recaptcha completion will be used when needed");
 
   // Fetch quiz answers from Supabase at the start
   console.log("\n=== Initializing Quiz Data ===");
@@ -2340,14 +2938,20 @@ async function main() {
     const targetSuccessfulQuizzes = 10;
     let successfulQuizzes = 0;
     let attemptedQuizzes = 0;
+    let consecutiveFailures = 0; // Track consecutive failed attempts
     const maxTotalAttempts = 50; // Safety limit to prevent infinite loops
+    const maxConsecutiveFailures = 5; // Exit after 5 consecutive failures
 
     console.log(`🎯 Target: ${targetSuccessfulQuizzes} successful quizzes`);
+    console.log(
+      `⚠️ Will exit after ${maxConsecutiveFailures} consecutive failures`
+    );
 
     // Continue until we have enough successful quizzes or hit the safety limit
     while (
       successfulQuizzes < targetSuccessfulQuizzes &&
-      attemptedQuizzes < maxTotalAttempts
+      attemptedQuizzes < maxTotalAttempts &&
+      consecutiveFailures < maxConsecutiveFailures
     ) {
       // Randomly select a quiz from remaining quizzes
       const remainingQuizzes = allQuizzes.filter(() => {
@@ -2365,7 +2969,7 @@ async function main() {
       attemptedQuizzes++;
 
       console.log(
-        `\n[${successfulQuizzes}/${targetSuccessfulQuizzes} successful] [${attemptedQuizzes} total attempts] Processing: ${selectedQuiz.quiz}`
+        `\n[${successfulQuizzes}/${targetSuccessfulQuizzes} successful] [${attemptedQuizzes} total attempts] [${consecutiveFailures} consecutive failures] Processing: ${selectedQuiz.quiz}`
       );
 
       const quizSuccess = await answerQuiz(page, selectedQuiz);
@@ -2375,8 +2979,20 @@ async function main() {
         console.log(
           `✅ Quiz completed successfully! (${successfulQuizzes}/${targetSuccessfulQuizzes})`
         );
+        consecutiveFailures = 0; // Reset consecutive failures if successful
       } else {
         console.log(`❌ Quiz failed - not counting toward target`);
+        consecutiveFailures++; // Increment consecutive failures if quiz fails
+
+        if (consecutiveFailures >= maxConsecutiveFailures) {
+          console.log(
+            `\n🛑 STOPPING: ${maxConsecutiveFailures} consecutive quiz failures detected`
+          );
+          console.log(
+            `⚠️ This is likely because you have already taken the max number of quizzes for the day.`
+          );
+          break; // Exit the loop early
+        }
       }
 
       // Wait between quizzes to avoid being too aggressive
@@ -2385,7 +3001,14 @@ async function main() {
 
     console.log("\n=== Quiz Session Complete ===");
 
-    if (successfulQuizzes >= targetSuccessfulQuizzes) {
+    if (consecutiveFailures >= maxConsecutiveFailures) {
+      console.log(
+        `🛑 Session ended due to ${maxConsecutiveFailures} consecutive failures`
+      );
+      console.log(
+        `📊 Completed ${successfulQuizzes} successful quizzes before stopping`
+      );
+    } else if (successfulQuizzes >= targetSuccessfulQuizzes) {
       console.log(`🎉 Successfully completed ${successfulQuizzes} quizzes!`);
     } else {
       console.log(
