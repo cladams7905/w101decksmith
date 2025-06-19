@@ -3,12 +3,16 @@ import { spawn } from "child_process";
 import path from "path";
 
 // This API route runs the earn-crowns script once when called
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    // Verify the request is from a trusted source
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Verify the request is from Vercel cron (check user agent)
+    const userAgent = request.headers.get("user-agent");
+    if (userAgent !== "vercel-cron/1.0") {
+      // Allow manual testing with CRON_SECRET
+      const authHeader = request.headers.get("authorization");
+      if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     // Check if we should start running yet
@@ -111,10 +115,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method for health check
-export async function GET() {
-  return NextResponse.json({
-    status: "ready",
-    timestamp: new Date().toISOString()
-  });
+// POST method for manual triggering with authentication
+export async function POST(request: NextRequest) {
+  try {
+    // Verify the request is from a trusted source
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Forward to GET method logic
+    return GET(request);
+  } catch (error) {
+    console.error("❌ API route error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error"
+      },
+      { status: 500 }
+    );
+  }
 }
