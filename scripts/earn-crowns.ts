@@ -206,8 +206,6 @@ Question: ${question}
 
 Answers: ${answersText}
 
-Return the correct answer in a JSON object containing: 
-
 - "question": the question.
 - "answer": the best answer from the selection provided.
 
@@ -220,9 +218,9 @@ Example response:
 
 Respond only with the JSON object.`;
 
-    // Make request to Gemini API
+    // Make request to Gemini 2.5 Flash API
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: "POST",
         headers: {
@@ -2675,7 +2673,7 @@ async function main() {
 
   // Launch browser with stealth-optimized settings
   const browser = await puppeteer.launch({
-    headless: false, // Keep visible for debugging - can be set to true for production
+    headless: true, // Run in headless mode to avoid opening browser window
     defaultViewport: null,
     userDataDir: "/tmp/wizard101-shared-chrome-data", // Use shared user data directory
     args: [
