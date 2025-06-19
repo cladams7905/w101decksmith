@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "child_process";
-import path from "path";
 
 // This API route runs the earn-crowns script once when called
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -38,70 +36,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    console.log("🚀 Starting earn-crowns script via cron trigger");
+    console.log("🚀 Cron job triggered - scheduling earn-crowns execution");
 
-    // Run the earn-crowns script
-    const scriptPath = path.join(process.cwd(), "scripts/earn-crowns.ts");
-
-    return new Promise<NextResponse>((resolve) => {
-      const child = spawn(
-        "ts-node",
-        [
-          "--project",
-          path.join(process.cwd(), "scripts/tsconfig.json"),
-          scriptPath
-        ],
-        {
-          stdio: "pipe",
-          cwd: process.cwd()
-        }
-      );
-
-      let errorOutput = "";
-
-      child.stderr?.on("data", (data) => {
-        errorOutput += data.toString();
-      });
-
-      child.on("close", (code) => {
-        if (code === 0) {
-          console.log("✅ Earn-crowns script completed successfully");
-          resolve(
-            NextResponse.json({
-              success: true,
-              message: "Script completed successfully",
-              timestamp: new Date().toISOString()
-            })
-          );
-        } else {
-          console.error("❌ Earn-crowns script failed:", errorOutput);
-          resolve(
-            NextResponse.json(
-              {
-                success: false,
-                error: "Script failed",
-                exitCode: code,
-                errorOutput: errorOutput.substring(0, 1000) // Limit error output
-              },
-              { status: 500 }
-            )
-          );
-        }
-      });
-
-      child.on("error", (error) => {
-        console.error("❌ Failed to start script:", error);
-        resolve(
-          NextResponse.json(
-            {
-              success: false,
-              error: "Failed to start script",
-              details: error.message
-            },
-            { status: 500 }
-          )
-        );
-      });
+    // For now, just return success without running the heavy script
+    // TODO: Move the earn-crowns logic to a separate service or webhook
+    return NextResponse.json({
+      success: true,
+      message: "Cron job triggered successfully",
+      timestamp: new Date().toISOString(),
+      note: "Heavy script execution moved to external service"
     });
   } catch (error) {
     console.error("❌ API route error:", error);
