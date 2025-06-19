@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/api/earn-crowns/route.ts": {
+      "maxDuration": 900
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/earn-crowns",
+      "schedule": "0 17 * * *"
+    }
+  ]
+}
