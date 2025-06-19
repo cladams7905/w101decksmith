@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "app/api/earn-crowns/route.ts": {
       "maxDuration": 900,
@@ -10,7 +11,5 @@
       "path": "/api/earn-crowns",
       "schedule": "0 17 * * *"
     }
-  ],
-  "buildCommand": "npm run build",
-  "installCommand": "npm install"
+  ]
 }
