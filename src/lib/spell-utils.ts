@@ -161,7 +161,6 @@ export function getSpellPipsGained(_spell: Spell): number {
   return 0;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getSpellTier(spell: Spell): string {
   return spell.tier;
 }

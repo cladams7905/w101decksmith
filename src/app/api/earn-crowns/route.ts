@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import path from "path";
 
 // This API route runs the earn-crowns script once when called
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     // Verify the request is from Vercel cron (check user agent)
     const userAgent = request.headers.get("user-agent");
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Run the earn-crowns script
     const scriptPath = path.join(process.cwd(), "scripts/earn-crowns.ts");
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       const child = spawn(
         "ts-node",
         [
