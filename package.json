@@ -10,7 +10,7 @@
     "gen-types": "./src/db/gen-types.sh",
     "sync-spells": "ts-node --project scripts/tsconfig.json scripts/sync-spells.ts",
     "sync-card-images": "ts-node --project scripts/tsconfig.json scripts/sync-card-images.ts",
-    "earn-crowns": "ts-node --project scripts/tsconfig.json scripts/earn-crowns.ts"
+    "earn-crowns": "ts-node --project scripts/tsconfig.json scripts/earn-crowns/earn-crowns.ts"
   },
   "overrides": {
     "esbuild": "^0.25.5",
