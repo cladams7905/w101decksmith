@@ -1,5 +1,4 @@
 import { ResizablePanel } from "@/components/shared/resizable-panel";
-import { AppHeader } from "@/components/app-header";
 import { DeckHeader } from "@/components/deck-header";
 import { RightSidebar } from "@/components/right-sidebar/";
 import { SpellSidebar } from "@/components/spell-sidebar";
@@ -12,16 +11,10 @@ import { deckLogger } from "@/lib/logger";
 export function DeckBuilderLayout() {
   const {
     currentDeck,
-    decks,
-    wizardLevel,
-    wizardSchool,
-    weavingClass,
     addSpell,
     addSpellToSlot,
     removeSpell,
     replaceSpell,
-    // createNewDeck,
-    switchDeck,
     updateDeckSpells
   } = useDeck();
 
@@ -30,11 +23,8 @@ export function DeckBuilderLayout() {
     leftPanelWidth,
     rightPanelWidth,
     isMobile,
-    showNewDeckModal,
-    toggleRightSidebar,
     setLeftPanelWidth,
-    setRightPanelWidth,
-    setShowNewDeckModal
+    setRightPanelWidth
   } = useUI();
 
   const handleRemoveSpell = (index: number) => {
@@ -129,61 +119,45 @@ export function DeckBuilderLayout() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-background text-foreground">
-      <AppHeader
-        currentDeck={currentDeck}
-        decks={decks}
-        onSwitchDeck={switchDeck}
-        // onCreateDeck={createNewDeck}
-        onToggleRightSidebar={toggleRightSidebar}
-        showNewDeckModal={showNewDeckModal}
-        setShowNewDeckModal={setShowNewDeckModal}
-        wizardSchool={wizardSchool}
-        wizardLevel={wizardLevel}
-        weavingClass={weavingClass}
-        onAddSpell={addSpell}
-      />
-
-      <div className="flex flex-1 w-full overflow-hidden">
-        <div className="hidden md:block">
-          <ResizablePanel
-            side="left"
-            defaultWidth={leftPanelWidth}
-            minWidth={240}
-            maxWidth={500}
-            onWidthChange={setLeftPanelWidth}
-            className="h-[calc(100vh-4rem)] border-r"
-          >
-            <div className="h-full flex flex-col w-full">
-              <SpellSidebar onAddSpell={addSpell} currentDeck={currentDeck} />
-            </div>
-          </ResizablePanel>
-        </div>
-
-        <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
-          <DeckHeader />
-          <div className="flex-1 overflow-y-auto p-4 md:px-6 md:pb-6 pt-0">
-            <DeckGrid
-              deck={currentDeck}
-              onAddSpell={addSpellToSlot}
-              onReplaceSpell={replaceSpell}
-              onRemoveSpell={handleRemoveSpell}
-              onBulkRemoveSpells={handleBulkRemoveSpells}
-              onBulkReplaceSpells={handleBulkReplaceSpells}
-              onBulkAddSpells={handleAddSpellToGridPositions}
-              onMixedOperation={handleMixedOperation}
-            />
+    <div className="flex flex-1 w-full overflow-hidden">
+      <div className="hidden md:block">
+        <ResizablePanel
+          side="left"
+          defaultWidth={leftPanelWidth}
+          minWidth={240}
+          maxWidth={500}
+          onWidthChange={setLeftPanelWidth}
+          className="h-full border-r"
+        >
+          <div className="h-full flex flex-col w-full">
+            <SpellSidebar onAddSpell={addSpell} currentDeck={currentDeck} />
           </div>
-        </main>
-
-        <RightSidebar
-          isOpen={rightSidebarOpen}
-          isMobile={isMobile}
-          panelWidth={rightPanelWidth}
-          onWidthChange={setRightPanelWidth}
-          deck={currentDeck}
-        />
+        </ResizablePanel>
       </div>
+
+      <main className="flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out">
+        <DeckHeader />
+        <div className="flex-1 overflow-y-auto p-4 md:px-6 md:pb-6 pt-0">
+          <DeckGrid
+            deck={currentDeck}
+            onAddSpell={addSpellToSlot}
+            onReplaceSpell={replaceSpell}
+            onRemoveSpell={handleRemoveSpell}
+            onBulkRemoveSpells={handleBulkRemoveSpells}
+            onBulkReplaceSpells={handleBulkReplaceSpells}
+            onBulkAddSpells={handleAddSpellToGridPositions}
+            onMixedOperation={handleMixedOperation}
+          />
+        </div>
+      </main>
+
+      <RightSidebar
+        isOpen={rightSidebarOpen}
+        isMobile={isMobile}
+        panelWidth={rightPanelWidth}
+        onWidthChange={setRightPanelWidth}
+        deck={currentDeck}
+      />
     </div>
   );
 }

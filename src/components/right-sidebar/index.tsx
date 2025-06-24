@@ -1,14 +1,21 @@
 "use client";
 
-import { BarChart, MessageSquare, PanelRight } from "lucide-react";
+import { BarChart, MessageSquare, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle
+} from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResizablePanel } from "@/components/shared/resizable-panel";
 import DeckStats from "@/components/right-sidebar/deck-stats";
 import DeckComments from "@/components/right-sidebar/deck-comments";
+import { SpellSidebar } from "@/components/spell-sidebar";
 import type { Deck } from "@/db/database.types";
 import { useEffect, useState } from "react";
+import { useDeck } from "@/lib/contexts/deck-context";
 
 interface RightSidebarProps {
   isOpen: boolean;
@@ -50,7 +57,12 @@ export function RightSidebar({
   }, [isOpen]);
 
   if (isMobile) {
-    return <MobileRightSidebar deck={deck} />;
+    return (
+      <>
+        <MobileRightSidebar deck={deck} isOpen={isOpen} />
+        <MobileSpellSidebar deck={deck} />
+      </>
+    );
   }
 
   return (
@@ -106,30 +118,24 @@ export function RightSidebar({
   );
 }
 
-function MobileRightSidebar({ deck }: { deck: Deck }) {
+function MobileRightSidebar({ deck, isOpen }: { deck: Deck; isOpen: boolean }) {
+  if (!isOpen) return null;
+
   return (
-    <Sheet>
-      <SheetTrigger asChild className="md:hidden fixed bottom-4 right-4 z-50">
-        <Button
-          size="icon"
-          className="rounded-full shadow-lg bg-purple-700 hover:bg-purple-600"
-        >
-          <PanelRight className="h-5 w-5" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] p-0 gradient-linear">
+    <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50">
+      <div className="absolute right-0 top-16 bottom-0 w-[300px] bg-background border-l">
         <Tabs defaultValue="stats" className="w-full h-full flex flex-col">
-          <div className="border-b border-blue-900/30">
-            <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-12">
+          <div className="border-b">
+            <TabsList className="grid w-full grid-cols-2 p-0 h-12">
               <TabsTrigger
                 value="stats"
-                className="rounded-none data-[state=active]:bg-blue-950/50 data-[state=active]:shadow-none"
+                className="rounded-none data-[state=active]:blue-900/60 data-[state=active]:shadow-none"
               >
                 <BarChart className="h-4 w-4" />
               </TabsTrigger>
               <TabsTrigger
                 value="comments"
-                className="rounded-none data-[state=active]:bg-blue-950/50 data-[state=active]:shadow-none"
+                className="rounded-none data-[state=active]:blue-900/60 data-[state=active]:shadow-none"
               >
                 <MessageSquare className="h-4 w-4" />
               </TabsTrigger>
@@ -145,6 +151,34 @@ function MobileRightSidebar({ deck }: { deck: Deck }) {
             <DeckComments />
           </TabsContent>
         </Tabs>
+      </div>
+    </div>
+  );
+}
+
+function MobileSpellSidebar({ deck }: { deck: Deck }) {
+  const { addSpell } = useDeck();
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild className="md:hidden fixed bottom-4 right-4 z-50">
+        <Button
+          size="icon"
+          className="rounded-full shadow-lg bg-purple-700 hover:bg-purple-600"
+        >
+          <Plus className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent
+        side="left"
+        className="w-[300px] p-0 bg-background flex flex-col pt-8"
+      >
+        <SheetTitle className="sr-only">Spell Library</SheetTitle>
+        <div className="flex-1 overflow-auto">
+          <div className="h-full overflow-y-auto">
+            <SpellSidebar onAddSpell={addSpell} currentDeck={deck} />
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

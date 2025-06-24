@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,39 +11,42 @@ import UserMenuComponent from "@/components/app-header/header-actions/user-menu"
 import type { Deck } from "@/db/database.types";
 
 interface HeaderActionsProps {
-  currentDeck: Deck;
-  onToggleRightSidebar: () => void;
+  isDeckPage: boolean;
+  currentDeck?: Deck;
+  onToggleRightSidebar?: () => void;
+  rightSidebarOpen?: boolean;
 }
 
 export function HeaderActions({
+  isDeckPage,
   currentDeck,
-  onToggleRightSidebar
+  onToggleRightSidebar,
+  rightSidebarOpen = false
 }: HeaderActionsProps) {
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-
   const handleToggleSidebar = () => {
-    setRightSidebarOpen(!rightSidebarOpen);
-    onToggleRightSidebar();
+    onToggleRightSidebar?.();
   };
 
   return (
     <div className="ml-auto flex items-center gap-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={rightSidebarOpen ? "secondary" : "ghost"}
-            size="icon"
-            className="hidden md:flex transition-colors"
-            onClick={handleToggleSidebar}
-            title={rightSidebarOpen ? "Close sidebar" : "Open sidebar"}
-          >
-            <PanelRight className="h-5 w-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">Toggle Sidebar</TooltipContent>
-      </Tooltip>
+      {isDeckPage && onToggleRightSidebar && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={rightSidebarOpen ? "secondary" : "ghost"}
+              size="icon"
+              className="flex transition-colors"
+              onClick={handleToggleSidebar}
+              title={rightSidebarOpen ? "Close sidebar" : "Open sidebar"}
+            >
+              <PanelRight className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Toggle Sidebar</TooltipContent>
+        </Tooltip>
+      )}
 
-      <ShareDeckModal deck={currentDeck} />
+      {isDeckPage && currentDeck && <ShareDeckModal deck={currentDeck} />}
       <NotificationMenu />
       <UserMenuComponent profileImage="/wizard-avatar.png" />
     </div>

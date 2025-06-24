@@ -27,7 +27,7 @@ export function CommunityDropdown() {
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
       >
-        <Button variant="ghost" className="mr-2 hidden md:flex">
+        <Button variant="ghost" className="hidden md:flex">
           Community
         </Button>
       </DropdownMenuTrigger>
