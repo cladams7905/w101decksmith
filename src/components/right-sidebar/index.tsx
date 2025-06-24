@@ -163,10 +163,10 @@ function MobileSpellSidebar({ deck }: { deck: Deck }) {
     <Sheet>
       <SheetTrigger asChild className="md:hidden fixed bottom-4 right-4 z-50">
         <Button
-          size="icon"
-          className="rounded-full shadow-lg bg-purple-700 hover:bg-purple-600"
+          size="lg"
+          className="rounded-full shadow-lg bg-purple-700 hover:bg-purple-600 w-16 h-16"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="!h-8 !w-8" />
         </Button>
       </SheetTrigger>
       <SheetContent
