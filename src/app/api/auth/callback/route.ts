@@ -5,7 +5,7 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") || "/home";
+  const next = searchParams.get("next") || "/my-decks";
 
   // Check for email verification tokens
   const token_hash =
