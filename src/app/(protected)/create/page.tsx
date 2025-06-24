@@ -42,7 +42,7 @@ export default function CreatePage() {
             <NewDeckModal
               showModal={showModal}
               setShowModal={handleModalClose}
-              triggerButton={<></>} // Empty trigger since modal opens automatically
+              triggerButton={<div style={{ display: "none" }} />} // Hidden trigger since modal opens automatically
               disableOutsideClick={true}
               hideCloseButton={true}
             />
