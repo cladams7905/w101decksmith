@@ -104,7 +104,7 @@ export function StatusSidebar({
                   onClick={() => onFilterChange(filter.id)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                     isSelected
-                      ? "bg-secondary hover:bg-secondary/80 text-purple-100 font-medium"
+                      ? "bg-linear-to-br from-blue-900/40 border border-border text-purple-100 font-medium"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
