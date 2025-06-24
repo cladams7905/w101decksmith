@@ -266,3 +266,29 @@ input[type="range"]::-ms-track {
 .slider-value {
   transition: all 0.2s ease;
 }
+
+/* Page Loading Bar (NProgress) */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: rgba(153, 51, 255, 0.4); /* Primary color */
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px hsl(267, 75%, 50%), 0 0 5px hsl(267, 75%, 50%);
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
