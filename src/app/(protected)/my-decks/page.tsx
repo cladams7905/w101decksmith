@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { DeckGallery } from "./components/deck-gallery";
-import { StatusSidebar } from "./components/status-sidebar";
+import { DeckGallery } from "@/components/my-decks/deck-gallery";
+import { StatusSidebar } from "@/components/my-decks/status-sidebar";
 
-export default function HomePage() {
+export default function MyDecksPage() {
   const [selectedFilter, setSelectedFilter] = useState("my-decks");
 
   return (

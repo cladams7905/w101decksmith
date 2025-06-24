@@ -4,7 +4,7 @@ import { getUrl } from "@/lib/utils";
 import { AuthError, AuthResponse } from "@supabase/supabase-js";
 import { createClient } from "../supabase/server";
 
-const REDIRECT_PATHNAME = "/home";
+const REDIRECT_PATHNAME = "/my-decks";
 
 export async function signUpWithEmailAndPassword(data: {
   email: string;

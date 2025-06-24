@@ -59,10 +59,10 @@ export async function updateSession(request: NextRequest) {
   if (
     user &&
     UNPROTECTED_ROUTES.some((route) => request.nextUrl.pathname === route) &&
-    !(request.nextUrl.pathname === "/home")
+    !(request.nextUrl.pathname === "/my-decks")
   ) {
-    console.log("Redirecting authenticated user to /home");
-    return NextResponse.redirect(new URL("/home", request.url));
+    console.log("Redirecting authenticated user to /my-decks");
+    return NextResponse.redirect(new URL("/my-decks", request.url));
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

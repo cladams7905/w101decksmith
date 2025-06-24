@@ -33,7 +33,7 @@ export function MobileNavigation({
 
   const handleMyDecks = () => {
     setIsOpen(false);
-    router.push("/home");
+    router.push("/my-decks");
   };
 
   return (

@@ -89,7 +89,7 @@ export default function SignInModal({
         onOpenChange(false);
 
         // Redirect to home page
-        window.location.href = "/home";
+        window.location.href = "/my-decks";
       } else {
         console.error("❌ Login failed - no user or session returned");
         setError("Login failed. Please try again.");

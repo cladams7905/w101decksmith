@@ -102,7 +102,7 @@ export function AppHeader({
               weavingClass={weavingClass}
             />
           ) : (
-            <Link href="/home">
+            <Link href="/my-decks">
               <Button variant="ghost" className="ml-3">
                 My Decks
               </Button>

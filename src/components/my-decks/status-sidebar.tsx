@@ -104,7 +104,7 @@ export function StatusSidebar({
                   onClick={() => onFilterChange(filter.id)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                     isSelected
-                      ? "bg-primary/10 text-primary font-medium"
+                      ? "bg-secondary hover:bg-secondary/80 text-purple-100 font-medium"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
@@ -112,7 +112,7 @@ export function StatusSidebar({
                     <Icon className="h-4 w-4" />
                     <span>{filter.label}</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="outline" className="text-xs">
                     {filter.count}
                   </Badge>
                 </button>
@@ -151,7 +151,7 @@ export function StatusSidebar({
                       <Folder className="h-4 w-4" />
                       <span>{collection.name}</span>
                     </div>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="outline" className="text-xs">
                       {collection.count}
                     </Badge>
                   </button>
