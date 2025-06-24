@@ -3,7 +3,7 @@ import { MobileNavigation } from "./mobile-navigation";
 import { CommunityDropdown } from "./navigation/community-dropdown";
 import { HeaderActions } from "./header-actions";
 import { MyDecksDropdown } from "@/components/app-header/navigation/my-decks-dropdown";
-import { NewDeckModal } from "@/components/app-header/navigation/new-deck-modal";
+
 import { Button } from "@/components/ui/button";
 import DecksmithLogo from "@/../public/DeckSmith_Logo.svg";
 import Image from "next/image";
@@ -40,24 +40,15 @@ export function AppHeader({
   const router = useRouter();
 
   const handleCreateDeck = () => {
-    // Navigate to deck builder or open modal
-    if (isDeckPage && setShowNewDeckModal) {
-      setShowNewDeckModal(true);
-    } else {
-      // For non-deck pages, navigate to deck builder
-      router.push("/decks");
-    }
+    // Navigate to the create page
+    router.push("/create");
   };
 
   return (
     <header className="h-16 border-b bg-linear-to-br from-blue-900/40 backdrop-blur supports-[backdrop-filter]:bg-opacity-80 flex items-center px-6 sticky top-0 z-50">
       <div className="flex items-center">
         {/* Mobile Navigation - Hamburger Menu */}
-        <MobileNavigation
-          isDeckPage={isDeckPage}
-          showNewDeckModal={showNewDeckModal}
-          setShowNewDeckModal={setShowNewDeckModal}
-        />
+        <MobileNavigation isDeckPage={isDeckPage} />
 
         {/* App Logo */}
         <Image
@@ -72,19 +63,9 @@ export function AppHeader({
         {/* Desktop Navigation - Hidden on Mobile */}
         <div className="hidden md:flex items-center ml-4">
           {/* 1. Create Deck Button (leftmost) */}
-          {isDeckPage && setShowNewDeckModal ? (
-            <NewDeckModal
-              showModal={showNewDeckModal}
-              setShowModal={setShowNewDeckModal}
-              triggerButton={
-                <Button variant="outline_primary">Create Deck</Button>
-              }
-            />
-          ) : (
-            <Button variant="outline_primary" onClick={handleCreateDeck}>
-              Create Deck
-            </Button>
-          )}
+          <Button variant="outline_primary" onClick={handleCreateDeck}>
+            Create Deck
+          </Button>
 
           {/* 2. My Decks Button */}
           {isDeckPage &&

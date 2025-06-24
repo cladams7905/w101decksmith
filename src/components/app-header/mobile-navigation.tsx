@@ -6,29 +6,17 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Plus, Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { NewDeckModal } from "./navigation/new-deck-modal";
-
 interface MobileNavigationProps {
   isDeckPage: boolean;
-  showNewDeckModal?: boolean;
-  setShowNewDeckModal?: (show: boolean) => void;
 }
 
-export function MobileNavigation({
-  isDeckPage,
-  showNewDeckModal = false,
-  setShowNewDeckModal
-}: MobileNavigationProps) {
+export function MobileNavigation({}: MobileNavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   const handleCreateDeck = () => {
     setIsOpen(false);
-    if (isDeckPage && setShowNewDeckModal) {
-      setShowNewDeckModal(true);
-    } else {
-      router.push("/decks");
-    }
+    router.push("/create");
   };
 
   const handleMyDecks = () => {
@@ -48,30 +36,14 @@ export function MobileNavigation({
           <h2 className="text-lg font-semibold mb-4">Navigation</h2>
 
           {/* Create Deck */}
-          {isDeckPage && setShowNewDeckModal ? (
-            <NewDeckModal
-              showModal={showNewDeckModal}
-              setShowModal={setShowNewDeckModal}
-              triggerButton={
-                <Button
-                  variant="outline_primary"
-                  className="w-full justify-start"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Deck
-                </Button>
-              }
-            />
-          ) : (
-            <Button
-              variant="outline_primary"
-              className="w-full justify-start"
-              onClick={handleCreateDeck}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Deck
-            </Button>
-          )}
+          <Button
+            variant="outline_primary"
+            className="w-full justify-start"
+            onClick={handleCreateDeck}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Deck
+          </Button>
 
           {/* My Decks */}
           <Button
