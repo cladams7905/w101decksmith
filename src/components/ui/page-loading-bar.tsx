@@ -8,7 +8,7 @@ import NProgress from "nprogress";
 NProgress.configure({
   showSpinner: false,
   trickleSpeed: 200,
-  minimum: 0.3
+  minimum: 1
 });
 
 function PageLoadingBarContent() {

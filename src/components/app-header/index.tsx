@@ -9,6 +9,7 @@ import DecksmithLogo from "@/../public/DeckSmith_Logo.svg";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 interface AppHeaderProps {
   isDeckPage: boolean;
@@ -38,11 +39,17 @@ export function AppHeader({
   rightSidebarOpen = false
 }: AppHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleCreateDeck = () => {
     // Navigate to the create page
     router.push("/create");
   };
+
+  // Check if current page is active
+  const isMyDecksActive = pathname === "/my-decks";
+  const isCommunityActive =
+    pathname?.startsWith("/decks") || pathname?.startsWith("/community");
 
   return (
     <header className="h-16 border-b bg-linear-to-br from-blue-900/40 backdrop-blur supports-[backdrop-filter]:bg-opacity-80 flex items-center px-6 sticky top-0 z-50">
@@ -81,17 +88,25 @@ export function AppHeader({
               wizardSchool={wizardSchool}
               wizardLevel={wizardLevel}
               weavingClass={weavingClass}
+              isActive={isMyDecksActive}
             />
           ) : (
             <Link href="/my-decks">
-              <Button variant="ghost" className="ml-3">
+              <Button
+                variant="ghost"
+                className={`ml-3 relative ${
+                  isMyDecksActive
+                    ? "after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-4 after:h-0.5 after:bg-primary"
+                    : ""
+                }`}
+              >
                 My Decks
               </Button>
             </Link>
           )}
 
           {/* 3. Community Dropdown */}
-          <CommunityDropdown />
+          <CommunityDropdown isActive={isCommunityActive} />
         </div>
       </div>
 

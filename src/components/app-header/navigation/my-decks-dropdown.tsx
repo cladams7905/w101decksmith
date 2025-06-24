@@ -35,6 +35,7 @@ interface MyDecksDropdownProps {
   wizardSchool: string;
   wizardLevel: string;
   weavingClass: string;
+  isActive?: boolean;
 }
 
 export function MyDecksDropdown({
@@ -44,7 +45,8 @@ export function MyDecksDropdown({
   setShowNewDeckModal,
   wizardSchool,
   wizardLevel,
-  weavingClass
+  weavingClass,
+  isActive = false
 }: MyDecksDropdownProps) {
   const [deckSearchQuery, setDeckSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -60,7 +62,14 @@ export function MyDecksDropdown({
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
       >
-        <Button variant="ghost" className="hidden md:flex">
+        <Button
+          variant="ghost"
+          className={`hidden md:flex relative ${
+            isActive
+              ? "after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-4 after:h-0.5 after:bg-primary"
+              : ""
+          }`}
+        >
           My Decks
         </Button>
       </DropdownMenuTrigger>
