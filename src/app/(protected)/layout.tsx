@@ -13,7 +13,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 
 function ConditionalAppHeader() {
   const pathname = usePathname();
-  const isDeckPage = pathname.includes("/decks");
+  const isDeckPage =
+    pathname.includes("/deck/") || pathname.includes("/create");
   const deckContext = useDeckPageContextOptional();
 
   if (isDeckPage) {
@@ -63,7 +64,10 @@ function DeckPageLayout({ children }: { children: React.ReactNode }) {
 
 function ProtectedContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isDeckPage = pathname.includes("/decks");
+  const isDeckPage =
+    pathname.includes("/deck/") ||
+    pathname.includes("/decks") ||
+    pathname.includes("/create");
 
   if (isDeckPage) {
     // Wrap deck pages with all necessary contexts including DeckPageProvider

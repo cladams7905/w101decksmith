@@ -37,7 +37,7 @@ export function ShareDeckModal({ deck, trigger }: ShareDeckModalProps) {
   const [activeTab, setActiveTab] = useState("link");
 
   // Generate a shareable link for the deck
-  const shareableLink = `https://wizard101-deck-builder.com/decks/${deck.id}`;
+  const shareableLink = `https://wizard101-deck-builder.com/deck/${deck.id}`;
 
   // Handle copy link to clipboard
   const handleCopyLink = () => {

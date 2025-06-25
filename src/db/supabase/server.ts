@@ -26,6 +26,11 @@ export async function createClient() {
             // user sessions.
           }
         }
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 0
+        }
       }
     }
   );

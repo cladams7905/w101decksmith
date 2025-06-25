@@ -61,12 +61,12 @@ export function DeckCard({ deck }: DeckCardProps) {
   };
 
   const handleEditDeck = () => {
-    router.push(`/decks?id=${deck.id}`);
+    router.push(`/deck/${deck.id}`);
   };
 
   const handleViewDeck = () => {
     // For now, same as edit - could be a read-only view later
-    router.push(`/decks?id=${deck.id}`);
+    router.push(`/deck/${deck.id}`);
   };
 
   const handleShareDeck = () => {

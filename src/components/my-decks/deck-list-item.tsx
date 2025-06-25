@@ -59,11 +59,11 @@ export function DeckListItem({ deck }: DeckListItemProps) {
   };
 
   const handleEditDeck = () => {
-    router.push(`/decks?id=${deck.id}`);
+    router.push(`/deck/${deck.id}`);
   };
 
   const handleViewDeck = () => {
-    router.push(`/decks?id=${deck.id}`);
+    router.push(`/deck/${deck.id}`);
   };
 
   const handleShareDeck = () => {

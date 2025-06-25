@@ -4,6 +4,7 @@ import type React from "react";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createDeck } from "@/db/actions/decks";
 import {
   Dialog,
   DialogHeader,
@@ -57,12 +58,6 @@ const MOCK_COLLECTIONS = [
 interface NewDeckModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
-  // onCreateDeck: (
-  //   name: string,
-  //   school: string,
-  //   level: string,
-  //   weaving_school: string
-  // ) => void;
   triggerButton: React.ReactNode;
   disableOutsideClick?: boolean;
   hideCloseButton?: boolean;
@@ -71,11 +66,11 @@ interface NewDeckModalProps {
 export function NewDeckModal({
   showModal,
   setShowModal,
-  // onCreateDeck,
   triggerButton,
   disableOutsideClick = false
 }: NewDeckModalProps) {
   const router = useRouter();
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     school: "",
@@ -98,22 +93,48 @@ export function NewDeckModal({
     }));
   };
 
-  const handleCreateDeck = () => {
+  const handleCreateDeck = async () => {
     if (formData.name.trim() && formData.school && formData.weavingSchool) {
-      // onCreateDeck(formData.name, formData.school, formData.level.toString(), formData.weavingSchool);
-      // Reset form
-      setFormData({
-        name: "",
-        school: "",
-        level: 10,
-        weavingSchool: "",
-        description: "",
-        isPvpDeck: true,
-        isPublic: false,
-        canComment: false,
-        collections: []
-      });
-      setShowModal(false);
+      setIsCreating(true);
+      try {
+        // Create the deck in the database
+        const newDeck = await createDeck({
+          name: formData.name,
+          school: formData.school,
+          level: formData.level,
+          weavingSchool: formData.weavingSchool,
+          description: formData.description,
+          isPvpDeck: formData.isPvpDeck,
+          isPublic: formData.isPublic,
+          canComment: formData.canComment,
+          collections: formData.collections
+        });
+
+        // Reset form
+        setFormData({
+          name: "",
+          school: "",
+          level: 10,
+          weavingSchool: "",
+          description: "",
+          isPvpDeck: true,
+          isPublic: false,
+          canComment: false,
+          collections: []
+        });
+
+        // Close modal
+        setShowModal(false);
+
+        // Redirect to the new deck page
+        router.push(`/deck/${newDeck.id}`);
+      } catch (error) {
+        console.error("Error creating deck:", error);
+        // TODO: Show error message to user
+        alert("Failed to create deck. Please try again.");
+      } finally {
+        setIsCreating(false);
+      }
     }
   };
 
@@ -380,10 +401,11 @@ export function NewDeckModal({
               disabled={
                 !formData.name.trim() ||
                 !formData.school ||
-                !formData.weavingSchool
+                !formData.weavingSchool ||
+                isCreating
               }
             >
-              Create Deck
+              {isCreating ? "Creating Deck..." : "Create Deck"}
             </Button>
           </div>
         </DialogPrimitive.Content>

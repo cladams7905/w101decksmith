@@ -118,7 +118,7 @@ export default function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 md:gap-3 justify-center items-center px-4 md:px-0">
-              <Link href="/decks" className="w-full sm:w-auto">
+              <Link href="/create" className="w-full sm:w-auto">
                 <Button
                   size="default"
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-5 md:px-6 py-2 text-sm md:text-base font-semibold shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 w-full sm:w-auto"

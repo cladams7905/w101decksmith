@@ -43,21 +43,29 @@ interface DeckContextType {
 
 const DeckContext = createContext<DeckContextType | undefined>(undefined);
 
-export function DeckProvider({ children }: { children: React.ReactNode }) {
-  const [currentDeck, setCurrentDeck] = useState<Deck>({
-    id: 1,
-    name: "Fire PvP Deck",
-    spells: [],
-    school: "fire",
-    level: 150,
-    weaving_school: "fire",
-    can_comment: true,
-    created_at: new Date().toISOString(),
-    description: "A deck for PvP",
-    is_public: true,
-    is_pve: false,
-    user_id: "1"
-  });
+export function DeckProvider({
+  children,
+  deck
+}: {
+  children: React.ReactNode;
+  deck?: Deck;
+}) {
+  const [currentDeck, setCurrentDeck] = useState<Deck>(
+    deck || {
+      id: 0,
+      name: "New Deck",
+      spells: [],
+      school: "fire",
+      level: 150,
+      weaving_school: "fire",
+      can_comment: true,
+      created_at: new Date().toISOString(),
+      description: null,
+      is_public: false,
+      is_pve: false,
+      user_id: "temp"
+    } // default deck if none provided
+  );
 
   const [decks, setDecks] = useState<Deck[]>([]);
 
@@ -66,6 +74,13 @@ export function DeckProvider({ children }: { children: React.ReactNode }) {
   const [weavingClass, setWeavingClass] = useState("pyromancer");
   const [sortBy, setSortBy] = useState<"school" | "pips" | "utility">("school");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Update currentDeck when initialDeck changes (e.g., navigating between decks)
+  useEffect(() => {
+    if (deck && deck.id !== currentDeck.id) {
+      setCurrentDeck(deck);
+    }
+  }, [deck, currentDeck.id]);
 
   // Auto-group spells based on current sorting selection whenever deck spells change
   useEffect(() => {
