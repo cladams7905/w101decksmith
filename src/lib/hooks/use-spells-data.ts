@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getAllSpells } from "@/db/actions/spells";
 import type { Spell } from "@/db/database.types";

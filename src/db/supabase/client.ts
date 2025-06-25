@@ -14,12 +14,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Create the client-side Supabase client
 export const supabase = createBrowserClient<Database>(
   supabaseUrl,
-  supabaseAnonKey,
-  {
-    realtime: {
-      params: {
-        eventsPerSecond: 0
-      }
-    }
-  }
+  supabaseAnonKey
 );

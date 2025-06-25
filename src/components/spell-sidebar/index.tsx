@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useMemo, memo } from "react";
 import type { Deck, Spell } from "@/db/database.types";
 import { SpellList } from "./spell-list";

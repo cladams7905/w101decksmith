@@ -1,3 +1,5 @@
+"use client";
+
 import { ResizablePanel } from "@/components/shared/resizable-panel";
 import { DeckHeader } from "@/components/deck-header";
 import { RightSidebar } from "@/components/right-sidebar/";

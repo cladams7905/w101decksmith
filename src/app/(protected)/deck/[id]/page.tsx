@@ -6,13 +6,14 @@ import { UIProvider } from "@/lib/contexts/ui-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface DeckPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function DeckPage({ params }: DeckPageProps) {
-  const deckId = parseInt(params.id);
+  const { id } = await params;
+  const deckId = parseInt(id);
 
   if (isNaN(deckId)) {
     notFound();
