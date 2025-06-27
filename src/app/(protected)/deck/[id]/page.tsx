@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { getDeckById } from "@/db/actions/decks";
 import { DeckBuilderLayout } from "@/components/deck-builder/deck-builder-layout";
 import { DeckProvider } from "@/lib/contexts/deck-context";
-import { UIProvider } from "@/lib/contexts/ui-context";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { DeckPageProvider } from "@/components/deck-builder/deck-page-provider";
 
 interface DeckPageProps {
   params: Promise<{
@@ -33,11 +32,9 @@ export default async function DeckPage({ params }: DeckPageProps) {
 
   return (
     <DeckProvider deck={deck}>
-      <UIProvider>
-        <SidebarProvider>
-          <DeckBuilderLayout />
-        </SidebarProvider>
-      </UIProvider>
+      <DeckPageProvider>
+        <DeckBuilderLayout />
+      </DeckPageProvider>
     </DeckProvider>
   );
 }
