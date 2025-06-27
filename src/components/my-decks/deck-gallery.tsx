@@ -64,7 +64,7 @@ export function DeckGallery({ selectedFilter }: DeckGalleryProps) {
         break;
       case "shared-with-me":
         // TODO: Implement shared decks filtering when sharing feature is added
-        filtered = decks.filter((deck) => deck.can_comment); // Placeholder logic
+        filtered = decks.filter((deck) => deck.is_public); // Placeholder logic
         break;
       default:
         filtered = decks;

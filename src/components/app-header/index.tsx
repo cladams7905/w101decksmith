@@ -68,7 +68,7 @@ export function AppHeader({
         />
 
         {/* Desktop Navigation - Hidden on Mobile */}
-        <div className="hidden md:flex items-center ml-4">
+        <div className="hidden md:flex items-center ml-4 gap-3">
           {/* 1. Create Deck Button (leftmost) */}
           <Button variant="outline_primary" onClick={handleCreateDeck}>
             Create Deck
@@ -94,10 +94,8 @@ export function AppHeader({
             <Link href="/my-decks">
               <Button
                 variant="ghost"
-                className={`ml-3 relative ${
-                  isMyDecksActive
-                    ? "after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-4 after:h-0.5 after:bg-primary"
-                    : ""
+                className={`ml-3 ${
+                  isMyDecksActive ? "bg-secondary hover:bg-secondary/60" : ""
                 }`}
               >
                 My Decks

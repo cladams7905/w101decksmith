@@ -9,6 +9,12 @@ import React, {
 } from "react";
 import type { Spell, Deck } from "@/db/database.types";
 import {
+  updateDeck as updateDeckInDB,
+  deleteDeck as deleteDeckInDB,
+  createDeck
+} from "@/db/actions/decks";
+import { useToast } from "@/lib/hooks/use-toast";
+import {
   getSpellPips,
   getSpellDamage,
   getSpellDamageOverTime,
@@ -23,24 +29,26 @@ import { uiLogger } from "../logger";
 interface DeckContextType {
   currentDeck: Deck;
   decks: Deck[];
-  wizardLevel: string;
-  wizardSchool: string;
-  weavingClass: string;
   sortBy: "school" | "pips" | "utility";
   sortOrder: "asc" | "desc";
   addSpell: (spell: Spell, quantity: number) => void;
   addSpellToSlot: (spell: Spell, slotIndex: number, quantity?: number) => void;
   removeSpell: (index: number) => void;
   replaceSpell: (spellName: string, newSpell: Spell, index?: number) => void;
-  createNewDeck: () => void;
+  createNewDeck: (deckData: {
+    name: string;
+    school: string;
+    level: number;
+    weavingSchool: string;
+    description: string;
+    isPvpDeck: boolean;
+    isPublic: boolean;
+    collections: string[];
+  }) => Promise<Deck | null>;
   switchDeck: (deck: Deck) => void;
-  updateDeckName: (name: string) => void;
+  updateDeck: (updates: Partial<Deck>) => Promise<void>;
   deleteDeck: () => void;
   sortDeck: (by: "school" | "pips" | "utility", order: "asc" | "desc") => void;
-  setWizardLevel: (level: string) => void;
-  setWizardSchool: (school: string) => void;
-  setWeavingClass: (weavingClass: string) => void;
-  updateDeckSpells: (spells: Spell[]) => void;
 }
 
 const DeckContext = createContext<DeckContextType | undefined>(undefined);
@@ -52,6 +60,7 @@ export function DeckProvider({
   children: React.ReactNode;
   deck?: Deck;
 }) {
+  const { toast } = useToast();
   const [currentDeck, setCurrentDeck] = useState<Deck>(
     deck || {
       id: 0,
@@ -60,7 +69,6 @@ export function DeckProvider({
       school: "fire",
       level: 150,
       weaving_school: "fire",
-      can_comment: true,
       created_at: new Date().toISOString(),
       description: null,
       is_public: false,
@@ -71,9 +79,6 @@ export function DeckProvider({
 
   const [decks, setDecks] = useState<Deck[]>([]);
 
-  const [wizardLevel, setWizardLevel] = useState("150");
-  const [wizardSchool, setWizardSchool] = useState("fire");
-  const [weavingClass, setWeavingClass] = useState("pyromancer");
   const [sortBy, setSortBy] = useState<"school" | "pips" | "utility">("school");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
@@ -372,68 +377,131 @@ export function DeckProvider({
     [currentDeck.id]
   );
 
-  const createNewDeck = useCallback(() => {
-    const newDeck: Deck = {
-      id: 123,
-      name: "New Deck",
-      spells: [],
-      school: "fire",
-      level: 150,
-      weaving_school: "fire",
-      can_comment: true,
-      created_at: new Date().toISOString(),
-      description: "A deck for PvP",
-      is_public: true,
-      is_pve: false,
-      user_id: "1"
-    };
-    setDecks((prev) => [...prev, newDeck]);
-    setCurrentDeck(newDeck);
-  }, []);
+  const createNewDeck = useCallback(
+    async (deckData: {
+      name: string;
+      school: string;
+      level: number;
+      weavingSchool: string;
+      description: string;
+      isPvpDeck: boolean;
+      isPublic: boolean;
+      collections: string[];
+    }) => {
+      try {
+        // Create the deck in the database
+        const newDeck = await createDeck({
+          name: deckData.name,
+          school: deckData.school,
+          level: deckData.level,
+          weavingSchool: deckData.weavingSchool,
+          description: deckData.description,
+          isPvpDeck: deckData.isPvpDeck,
+          isPublic: deckData.isPublic,
+          collections: deckData.collections
+        });
+
+        if (newDeck) {
+          // Add to local state
+          setDecks((prev) => [...prev, newDeck]);
+          setCurrentDeck(newDeck);
+
+          // Show success toast
+          toast({
+            variant: "success",
+            title: "Deck created",
+            description: `"${deckData.name}" has been created successfully.`
+          });
+
+          return newDeck;
+        }
+
+        return null;
+      } catch (error) {
+        console.error("Error creating deck:", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to create deck",
+          description:
+            "There was an error creating your deck. Please try again."
+        });
+        return null;
+      }
+    },
+    [toast]
+  );
 
   const switchDeck = useCallback((deck: Deck) => {
     setCurrentDeck(deck);
   }, []);
 
-  const updateDeckName = useCallback(
-    (name: string) => {
-      if (name.trim()) {
-        setCurrentDeck((prev) => ({ ...prev, name }));
+  const updateDeck = useCallback(
+    async (updates: Partial<Deck>) => {
+      try {
+        // First update the database
+        if (currentDeck.id !== 0) {
+          // Don't try to update temp/default decks
+          await updateDeckInDB(currentDeck.id, updates);
+        }
+
+        // Then update the local state
+        setCurrentDeck((prev) => ({ ...prev, ...updates }));
+
+        // Update the deck in the decks array
         setDecks((prev) =>
           prev.map((deck) =>
-            deck.id === currentDeck.id ? { ...deck, name } : deck
+            deck.id === currentDeck.id ? { ...deck, ...updates } : deck
           )
         );
+      } catch (error) {
+        console.error("Failed to update deck:", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to save deck",
+          description:
+            "There was an error saving your deck changes. Please try again."
+        });
+        throw error; // Re-throw so calling code can handle the error
       }
     },
-    [currentDeck.id] // Only depend on stable ID
+    [currentDeck.id, toast] // Use toast dependency
   );
 
-  const deleteDeck = useCallback(() => {
-    setDecks((prev) => {
-      if (prev.length <= 1) return prev;
+  const deleteDeck = useCallback(async () => {
+    try {
+      // First delete from database
+      if (currentDeck.id !== 0) {
+        // Don't try to delete temp/default decks
+        await deleteDeckInDB(currentDeck.id);
+      }
 
-      const updatedDecks = prev.filter((deck) => deck.id !== currentDeck.id);
-      setCurrentDeck(updatedDecks[0]);
-      return updatedDecks;
-    });
-  }, [currentDeck.id]); // Only depend on stable ID
+      // Then update local state
+      setDecks((prev) => {
+        const updatedDecks = prev.filter((deck) => deck.id !== currentDeck.id);
 
-  const updateDeckSpells = useCallback(
-    (spells: Spell[]) => {
-      setCurrentDeck((prev) => ({
-        ...prev,
-        spells
-      }));
+        // If there are remaining decks, switch to the first one
+        if (updatedDecks.length > 0) {
+          setCurrentDeck(updatedDecks[0]);
+        }
 
-      setDecks((prev) =>
-        prev.map((deck) =>
-          deck.id === currentDeck.id ? { ...deck, spells } : deck
-        )
-      );
-    },
-    [currentDeck.id]
-  );
+        return updatedDecks;
+      });
+
+      // Show success toast
+      toast({
+        variant: "success",
+        title: "Deck deleted",
+        description: `"${currentDeck.name}" has been deleted successfully.`
+      });
+    } catch (error) {
+      console.error("Failed to delete deck:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to delete deck",
+        description: "There was an error deleting your deck. Please try again."
+      });
+    }
+  }, [currentDeck.id, currentDeck.name, toast]); // Include toast dependency
 
   const sortDeckSpells = useCallback(
     (by: "school" | "pips" | "utility", order: "asc" | "desc") => {
@@ -521,9 +589,6 @@ export function DeckProvider({
     () => ({
       currentDeck,
       decks,
-      wizardLevel,
-      wizardSchool,
-      weavingClass,
       sortBy,
       sortOrder,
       addSpell,
@@ -532,24 +597,12 @@ export function DeckProvider({
       replaceSpell,
       createNewDeck,
       switchDeck,
-      updateDeckName,
+      updateDeck,
       deleteDeck,
-      sortDeck: sortDeckSpells,
-      setWizardLevel,
-      setWizardSchool,
-      setWeavingClass,
-      updateDeckSpells
+      sortDeck: sortDeckSpells
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      currentDeck,
-      decks,
-      wizardLevel,
-      wizardSchool,
-      weavingClass,
-      sortBy,
-      sortOrder
-    ]
+    [currentDeck, decks, sortBy, sortOrder]
   );
 
   // Debug logging for context value changes - add dependency array to prevent running on every render

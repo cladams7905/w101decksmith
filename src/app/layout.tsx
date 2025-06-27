@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Spectral } from "next/font/google";
 import "./globals.css";
 import { PageLoadingBar } from "@/components/ui/page-loading-bar";
+import { Toaster } from "@/components/ui/toaster";
 
 const fontSans = Spectral({
   variable: "--font-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
         <PageLoadingBar />
         {children}
+        <Toaster />
       </body>
     </html>
   );

@@ -28,7 +28,6 @@ interface DeckGalleryProps {
     description?: string;
     isPvE: boolean;
     isPublic: boolean;
-    canComment: boolean;
   }) => Promise<void>;
   wizardSchool: string;
   wizardLevel: string;

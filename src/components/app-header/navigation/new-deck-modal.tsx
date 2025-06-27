@@ -4,7 +4,8 @@ import type React from "react";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createDeck } from "@/db/actions/decks";
+import Image from "next/image";
+import { useDeck } from "@/lib/contexts/deck-context";
 import {
   Dialog,
   DialogHeader,
@@ -24,9 +25,11 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Popover,
   PopoverContent,
@@ -35,15 +38,37 @@ import {
 import { ChevronDown } from "lucide-react";
 
 const SCHOOLS = [
-  { value: "fire", label: "Fire" },
-  { value: "ice", label: "Ice" },
-  { value: "storm", label: "Storm" },
-  { value: "myth", label: "Myth" },
-  { value: "life", label: "Life" },
-  { value: "death", label: "Death" },
-  { value: "balance", label: "Balance" },
-  { value: "astral", label: "Astral" },
-  { value: "shadow", label: "Shadow" }
+  {
+    value: "fire",
+    label: "Fire",
+    icon: "/school-icons/(Icon)_Fire_School.png"
+  },
+  { value: "ice", label: "Ice", icon: "/school-icons/(Icon)_Ice_School.png" },
+  {
+    value: "storm",
+    label: "Storm",
+    icon: "/school-icons/(Icon)_Storm_School.png"
+  },
+  {
+    value: "myth",
+    label: "Myth",
+    icon: "/school-icons/(Icon)_Myth_School.png"
+  },
+  {
+    value: "life",
+    label: "Life",
+    icon: "/school-icons/(Icon)_Life_School.png"
+  },
+  {
+    value: "death",
+    label: "Death",
+    icon: "/school-icons/(Icon)_Death_School.png"
+  },
+  {
+    value: "balance",
+    label: "Balance",
+    icon: "/school-icons/(Icon)_Balance_School.png"
+  }
 ];
 
 // Mock collections - replace with actual data from your API/database
@@ -70,16 +95,16 @@ export function NewDeckModal({
   disableOutsideClick = false
 }: NewDeckModalProps) {
   const router = useRouter();
+  const { createNewDeck } = useDeck();
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     school: "",
-    level: 10,
+    level: 170,
     weavingSchool: "",
     description: "",
     isPvpDeck: true,
-    isPublic: false,
-    canComment: false,
+    visibility: "private" as "public" | "private",
     collections: [] as string[]
   });
 
@@ -94,44 +119,44 @@ export function NewDeckModal({
   };
 
   const handleCreateDeck = async () => {
-    if (formData.name.trim() && formData.school && formData.weavingSchool) {
+    if (formData.name.trim() && formData.school) {
       setIsCreating(true);
       try {
-        // Create the deck in the database
-        const newDeck = await createDeck({
+        // Create the deck using context method
+        const newDeck = await createNewDeck({
           name: formData.name,
           school: formData.school,
           level: formData.level,
           weavingSchool: formData.weavingSchool,
           description: formData.description,
           isPvpDeck: formData.isPvpDeck,
-          isPublic: formData.isPublic,
-          canComment: formData.canComment,
+          isPublic: formData.visibility === "public",
           collections: formData.collections
         });
 
-        // Reset form
-        setFormData({
-          name: "",
-          school: "",
-          level: 10,
-          weavingSchool: "",
-          description: "",
-          isPvpDeck: true,
-          isPublic: false,
-          canComment: false,
-          collections: []
-        });
+        if (newDeck) {
+          // Reset form
+          setFormData({
+            name: "",
+            school: "",
+            level: 170,
+            weavingSchool: "",
+            description: "",
+            isPvpDeck: true,
+            visibility: "private",
+            collections: []
+          });
 
-        // Close modal
-        setShowModal(false);
+          // Close modal
+          setShowModal(false);
 
-        // Redirect to the new deck page
-        router.push(`/deck/${newDeck.id}`);
+          // Redirect to the new deck page
+          router.push(`/deck/${newDeck.id}`);
+        }
+        // If newDeck is null, error was already handled by the context (toast shown)
       } catch (error) {
         console.error("Error creating deck:", error);
-        // TODO: Show error message to user
-        alert("Failed to create deck. Please try again.");
+        // Error handling is done by the context method
       } finally {
         setIsCreating(false);
       }
@@ -209,7 +234,16 @@ export function NewDeckModal({
                   <SelectContent>
                     {SCHOOLS.map((school) => (
                       <SelectItem key={school.value} value={school.value}>
-                        {school.label}
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src={school.icon}
+                            alt={school.label}
+                            width={20}
+                            height={20}
+                            className="shrink-0"
+                          />
+                          {school.label}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -229,7 +263,7 @@ export function NewDeckModal({
                       "level",
                       Math.max(
                         10,
-                        Math.min(170, parseInt(e.target.value) || 10)
+                        Math.min(170, parseInt(e.target.value) || 170)
                       )
                     )
                   }
@@ -239,7 +273,7 @@ export function NewDeckModal({
 
             {/* Weaving School */}
             <div className="space-y-2">
-              <Label htmlFor="weaving-school">Weaving School</Label>
+              <Label htmlFor="weaving-school">Weaving School (Optional)</Label>
               <Select
                 value={formData.weavingSchool}
                 onValueChange={(value) =>
@@ -252,29 +286,20 @@ export function NewDeckModal({
                 <SelectContent>
                   {SCHOOLS.map((school) => (
                     <SelectItem key={school.value} value={school.value}>
-                      {school.label}
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src={school.icon}
+                          alt={school.label}
+                          width={20}
+                          height={20}
+                          className="shrink-0"
+                        />
+                        {school.label}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe your deck (max 200 characters)"
-                maxLength={200}
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                className="resize-none"
-              />
-              <div className="text-xs text-muted-foreground text-right">
-                {formData.description.length}/200
-              </div>
             </div>
 
             {/* Collections */}
@@ -295,7 +320,7 @@ export function NewDeckModal({
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                   <div className="p-4 space-y-2">
                     {MOCK_COLLECTIONS.map((collection) => (
                       <div
@@ -336,74 +361,130 @@ export function NewDeckModal({
               </Popover>
             </div>
 
-            {/* Checkboxes */}
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (Optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Describe your deck (max 200 characters)"
+                maxLength={200}
+                value={formData.description}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+                className="resize-none"
+              />
+              <div className="text-xs text-muted-foreground text-right">
+                {formData.description.length}/200
+              </div>
+            </div>
+
+            {/* Radio Button Sections */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="isPvpDeck"
-                  checked={formData.isPvpDeck}
-                  onCheckedChange={(checked) =>
-                    handleInputChange("isPvpDeck", checked)
-                  }
-                />
-                <Label
-                  htmlFor="isPvpDeck"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  PvP Deck
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="isPublic"
-                  checked={formData.isPublic}
-                  onCheckedChange={(checked) => {
-                    handleInputChange("isPublic", checked);
-                    // Reset canComment if deck becomes private
-                    if (!checked) {
-                      handleInputChange("canComment", false);
-                    }
+              {/* Deck Type Radio Buttons */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Deck Type</Label>
+                <RadioGroup
+                  value={formData.isPvpDeck ? "pvp" : "pve"}
+                  onValueChange={(value: string) => {
+                    handleInputChange("isPvpDeck", value === "pvp");
                   }}
-                />
-                <Label
-                  htmlFor="isPublic"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="grid grid-cols-2 gap-4"
                 >
-                  Make deck public
-                </Label>
+                  <div className="flex items-start space-x-2">
+                    <RadioGroupItem
+                      value="pvp"
+                      id="deck-type-pvp"
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="deck-type-pvp"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        PvP Deck
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        For player vs player combat
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <RadioGroupItem
+                      value="pve"
+                      id="deck-type-pve"
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="deck-type-pve"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        PvE Deck
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        For questing and PvE content
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
               </div>
 
-              {/* Can Comment - only show if public */}
-              {formData.isPublic && (
-                <div className="flex items-center space-x-2 ml-6">
-                  <Checkbox
-                    id="canComment"
-                    checked={formData.canComment}
-                    onCheckedChange={(checked) =>
-                      handleInputChange("canComment", checked)
-                    }
-                  />
-                  <Label
-                    htmlFor="canComment"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Allow comments
-                  </Label>
-                </div>
-              )}
+              {/* Visibility Radio Buttons */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Deck Visibility</Label>
+                <RadioGroup
+                  value={formData.visibility}
+                  onValueChange={(value: "public" | "private") => {
+                    handleInputChange("visibility", value);
+                  }}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="flex items-start space-x-2">
+                    <RadioGroupItem
+                      value="private"
+                      id="visibility-private"
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="visibility-private"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Private
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Only you can see this deck
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <RadioGroupItem
+                      value="public"
+                      id="visibility-public"
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-1">
+                      <Label
+                        htmlFor="visibility-public"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Public
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Anyone can view and comment on this deck
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
             </div>
 
             {/* Create Button */}
             <Button
               onClick={handleCreateDeck}
               className="w-full"
-              disabled={
-                !formData.name.trim() ||
-                !formData.school ||
-                !formData.weavingSchool ||
-                isCreating
-              }
+              disabled={!formData.name.trim() || !formData.school || isCreating}
             >
               {isCreating ? "Creating Deck..." : "Create Deck"}
             </Button>

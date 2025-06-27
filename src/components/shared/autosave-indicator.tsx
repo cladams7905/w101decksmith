@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Check, X, Loader2 } from "lucide-react";
-import { updateDeckSpells } from "@/db/actions/decks";
+import { updateDeck } from "@/db/actions/decks";
 import type { Spell } from "@/db/database.types";
 import { uiLogger } from "@/lib/logger";
 
@@ -31,7 +31,7 @@ export function AutoSaveIndicator({
 
     try {
       // Save to database
-      await updateDeckSpells(deckId, spells);
+      await updateDeck(deckId, { spells });
 
       setStatus("saved");
       uiLogger.info("Deck auto-saved successfully");

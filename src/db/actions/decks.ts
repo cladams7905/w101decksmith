@@ -1,13 +1,7 @@
 "use server";
 
 import { createClient } from "../supabase/server";
-import {
-  Deck,
-  DeckInsert,
-  DeckUpdate,
-  School,
-  Spell
-} from "@/db/database.types";
+import { Deck, DeckInsert, DeckUpdate, School } from "@/db/database.types";
 
 export async function getAllDecks(): Promise<Deck[]> {
   const supabase = await createClient();
@@ -71,7 +65,6 @@ export async function createDeck(deckData: {
   description?: string;
   isPvpDeck: boolean;
   isPublic: boolean;
-  canComment: boolean;
   collections: string[];
 }): Promise<Deck> {
   const supabase = await createClient();
@@ -94,7 +87,6 @@ export async function createDeck(deckData: {
     description: deckData.description || null,
     is_pve: !deckData.isPvpDeck, // Note: is_pve is the inverse of isPvpDeck
     is_public: deckData.isPublic,
-    can_comment: deckData.canComment,
     user_id: user.id,
     spells: [] // Start with empty spells array
   };
@@ -134,20 +126,4 @@ export async function deleteDeck(id: number): Promise<void> {
   const { error } = await supabase.from("decks").delete().eq("id", id);
 
   if (error) throw error;
-}
-
-export async function updateDeckSpells(
-  id: number,
-  spells: Spell[]
-): Promise<Deck> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("decks")
-    .update({ spells })
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
 }

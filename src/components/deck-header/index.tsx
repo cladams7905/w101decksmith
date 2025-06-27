@@ -24,16 +24,17 @@ import { DeckSettingsModal } from "@/components/deck-header/deck-settings-modal"
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
 import { AutoSaveIndicator } from "@/components/shared/autosave-indicator";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useState } from "react";
 
 function DeckNameEditor() {
-  const { currentDeck, updateDeckName } = useDeck();
+  const { currentDeck, updateDeck } = useDeck();
   const { isEditingDeckName, setIsEditingDeckName } = useUI();
   const [editedDeckName, setEditedDeckName] = useState(currentDeck.name);
 
   const handleSaveDeckName = () => {
     if (editedDeckName.trim()) {
-      updateDeckName(editedDeckName);
+      updateDeck({ name: editedDeckName });
     }
     setIsEditingDeckName(false);
   };
@@ -156,16 +157,22 @@ function DeckSortButton() {
 
 function DeckSettingsButton() {
   const { showDeckSettingsModal, setShowDeckSettingsModal } = useUI();
-  const {
-    wizardLevel,
-    setWizardLevel,
-    wizardSchool,
-    setWizardSchool,
-    weavingClass,
-    setWeavingClass,
-    decks,
-    deleteDeck
-  } = useDeck();
+  const { currentDeck, decks, updateDeck, deleteDeck } = useDeck();
+  const { toast } = useToast();
+
+  const handleUpdateDeck = async (updatedDeck: Partial<typeof currentDeck>) => {
+    try {
+      await updateDeck(updatedDeck);
+    } catch (error) {
+      console.error("Failed to update deck:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to save deck",
+        description:
+          "There was an error saving your deck changes. Please try again."
+      });
+    }
+  };
 
   return (
     <Dialog
@@ -178,13 +185,9 @@ function DeckSettingsButton() {
         </Button>
       </DialogTrigger>
       <DeckSettingsModal
-        wizardLevel={wizardLevel}
-        setWizardLevel={setWizardLevel}
-        wizardSchool={wizardSchool}
-        setWizardSchool={setWizardSchool}
-        weavingClass={weavingClass}
-        setWeavingClass={setWeavingClass}
+        currentDeck={currentDeck}
         decks={decks}
+        onUpdateDeck={handleUpdateDeck}
         onDeleteDeck={deleteDeck}
       />
     </Dialog>

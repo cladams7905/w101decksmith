@@ -30,7 +30,6 @@ interface MyDecksDropdownProps {
   //   description?: string;
   //   isPvE: boolean;
   //   isPublic: boolean;
-  //   canComment: boolean;
   // }) => Promise<void>;
   wizardSchool: string;
   wizardLevel: string;
@@ -64,10 +63,8 @@ export function MyDecksDropdown({
       >
         <Button
           variant="ghost"
-          className={`hidden md:flex relative ${
-            isActive
-              ? "after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-4 after:h-0.5 after:bg-primary"
-              : ""
+          className={`hidden md:flex ${
+            isActive ? "bg-secondary hover:bg-secondary/60" : ""
           }`}
         >
           My Decks

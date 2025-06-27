@@ -13,9 +13,6 @@ interface DeckPageContextType {
   rightSidebarOpen: boolean;
   showNewDeckModal: boolean;
   setShowNewDeckModal: (show: boolean) => void;
-  wizardSchool: string;
-  wizardLevel: string;
-  weavingClass: string;
 }
 
 const DeckPageContext = createContext<DeckPageContextType | null>(null);
@@ -35,14 +32,7 @@ export function useDeckPageContextOptional() {
 }
 
 export function DeckPageProvider({ children }: { children: React.ReactNode }) {
-  const {
-    currentDeck,
-    decks,
-    wizardLevel,
-    wizardSchool,
-    weavingClass,
-    switchDeck
-  } = useDeck();
+  const { currentDeck, decks, switchDeck } = useDeck();
 
   const {
     showNewDeckModal,
@@ -58,10 +48,7 @@ export function DeckPageProvider({ children }: { children: React.ReactNode }) {
     onToggleRightSidebar: toggleRightSidebar,
     rightSidebarOpen,
     showNewDeckModal,
-    setShowNewDeckModal,
-    wizardSchool,
-    wizardLevel,
-    weavingClass
+    setShowNewDeckModal
   };
 
   return (

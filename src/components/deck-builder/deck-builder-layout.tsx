@@ -17,7 +17,7 @@ export function DeckBuilderLayout() {
     addSpellToSlot,
     removeSpell,
     replaceSpell,
-    updateDeckSpells
+    updateDeck
   } = useDeck();
 
   const {
@@ -45,7 +45,7 @@ export function DeckBuilderLayout() {
       }
     });
 
-    updateDeckSpells(newSpells);
+    updateDeck({ spells: newSpells });
   };
 
   const handleBulkReplaceSpells = (spell: Spell, indices: number[]) => {
@@ -58,7 +58,7 @@ export function DeckBuilderLayout() {
       }
     });
 
-    updateDeckSpells(newSpells);
+    updateDeck({ spells: newSpells });
   };
 
   const handleAddSpellToGridPositions = (spell: Spell, positions: number[]) => {
@@ -72,7 +72,7 @@ export function DeckBuilderLayout() {
       }
     });
 
-    updateDeckSpells(newSpells);
+    updateDeck({ spells: newSpells });
   };
 
   const handleMixedOperation = (
@@ -116,7 +116,7 @@ export function DeckBuilderLayout() {
       }))
     );
 
-    updateDeckSpells(newSpells);
+    updateDeck({ spells: newSpells });
     deckLogger.info("=== End atomic mixed operation ===");
   };
 
