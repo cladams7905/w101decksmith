@@ -3,22 +3,22 @@
 PROJECT_REF="rnsdsclvovqpgqdrvzmv"
 
 # Generate the types
-npx supabase gen types typescript --project-id "$PROJECT_REF" --schema public > ./database.types.ts
+npx supabase gen types typescript --project-id "$PROJECT_REF" --schema public > ./src/db/database.types.ts
 
 # Replace all occurrences of 'spells: Json | null' with 'spells: Spell[]'
-sed -i.bak 's/spells: Json | null/spells: Spell[]/g' ./database.types.ts
+sed -i.bak 's/spells: Json | null/spells: Spell[]/g' ./src/db/database.types.ts
 
 # Replace all occurrences of 'spells?: Json | null' with 'spells?: Spell[]' 
-sed -i.bak 's/spells?: Json | null/spells?: Spell[]/g' ./database.types.ts
+sed -i.bak 's/spells?: Json | null/spells?: Spell[]/g' ./src/db/database.types.ts
 
 # Replace verbose enum references with clean type aliases (excluding export type lines)
-sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["school"\]/School/g' ./database.types.ts
-sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["card_effect"\]/CardEffect/g' ./database.types.ts  
-sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["card_type"\]/CardType/g' ./database.types.ts
-sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["pvp_status"\]/PvpStatus/g' ./database.types.ts
+sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["school"\]/School/g' ./src/db/database.types.ts
+sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["card_effect"\]/CardEffect/g' ./src/db/database.types.ts  
+sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["card_type"\]/CardType/g' ./src/db/database.types.ts
+sed -i.bak '/^export type /!s/Database\["public"\]\["Enums"\]\["pvp_status"\]/PvpStatus/g' ./src/db/database.types.ts
 
 # Add all type aliases after the Json type definition
-cat >> ./database.types.ts << 'EOF'
+cat >> ./src/db/database.types.ts << 'EOF'
 
 export type Spell = Database["public"]["Tables"]["spells"]["Row"];
 export type SpellInsert = Database["public"]["Tables"]["spells"]["Insert"];
@@ -35,6 +35,6 @@ export type PvpStatus = Database["public"]["Enums"]["pvp_status"];
 EOF
 
 # Remove the backup file
-rm ./database.types.ts.bak
+rm ./src/db/database.types.ts.bak
 
 echo "Types generated with clean type aliases and enum references updated"

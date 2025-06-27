@@ -78,12 +78,18 @@ export async function createDeck(deckData: {
     throw new Error("User not authenticated");
   }
 
+  // Process weaving school to handle empty strings
+  const processedWeavingSchool =
+    deckData.weavingSchool && deckData.weavingSchool.trim().length > 0
+      ? (deckData.weavingSchool as School)
+      : null;
+
   // Prepare deck data for insertion
   const deckInsert: DeckInsert = {
     name: deckData.name,
     school: deckData.school as School,
     level: deckData.level,
-    weaving_school: deckData.weavingSchool as School | null,
+    weaving_school: processedWeavingSchool,
     description: deckData.description || null,
     is_pve: !deckData.isPvpDeck, // Note: is_pve is the inverse of isPvpDeck
     is_public: deckData.isPublic,
@@ -110,9 +116,21 @@ export async function updateDeck(
   updates: DeckUpdate
 ): Promise<Deck> {
   const supabase = await createClient();
+
+  // Handle weaving_school if it's being updated
+  const processedUpdates = { ...updates };
+  if (
+    "weaving_school" in processedUpdates &&
+    typeof processedUpdates.weaving_school === "string"
+  ) {
+    processedUpdates.weaving_school = processedUpdates.weaving_school.trim()
+      ? (processedUpdates.weaving_school as School)
+      : null;
+  }
+
   const { data, error } = await supabase
     .from("decks")
-    .update(updates)
+    .update(processedUpdates)
     .eq("id", id)
     .select()
     .single();

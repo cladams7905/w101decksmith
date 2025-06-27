@@ -120,10 +120,14 @@ export function NewDeckModal({
 
   const handleCreateDeck = async () => {
     if (formData.name.trim() && formData.school) {
+      console.log(
+        "NewDeckModal: handleCreateDeck called with formData:",
+        formData
+      );
+
       setIsCreating(true);
       try {
-        // Create the deck using context method
-        const newDeck = await createNewDeck({
+        const deckDataToSend = {
           name: formData.name,
           school: formData.school,
           level: formData.level,
@@ -132,7 +136,15 @@ export function NewDeckModal({
           isPvpDeck: formData.isPvpDeck,
           isPublic: formData.visibility === "public",
           collections: formData.collections
-        });
+        };
+
+        console.log(
+          "NewDeckModal: Sending deckData to createNewDeck:",
+          deckDataToSend
+        );
+
+        // Create the deck using context method
+        const newDeck = await createNewDeck(deckDataToSend);
 
         if (newDeck) {
           // Reset form
@@ -310,7 +322,11 @@ export function NewDeckModal({
                   <Button
                     variant="outline"
                     role="combobox"
-                    className="w-full justify-between"
+                    className={`w-full justify-between hover:bg-secondary/50 ${
+                      formData.collections.length === 0
+                        ? "text-muted-foreground hover:text-muted-foreground hover:bg-secondary/50"
+                        : ""
+                    }`}
                   >
                     {formData.collections.length === 0
                       ? "Select collections..."

@@ -383,7 +383,11 @@ export function DeckSettingsModal({
               <Button
                 variant="outline"
                 role="combobox"
-                className="w-full justify-between"
+                className={`w-full justify-between hover:bg-secondary/50 ${
+                  formData.collections.length === 0
+                    ? "text-muted-foreground hover:text-muted-foreground hover:bg-secondary/50"
+                    : ""
+                }`}
               >
                 {formData.collections.length === 0
                   ? "Select collections..."
@@ -567,7 +571,7 @@ export function DeckSettingsModal({
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteDeck}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="bg-destructive/60 border-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   Delete Deck
                 </AlertDialogAction>
