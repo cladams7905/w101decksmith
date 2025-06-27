@@ -86,11 +86,11 @@ export function DeckProvider({
 
   // Auto-group spells based on current sorting selection whenever deck spells change
   useEffect(() => {
-    if ((currentDeck.spells as Spell[]).length === 0) return;
+    if (currentDeck.spells.length === 0) return;
 
     setCurrentDeck((prev) => {
       // Create a sorted copy of spells based on current sorting selection
-      const sortedSpells = [...(prev.spells as Spell[])].sort((a, b) => {
+      const sortedSpells = [...prev.spells].sort((a, b) => {
         if (sortBy === "school") {
           const schoolA = (a.school || "unknown").toLowerCase();
           const schoolB = (b.school || "unknown").toLowerCase();
@@ -146,7 +146,7 @@ export function DeckProvider({
       });
 
       // Only update if the order actually changed
-      const hasOrderChanged = (prev.spells as Spell[]).some(
+      const hasOrderChanged = prev.spells.some(
         (spell, index) =>
           !sortedSpells[index] ||
           spell.name !== sortedSpells[index].name ||
@@ -235,11 +235,11 @@ export function DeckProvider({
   const addSpell = useCallback(
     (spell: Spell, quantity: number) => {
       setCurrentDeck((prev) => {
-        if ((prev.spells as Spell[]).length + quantity <= 64) {
+        if (prev.spells.length + quantity <= 64) {
           const spellsToAdd = Array(quantity).fill(spell);
           return {
             ...prev,
-            spells: [...(prev.spells as Spell[]), ...spellsToAdd]
+            spells: [...prev.spells, ...spellsToAdd]
           };
         }
         return prev;
@@ -266,7 +266,7 @@ export function DeckProvider({
   const addSpellToSlot = useCallback(
     (spell: Spell, slotIndex: number, quantity = 1) => {
       setCurrentDeck((prev) => {
-        const newSpells = [...(prev.spells as Spell[])];
+        const newSpells = [...prev.spells];
 
         // Only add to slots that are actually empty (beyond current deck length)
         if (slotIndex >= newSpells.length) {
@@ -305,7 +305,7 @@ export function DeckProvider({
   const removeSpell = useCallback(
     (index: number) => {
       setCurrentDeck((prev) => {
-        const newSpells = [...(prev.spells as Spell[])];
+        const newSpells = [...prev.spells];
         newSpells.splice(index, 1);
         return { ...prev, spells: newSpells };
       });
@@ -329,7 +329,7 @@ export function DeckProvider({
       if (index !== undefined) {
         // Replace spell at specific index
         setCurrentDeck((prev) => {
-          const newSpells = [...(prev.spells as Spell[])];
+          const newSpells = [...prev.spells];
           newSpells[index] = newSpell;
           return { ...prev, spells: newSpells };
         });
@@ -350,7 +350,7 @@ export function DeckProvider({
         // Replace all instances of the spell
         setCurrentDeck((prev) => ({
           ...prev,
-          spells: (prev.spells as Spell[]).map((spell) =>
+          spells: prev.spells.map((spell) =>
             spell.name === spellName ? newSpell : spell
           )
         }));
@@ -376,7 +376,7 @@ export function DeckProvider({
     const newDeck: Deck = {
       id: 123,
       name: "New Deck",
-      spells: [] as Spell[],
+      spells: [],
       school: "fire",
       level: 150,
       weaving_school: "fire",
@@ -442,7 +442,7 @@ export function DeckProvider({
 
       // Use callback form to access current deck without dependency
       setCurrentDeck((prev) => {
-        const sortedSpells = [...(prev.spells as Spell[])].sort((a, b) => {
+        const sortedSpells = [...prev.spells].sort((a, b) => {
           if (by === "school") {
             const schoolA = (a.school || "unknown").toLowerCase();
             const schoolB = (b.school || "unknown").toLowerCase();
@@ -557,12 +557,12 @@ export function DeckProvider({
     () => {
       uiLogger.debug(`🔄 DeckContext value recreated:`, {
         currentDeckId: currentDeck.id,
-        currentDeckSpellsLength: (currentDeck.spells as Spell[]).length,
+        currentDeckSpellsLength: currentDeck.spells.length,
         addSpellRef: addSpell.toString().slice(0, 50),
         timestamp: Date.now()
       });
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentDeck.id, (currentDeck.spells as Spell[]).length]
+    [currentDeck.id, currentDeck.spells.length]
   ); // Only log when deck actually changes - removed addSpell to prevent circular logging
 
   return <DeckContext.Provider value={value}>{children}</DeckContext.Provider>;

@@ -23,8 +23,8 @@ import DeckBreakdown from "@/components/deck-header/deck-breakdown";
 import { DeckSettingsModal } from "@/components/deck-header/deck-settings-modal";
 import { useDeck } from "@/lib/contexts/deck-context";
 import { useUI } from "@/lib/contexts/ui-context";
+import { AutoSaveIndicator } from "@/components/shared/autosave-indicator";
 import { useState } from "react";
-import type { Spell } from "@/db/database.types";
 
 function DeckNameEditor() {
   const { currentDeck, updateDeckName } = useDeck();
@@ -87,7 +87,7 @@ function DeckCardCount() {
           variant="outline"
           className="text-sm px-3 py-1 cursor-pointer hover:bg-accent/50 transition-colors"
         >
-          {(currentDeck.spells as Spell[]).length} / 64 cards
+          {currentDeck.spells.length} / 64 cards
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0 rounded-lg" align="end">
@@ -192,10 +192,16 @@ function DeckSettingsButton() {
 }
 
 export function DeckHeader() {
+  const { currentDeck } = useDeck();
+
   return (
     <div className="flex items-center justify-between p-4 md:px-6 md:pt-6 md:pb-4">
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
         <DeckNameEditor />
+        <AutoSaveIndicator
+          deckId={currentDeck.id}
+          spells={currentDeck.spells}
+        />
       </div>
       <div className="flex items-center gap-2">
         <DeckCardCount />

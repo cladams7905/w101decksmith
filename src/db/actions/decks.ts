@@ -2,11 +2,11 @@
 
 import { createClient } from "../supabase/server";
 import {
-  Database,
   Deck,
   DeckInsert,
   DeckUpdate,
-  School
+  School,
+  Spell
 } from "@/db/database.types";
 
 export async function getAllDecks(): Promise<Deck[]> {
@@ -138,7 +138,7 @@ export async function deleteDeck(id: number): Promise<void> {
 
 export async function updateDeckSpells(
   id: number,
-  spells: Database["public"]["Tables"]["decks"]["Row"]["spells"]
+  spells: Spell[]
 ): Promise<Deck> {
   const supabase = await createClient();
   const { data, error } = await supabase
