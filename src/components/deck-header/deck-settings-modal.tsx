@@ -276,15 +276,15 @@ export function DeckSettingsModal({
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <div className="flex items-center justify-between">
-          <DialogTitle>Deck Settings</DialogTitle>
+        <DialogTitle className="flex items-center gap-4">
+          Deck Settings
           <div
             className={`flex items-center gap-1 text-xs ${statusDisplay.color}`}
           >
             {statusDisplay.icon}
             <span>{statusDisplay.text}</span>
           </div>
-        </div>
+        </DialogTitle>
       </DialogHeader>
       <div className="space-y-6 mt-4">
         {/* Deck Name */}

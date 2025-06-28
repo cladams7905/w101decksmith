@@ -77,25 +77,28 @@ export const SpellSidebar = memo(function SpellSidebar({
   }
 
   return (
-    <div className="bg-card flex flex-col h-full w-full">
-      <SpellSearchBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        categoryFilters={categoryFilters}
-        onCategoryFiltersChange={setCategoryFilters}
-        className="mb-2 pl-2 pr-3 py-4"
-      />
-
-      {/* List of spells in accordions */}
-      <div className="flex-1 overflow-auto">
-        <SpellList
-          filteredSpells={filteredSpells}
-          onSpellClick={handleSpellClick}
+    <div className="bg-card flex flex-col h-full w-full max-h-[calc(100vh-4rem)]">
+      {/* Content wrapper - matches popup structure */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <SpellSearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          categoryFilters={categoryFilters}
+          onCategoryFiltersChange={setCategoryFilters}
+          className="mb-2 pl-2 pr-3 py-4"
         />
+
+        {/* List of spells in accordions */}
+        <div className="overflow-y-auto flex-1" style={{ height: 0 }}>
+          <SpellList
+            filteredSpells={filteredSpells}
+            onSpellClick={handleSpellClick}
+          />
+        </div>
       </div>
 
       {/* Sticky sidebar footer */}
-      <div className="border-t p-4 mt-auto bg-background gradient-special backdrop-blur-2xl z-20">
+      <div className="flex-shrink-0 border-t p-4 bg-background gradient-special backdrop-blur-2xl z-20">
         <UpgradeMembershipModal />
         <div className="text-xs text-muted-foreground text-center mt-2">
           Wizard101 Deck Builder
