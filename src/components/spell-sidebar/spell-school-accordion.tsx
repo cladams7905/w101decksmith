@@ -30,6 +30,7 @@ interface SpellSchoolAccordionProps {
   onSort: (schoolId: string, by: "pips" | "utility" | "none") => void;
   onSpellClick: (spell: Spell, event: React.MouseEvent) => void;
   sortedSpells: Spell[];
+  isOpen: boolean;
 }
 
 export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
@@ -37,7 +38,8 @@ export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
   sortOptions,
   onSort,
   onSpellClick,
-  sortedSpells
+  sortedSpells,
+  isOpen
 }: SpellSchoolAccordionProps) {
   // State to track selected tier for each spell group
   const [selectedTiers, setSelectedTiers] = useState<Map<string, Spell>>(
@@ -117,13 +119,15 @@ export const SpellSchoolAccordion = memo(function SpellSchoolAccordion({
             <span>{category.name}</span>
           </div>
         </AccordionTrigger>
+        {isOpen && (
+          <SpellSortButtons
+            schoolId={category.id}
+            sortOptions={sortOptions}
+            onSort={onSort}
+          />
+        )}
       </div>
-      <AccordionContent>
-        <SpellSortButtons
-          schoolId={category.id}
-          sortOptions={sortOptions}
-          onSort={onSort}
-        />
+      <AccordionContent className="overflow-visible">
         <div className="grid grid-cols-2 gap-2 p-1">{spellCards}</div>
       </AccordionContent>
     </AccordionItem>

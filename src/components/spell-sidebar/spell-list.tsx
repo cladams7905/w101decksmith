@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import type { Spell } from "@/db/database.types";
 import { Accordion } from "@/components/ui/accordion";
 import { SpellSchoolAccordion } from "./spell-school-accordion";
@@ -21,8 +21,20 @@ export const SpellList = memo(function SpellList({
   const { schoolSortOptions, toggleSchoolSort, getSortedSpells } =
     useSpellSorting();
 
+  // Track which accordions are open
+  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
+
+  const handleAccordionChange = (value: string[]) => {
+    setOpenAccordions(value);
+  };
+
   return (
-    <Accordion type="multiple" className="w-full">
+    <Accordion
+      type="multiple"
+      className="w-full"
+      value={openAccordions}
+      onValueChange={handleAccordionChange}
+    >
       {filteredSpells.map((category) => (
         <SpellSchoolAccordion
           key={category.id}
@@ -34,6 +46,7 @@ export const SpellList = memo(function SpellList({
             category.spells,
             schoolSortOptions[category.id]
           )}
+          isOpen={openAccordions.includes(category.id)}
         />
       ))}
     </Accordion>

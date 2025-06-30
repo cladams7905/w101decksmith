@@ -17,7 +17,7 @@ export function SpellSortButtons({
   onSort
 }: SpellSortButtonsProps) {
   return (
-    <div className="flex gap-2 px-3 mb-2">
+    <div className="flex gap-2 py-2 bg-background z-10">
       <Button
         variant="outline"
         size="sm"

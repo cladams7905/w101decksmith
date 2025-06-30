@@ -34,9 +34,6 @@ function ConditionalAppHeader() {
         onToggleRightSidebar={toggleFunction}
         showNewDeckModal={deckContext?.showNewDeckModal || false}
         setShowNewDeckModal={deckContext?.setShowNewDeckModal || (() => {})}
-        wizardSchool={deckContext?.wizardSchool || ""}
-        wizardLevel={deckContext?.wizardLevel || ""}
-        weavingClass={deckContext?.weavingClass || ""}
         rightSidebarOpen={deckContext?.rightSidebarOpen || false}
       />
     );
